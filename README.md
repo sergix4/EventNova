@@ -2,9 +2,10 @@
 
 Sistema web de gestión y reserva de eventos y espectáculos — Proyecto Integrador.
 
-> **Esta rama (`feature/estructura-figma`) reorganiza el proyecto para incorporar el
-> prototipo visual hecho en Figma Make.** Convive junto a la estructura original
-> (rama `feature/estructura-mvc`) mientras el equipo decide con cuál continuar.
+> **Esta es la arquitectura oficial del proyecto**, decidida por el equipo: backend
+> (Express API) + frontend (React, basado en el prototipo de Figma Make). La
+> estructura original en EJS quedó archivada en la rama `archive/estructura-mvc`
+> como respaldo histórico.
 
 ## Cambio de arquitectura
 
@@ -88,11 +89,15 @@ dev`, puerto 5173). El navegador se abre en la URL del frontend
 - Páginas del frontend: `NombrePantallaPage.tsx` o `NombreRolDashboard.tsx`
 - Ramas de Git: `feature/nombre-funcionalidad`
 
+## Ramas del repositorio
+
+- `main` → rama estable con la arquitectura oficial (esta rama)
+- `develop` → integración diaria del equipo, nace igual que `main`
+- `archive/estructura-mvc` → versión anterior (EJS) descartada, conservada como respaldo histórico
+
 ## Equipo
 
-| Integrante | Módulo a cargo |
-| --- | --- |
-| Por definir | Base de Datos |
-| Por definir | Backend / API |
-| Por definir | Frontend (React) |
-| Por definir | Diseño (Figma) |
+- Sergio Alejandro Morales Florez
+- Daniel Castañeda Londoño
+- Paola Andrea Carmona Salazar
+- Isabella Serna Torres
