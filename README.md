@@ -1,3 +1,9 @@
+> ⚠️ **Rama archivada — no usar para desarrollo activo.**
+> Contiene la primera versión de la estructura MVC (Node + Express + EJS),
+> descartada en favor de la arquitectura backend (Express API) + frontend (React,
+> prototipo de Figma). Se conserva únicamente como respaldo histórico.
+> La arquitectura oficial vive en `main`.
+
 # EventNova
 
 Sistema web de gestión y reserva de eventos y espectáculos, desarrollado como Proyecto Integrador (Bases de Datos y Programación en Ambiente Web I).
