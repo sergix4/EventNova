@@ -9,6 +9,7 @@ const cors = require('cors');
 const session = require('express-session');
 
 const indexRoutes = require('./routes/index');
+require('./config/db'); // ← se agrega esta línea: fuerza a que db.js se ejecute y pruebe la conexión
 
 const app = express();
 const PORT = process.env.PORT || 3000;
