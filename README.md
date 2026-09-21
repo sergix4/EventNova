@@ -42,6 +42,28 @@ carpetas `views/` ni `public/` — esa responsabilidad la asumió por completo
 - Usa `cors` para permitir que el frontend (que corre en otro puerto) le haga
   peticiones
 
+  ## Configuración de la base de datos (PostgreSQL)
+
+### Requisitos
+- PostgreSQL 18 instalado (con pgAdmin 4).
+
+### Pasos
+1. Crear una base de datos llamada `eventnova_db`.
+2. Crear un usuario `eventnova_user` con permisos ALL sobre esa base.
+3. En la carpeta `backend/`, copiar `.env.example` como `.env` y completar con tus propias credenciales:
+
+   \`\`\`
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=eventnova_db
+   DB_USER=eventnova_user
+   DB_PASSWORD=tu_contraseña
+   \`\`\`
+
+4. Instalar dependencias: `npm install` (dentro de `backend/`).
+5. Levantar el servidor: `npm run dev`.
+6. Verificar en la terminal el mensaje `Conexion a PostgreSQL establecida correctamente.`
+
 ### Instalación
 
 ```
