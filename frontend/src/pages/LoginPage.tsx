@@ -69,12 +69,31 @@ export default function LoginPage({ onBack, onRegister, onLogin }: LoginPageProp
   const [emailFocused, setEmailFocused] = useState(false)
   const [passwordFocused, setPasswordFocused] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setTimeout(() => { setLoading(false); onLogin?.() }, 1200)
+ const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault()
+
+  const newErrors: { email?: string; password?: string } = {}
+
+  if (!email.trim()) {
+    newErrors.email = 'El correo electrónico es obligatorio.'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    newErrors.email = 'Ingresa un correo electrónico válido.'
   }
+
+  if (!password.trim()) {
+    newErrors.password = 'La contraseña es obligatoria.'
+  }
+
+  setErrors(newErrors)
+
+  // Si hay errores, no continúa (esto es lo que evita el "login falso" con campos vacíos)
+  if (Object.keys(newErrors).length > 0) return
+
+  setLoading(true)
+  setTimeout(() => { setLoading(false); onLogin?.() }, 1200)
+}
 
   return (
     <div
@@ -164,6 +183,11 @@ export default function LoginPage({ onBack, onRegister, onLogin }: LoginPageProp
                     autoComplete="email"
                   />
                 </div>
+                {errors.email && (
+  <span className="text-xs text-red-500" style={{ fontWeight: 500 }}>
+    {errors.email}
+  </span>
+)}
               </div>
 
               {/* Password field */}
@@ -183,7 +207,7 @@ export default function LoginPage({ onBack, onRegister, onLogin }: LoginPageProp
                 <div
                   className="flex items-center gap-3 rounded-xl border px-4 py-3 transition-all"
                   style={{
-                    borderColor: passwordFocused ? '#4f46e5' : '#e5e7eb',
+                   borderColor: errors.email ? '#ef4444' : emailFocused ? '#4f46e5' : '#e5e7eb',
                     boxShadow: passwordFocused ? '0 0 0 3px rgba(79,70,229,0.1)' : 'none',
                     background: passwordFocused ? '#fafafe' : '#fff',
                   }}
