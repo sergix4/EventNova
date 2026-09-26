@@ -5,6 +5,7 @@
 
 require('dotenv').config();
 const express = require('express');
+require('./config/db');
 const cors = require('cors');
 const session = require('express-session');
 
