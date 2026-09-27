@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { SHARED_EVENTS } from './sharedData'
+import { UsuarioSesion } from './services/api'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ClientDashboard from './pages/ClientDashboard'
@@ -315,6 +316,14 @@ export default function App() {
 
   const [page, setPage] = useState<Page>('home')
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [usuarioActual, setUsuarioActual] = useState<UsuarioSesion | null>(null)
+
+  const handleAuthSuccess = (usuario: UsuarioSesion) => {
+    setUsuarioActual(usuario)
+    if (usuario.rol === 'agente') setPage('agent-dashboard')
+    else if (usuario.rol === 'administrador') setPage('admin-dashboard')
+    else setPage('dashboard')
+  }
 
   // Map sidebar nav key → page
   const handleClientNav = (key: NavKey) => {
@@ -340,6 +349,7 @@ export default function App() {
     onNavigate:  handleClientNav,
     activeNav:   activeNavFromPage(page),
     onViewEvent: () => setPage('event-detail'),
+    usuario:     usuarioActual,
   }
 
   if (page === 'dashboard')
@@ -351,7 +361,7 @@ export default function App() {
   if (page === 'my-reservations')
     return <MyReservationsPage onLogout={() => setPage('home')} onViewEvent={() => setPage('event-detail')} onNavigate={handleClientNav} activeNav="reservas" />
   if (page === 'profile')
-    return <ClientProfilePage onLogout={() => setPage('home')} onNavigate={handleClientNav} activeNav="perfil" />
+    return <ClientProfilePage onLogout={() => setPage('home')} onNavigate={handleClientNav} activeNav="perfil" usuario={usuarioActual} />
   const handleAgentNav = (key: AgentNavKey) => {
     const agentMap: Record<AgentNavKey, Page> = {
       'mis-eventos':      'agent-dashboard',
@@ -471,8 +481,8 @@ export default function App() {
         onNavigate={handleAdminNav}
       />
     )
-  if (page === 'login') return <LoginPage onBack={() => setPage('home')} onRegister={() => setPage('register')} onLogin={() => setPage('dashboard')} />
-  if (page === 'register') return <RegisterPage onBack={() => setPage('home')} onLogin={() => setPage('login')} onAgentRegister={() => setPage('agent-dashboard')} />
+  if (page === 'login') return <LoginPage onBack={() => setPage('home')} onRegister={() => setPage('register')} onLogin={handleAuthSuccess} />
+  if (page === 'register') return <RegisterPage onBack={() => setPage('home')} onLogin={() => setPage('login')} onAgentRegister={() => setPage('agent-dashboard')} onClientRegister={handleAuthSuccess} />
 
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>

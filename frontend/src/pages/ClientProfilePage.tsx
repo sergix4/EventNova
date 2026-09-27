@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { UsuarioSesion } from '../services/api'
 
 type NavKey = 'inicio' | 'explorar' | 'reservas' | 'perfil'
 
@@ -37,8 +38,7 @@ const navItems: { key: NavKey; label: string; icon: React.ReactNode }[] = [
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-function Sidebar({ activeNav, onNav, onLogout }: { activeNav: NavKey; onNav: (k: NavKey) => void; onLogout: () => void }) {
-  return (
+function Sidebar({ activeNav, onNav, onLogout, nombre }: { activeNav: NavKey; onNav: (k: NavKey) => void; onLogout: () => void; nombre?: string }) {  return (
     <aside className="flex flex-col h-full bg-white border-r border-gray-100" style={{ width: 220, flexShrink: 0 }}>
       <div className="px-5 py-5 flex items-center gap-2.5 border-b border-gray-100" style={{ height: 64 }}>
         <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: '#4f46e5' }}>
@@ -65,9 +65,9 @@ function Sidebar({ activeNav, onNav, onLogout }: { activeNav: NavKey; onNav: (k:
       </nav>
       <div className="border-t border-gray-100 p-3">
         <div className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-gray-50 transition-colors">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm shrink-0" style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)', fontWeight: 700 }}>LG</div>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm shrink-0" style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)', fontWeight: 700 }}>{(nombre || 'Cliente').split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()}</div>
           <div className="min-w-0">
-            <p className="text-sm text-gray-900 truncate" style={{ fontWeight: 600 }}>Laura García</p>
+            <p className="text-sm text-gray-900 truncate" style={{ fontWeight: 600 }}>{nombre || 'Cliente'}</p>
             <p className="text-xs text-gray-400">Cliente</p>
           </div>
         </div>
@@ -137,10 +137,10 @@ interface ClientProfilePageProps {
   onLogout: () => void
   onNavigate?: (key: NavKey) => void
   activeNav?: NavKey
+  usuario?: UsuarioSesion | null
 }
 
-export default function ClientProfilePage({ onLogout, onNavigate, activeNav = 'perfil' }: ClientProfilePageProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+export default function ClientProfilePage({ onLogout, onNavigate, activeNav = 'perfil', usuario }: ClientProfilePageProps) {  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [publicidad, setPublicidad] = useState(true)
   const [notifEmail, setNotifEmail] = useState(true)
   const [notifReservas, setNotifReservas] = useState(true)
@@ -156,13 +156,14 @@ export default function ClientProfilePage({ onLogout, onNavigate, activeNav = 'p
 
       {/* Sidebar desktop */}
       <div className="hidden md:flex flex-col h-full shrink-0" style={{ width: 220 }}>
-        <Sidebar activeNav={activeNav} onNav={(k) => onNavigate?.(k)} onLogout={onLogout} />
+        <Sidebar activeNav={activeNav} onNav={(k) => onNavigate?.(k)} onLogout={onLogout} nombre={usuario?.nombre} />
       </div>
+
 
       {/* Sidebar mobile */}
       <div className="fixed left-0 top-0 h-full z-40 md:hidden flex flex-col transition-transform duration-200"
         style={{ transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', width: 220 }}>
-        <Sidebar activeNav={activeNav} onNav={(k) => { onNavigate?.(k); setSidebarOpen(false) }} onLogout={onLogout} />
+        <Sidebar activeNav={activeNav} onNav={(k) => { onNavigate?.(k); setSidebarOpen(false) }} onLogout={onLogout} nombre={usuario?.nombre} />
       </div>
 
       {/* Main */}
@@ -193,21 +194,21 @@ export default function ClientProfilePage({ onLogout, onNavigate, activeNav = 'p
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex items-center gap-5">
               <div className="relative">
                 <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-white text-2xl" style={{ background: 'linear-gradient(135deg,#6366f1,#4f46e5)', fontWeight: 800 }}>
-                  LG
+                  {(usuario?.nombre || 'Cliente').split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()}
                 </div>
                 <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors shadow-sm">
                   <IconEdit />
                 </button>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xl text-gray-900" style={{ fontWeight: 800 }}>Laura García</p>
-                <p className="text-sm text-gray-400 mt-0.5">Cliente · Desde agosto 2025</p>
+                <p className="text-xl text-gray-900" style={{ fontWeight: 800 }}>{usuario?.nombre || 'Cliente'}</p>
+                <p className="text-sm text-gray-400 mt-0.5">Cliente</p>
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-xs bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-1 rounded-full" style={{ fontWeight: 600 }}>
                     Cuenta activa
                   </span>
                   <span className="text-xs bg-gray-100 text-gray-500 px-2.5 py-1 rounded-full" style={{ fontWeight: 500 }}>
-                    ID: CLI-2025-0042
+                    ID: {usuario?.numero_id ? `CLI-${usuario.numero_id}` : '—'}
                   </span>
                 </div>
               </div>
@@ -235,12 +236,12 @@ export default function ClientProfilePage({ onLogout, onNavigate, activeNav = 'p
                 </button>
               }
             >
-              <FieldRow icon={<IconUser />}   label="Nombre completo"       value="Laura García Romero" />
-              <FieldRow icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /><path d="M16 10h2M16 14h2M7 10h2a2 2 0 1 1 0 4H7z" /></svg>} label="N.° de identificación" value="1.023.456.789" />
-              <FieldRow icon={<IconMail />}   label="Correo electrónico"    value="laura.garcia@correo.com" />
-              <FieldRow icon={<IconPhone />}  label="Teléfono"              value="+57 312 456 7890" />
-              <FieldRow icon={<IconMapPin />} label="Ciudad"                value="Bogotá, Cundinamarca" />
-              <FieldRow icon={<IconMapPin />} label="Dirección"             value="Cra. 15 #85-42, Chapinero" />
+              <FieldRow icon={<IconUser />}   label="Nombre completo"       value={usuario?.nombre || '—'} />
+              <FieldRow icon={<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="14" x="2" y="5" rx="2" /><path d="M16 10h2M16 14h2M7 10h2a2 2 0 1 1 0 4H7z" /></svg>} label="N.° de identificación" value={usuario?.numero_id || '—'} />
+              <FieldRow icon={<IconMail />}   label="Correo electrónico"    value={usuario?.correo || '—'} />
+              <FieldRow icon={<IconPhone />}  label="Teléfono"              value="No registrado" />
+              <FieldRow icon={<IconMapPin />} label="Ciudad"                value="No registrada" />
+              <FieldRow icon={<IconMapPin />} label="Dirección"             value={usuario?.direccion || '—'} />
             </SectionCard>
 
             {/* Preferences */}

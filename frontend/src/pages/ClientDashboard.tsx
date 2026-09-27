@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { UsuarioSesion } from '../services/api'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -515,11 +516,13 @@ function Sidebar({
   onNav,
   onLogout,
   collapsed,
+  nombre,
 }: {
   activeNav: NavKey
   onNav: (k: NavKey) => void
   onLogout: () => void
   collapsed?: boolean
+  nombre?: string
 }) {
   return (
     <aside
@@ -576,11 +579,11 @@ function Sidebar({
             className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-sm shrink-0"
             style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)', fontWeight: 700 }}
           >
-            LG
+            {(nombre || 'Cliente').split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()}
           </div>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <p className="text-sm text-gray-900 truncate" style={{ fontWeight: 600 }}>Laura García</p>
+              <p className="text-sm text-gray-900 truncate" style={{ fontWeight: 600 }}>{nombre || 'Cliente'}</p>
               <p className="text-xs text-gray-400 truncate">Cliente</p>
             </div>
           )}
@@ -605,9 +608,10 @@ interface ClientDashboardProps {
   onViewEvent?: () => void
   onNavigate?: (key: NavKey) => void
   activeNav?: NavKey
+  usuario?: UsuarioSesion | null
 }
 
-export default function ClientDashboard({ onLogout, onViewEvent, onNavigate, activeNav = 'inicio' }: ClientDashboardProps) {
+export default function ClientDashboard({ onLogout, onViewEvent, onNavigate, activeNav = 'inicio', usuario }: ClientDashboardProps) {
   const [search, setSearch] = useState('')
   const [filterPais, setFilterPais] = useState('')
   const [filterDept, setFilterDept] = useState('')
@@ -655,7 +659,7 @@ export default function ClientDashboard({ onLogout, onViewEvent, onNavigate, act
         className="hidden md:flex flex-col h-full shrink-0"
         style={{ width: 220 }}
       >
-        <Sidebar activeNav={activeNav} onNav={(k) => onNavigate?.(k)} onLogout={onLogout} />
+       <Sidebar activeNav={activeNav} onNav={(k) => onNavigate?.(k)} onLogout={onLogout} nombre={usuario?.nombre} />
       </div>
 
       {/* Mobile sidebar drawer */}
@@ -663,7 +667,7 @@ export default function ClientDashboard({ onLogout, onViewEvent, onNavigate, act
         className="fixed left-0 top-0 h-full z-40 md:hidden flex flex-col transition-transform duration-200"
         style={{ transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)', width: 220 }}
       >
-        <Sidebar activeNav={activeNav} onNav={(k) => { onNavigate?.(k); setSidebarOpen(false) }} onLogout={onLogout} />
+        <Sidebar activeNav={activeNav} onNav={(k) => { onNavigate?.(k); setSidebarOpen(false) }} onLogout={onLogout} nombre={usuario?.nombre} />
       </div>
 
       {/* Main content */}
@@ -680,7 +684,7 @@ export default function ClientDashboard({ onLogout, onViewEvent, onNavigate, act
             </button>
             <div>
               <h1 className="text-lg text-gray-900 leading-tight" style={{ fontWeight: 700 }}>
-                Hola, Laura 👋
+                Hola, {usuario?.nombre?.split(' ')[0] || 'Cliente'} 👋
               </h1>
               <p className="text-xs text-gray-500 leading-none">Encuentra tu próximo evento.</p>
             </div>

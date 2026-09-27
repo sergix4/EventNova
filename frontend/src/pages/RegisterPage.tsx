@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { registerClienteApi, UsuarioSesion } from '../services/api'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -409,6 +410,7 @@ interface RegisterPageProps {
   onBack: () => void
   onLogin: () => void
   onAgentRegister?: () => void
+  onClientRegister?: (usuario: UsuarioSesion) => void
 }
 
 type Role = 'cliente' | 'agente'
@@ -447,7 +449,7 @@ function validate(field: keyof FormData, value: string | boolean, form: FormData
   }
 }
 
-export default function RegisterPage({ onBack, onLogin, onAgentRegister }: RegisterPageProps) {
+export default function RegisterPage({ onBack, onLogin, onAgentRegister, onClientRegister }: RegisterPageProps) {
   const [role, setRole] = useState<Role>('cliente')
   const [showPass, setShowPass] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -456,6 +458,7 @@ export default function RegisterPage({ onBack, onLogin, onAgentRegister }: Regis
   const [selectedPlan, setSelectedPlan] = useState<PlanKey | null>(null)
   const [planError, setPlanError] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [serverError, setServerError] = useState('')
 
   const [form, setForm] = useState<FormData>({
     identificacion: '', nombre: '', correo: '', password: '', confirmar: '',
@@ -478,12 +481,31 @@ export default function RegisterPage({ onBack, onLogin, onAgentRegister }: Regis
   const selectedPlanData = AGENT_PLANS.find(p => p.key === selectedPlan)
 
   // ── Client submit (unchanged logic) ───────────────────────────────────────
-  const handleClientSubmit = (e: React.FormEvent) => {
+  const handleClientSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const allFields: (keyof FormData)[] = ['identificacion','nombre','correo','password','confirmar','direccion','pais','departamento','ciudad','telefono']
     setTouched(Object.fromEntries(allFields.map((k) => [k, true])))
+
+    const hasErrors = allFields.some(f => validate(f, form[f] as string, form) === 'invalid')
+    const missing = allFields.some(f => !(form[f] as string))
+    if (hasErrors || missing || !form.terminos) return
+
+    setServerError('')
     setLoading(true)
-    setTimeout(() => setLoading(false), 1800)
+    try {
+      const data = await registerClienteApi({
+        identificacion: form.identificacion,
+        nombre: form.nombre,
+        correo: form.correo,
+        password: form.password,
+        direccion: form.direccion,
+      })
+      onClientRegister?.(data.usuario)
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : 'Error al crear la cuenta')
+    } finally {
+      setLoading(false)
+    }
   }
 
   // ── Agent submit ───────────────────────────────────────────────────────────
@@ -588,6 +610,11 @@ export default function RegisterPage({ onBack, onLogin, onAgentRegister }: Regis
           </span>
         }
       />
+            {serverError && (
+        <p className="text-xs text-center" style={{ color: '#ef4444', fontWeight: 500 }}>
+          {serverError}
+        </p>
+      )}
       <button
         type="submit"
         disabled={disabled}
