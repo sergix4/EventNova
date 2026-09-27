@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { loginApi, UsuarioSesion } from '../services/api'
 
 function IconTicket() {
   return (
@@ -58,7 +59,7 @@ function IconArrowLeft() {
 interface LoginPageProps {
   onBack: () => void
   onRegister?: () => void
-  onLogin?: () => void
+  onLogin?: (usuario: UsuarioSesion) => void
 }
 
 export default function LoginPage({ onBack, onRegister, onLogin }: LoginPageProps) {
@@ -70,29 +71,32 @@ export default function LoginPage({ onBack, onRegister, onLogin }: LoginPageProp
   const [passwordFocused, setPasswordFocused] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
+  const [serverError, setServerError] = useState('')
 
- const handleSubmit = (e: React.FormEvent) => {
+ const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault()
-
+  setServerError('')
   const newErrors: { email?: string; password?: string } = {}
-
   if (!email.trim()) {
     newErrors.email = 'El correo electrónico es obligatorio.'
   } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     newErrors.email = 'Ingresa un correo electrónico válido.'
   }
-
   if (!password.trim()) {
     newErrors.password = 'La contraseña es obligatoria.'
   }
-
   setErrors(newErrors)
-
-  // Si hay errores, no continúa (esto es lo que evita el "login falso" con campos vacíos)
   if (Object.keys(newErrors).length > 0) return
 
-  setLoading(true)
-  setTimeout(() => { setLoading(false); onLogin?.() }, 1200)
+   setLoading(true)
+  try {
+    const data = await loginApi(email, password)
+    onLogin?.(data.usuario)
+  } catch (err) {
+    setServerError(err instanceof Error ? err.message : 'Error al iniciar sesión')
+  } finally {
+    setLoading(false)
+  }
 }
 
   return (
@@ -260,6 +264,11 @@ export default function LoginPage({ onBack, onRegister, onLogin }: LoginPageProp
               </label>
 
               {/* Submit */}
+               {serverError && (
+                <p className="text-xs text-center" style={{ color: '#ef4444', fontWeight: 500 }}>
+                  {serverError}
+                </p>
+              )}
               <button
                 type="submit"
                 disabled={loading}
