@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { UsuarioSesion } from '../services/api'
 import { AGENT_CARLOS_EVENTS, SHARED_RATINGS } from '../sharedData'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -159,6 +160,7 @@ interface Props {
   onLogout: () => void
   onNavigate: (key: AgentNavKey) => void
   activeNav: AgentNavKey
+  usuario?: UsuarioSesion | null   // ← NUEVA
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
@@ -375,9 +377,10 @@ interface EditEventViewProps {
   activeNav: AgentNavKey
   onNavigate: (key: AgentNavKey) => void
   onLogout: () => void
+  usuario?: UsuarioSesion | null   // ← NUEVA
 }
 
-function EditEventView({ event, onCancel, onSave, activeNav, onNavigate, onLogout }: EditEventViewProps) {
+function EditEventView({ event, onCancel, onSave, activeNav, onNavigate, onLogout, usuario }: EditEventViewProps) {
   const sharedEv = AGENT_CARLOS_EVENTS.find(e => e.nombre === event.name)
 
   const [form, setForm] = useState<EditFormFields>({
@@ -437,8 +440,7 @@ function EditEventView({ event, onCancel, onSave, activeNav, onNavigate, onLogou
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#f8f9fc' }}>
-      <AgentSidebar activeNav={activeNav} onNavigate={onNavigate} onLogout={onLogout} />
-
+      <AgentSidebar activeNav={activeNav} onNavigate={onNavigate} onLogout={onLogout} usuario={usuario} />
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
         <div className="bg-white border-b border-gray-100 px-8 py-5 sticky top-0 z-20">
@@ -643,7 +645,7 @@ function EditEventView({ event, onCancel, onSave, activeNav, onNavigate, onLogou
   )
 }
 
-function AgentSidebar({ activeNav, onNavigate, onLogout }: Props) {
+function AgentSidebar({ activeNav, onNavigate, onLogout, usuario }: Props) {
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0">
       {/* Logo */}
@@ -686,14 +688,12 @@ function AgentSidebar({ activeNav, onNavigate, onLogout }: Props) {
       {/* Agent profile */}
       <div className="px-4 py-4 border-t border-gray-100">
         <div className="flex items-center gap-3 mb-3">
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm shrink-0"
-            style={{ background: 'linear-gradient(135deg, #4f46e5, #6366f1)', fontWeight: 700 }}
-          >
-            CM
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm shrink-0"
+            style={{ background: 'linear-gradient(135deg, #4f46e5, #6366f1)', fontWeight: 700 }}>
+            {(usuario?.nombre || 'Agente').split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-900 truncate" style={{ fontWeight: 600 }}>Carlos Martínez</p>
+            <p className="text-sm text-gray-900 truncate" style={{ fontWeight: 600 }}>{usuario?.nombre || 'Agente'}</p>
             <p className="text-xs text-gray-400">Agente</p>
           </div>
         </div>
@@ -866,7 +866,7 @@ function EventDetailModal({ event, onClose }: { event: AgentEvent; onClose: () =
 
 // ─── Main Dashboard ────────────────────────────────────────────────────────────
 
-export default function AgentDashboard({ onLogout, onNavigate, activeNav }: Props) {
+export default function AgentDashboard({ onLogout, onNavigate, activeNav, usuario }: Props) {
   const [search, setSearch] = useState('')
   const [cityFilter, setCityFilter] = useState('Todas las ciudades')
   const [statusFilter, setStatusFilter] = useState<'Todos' | EventStatus>('Todos')
@@ -911,13 +911,14 @@ export default function AgentDashboard({ onLogout, onNavigate, activeNav }: Prop
 
   if (editTarget) {
     return (
-      <EditEventView
+        <EditEventView
         event={editTarget}
         onCancel={() => setEditTarget(null)}
         onSave={handleSaveEdit}
         activeNav={activeNav}
         onNavigate={onNavigate}
         onLogout={onLogout}
+        usuario={usuario}
       />
     )
   }
@@ -963,8 +964,7 @@ export default function AgentDashboard({ onLogout, onNavigate, activeNav }: Prop
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#f8f9fc' }}>
-      <AgentSidebar activeNav={activeNav} onNavigate={onNavigate} onLogout={onLogout} />
-
+      <AgentSidebar activeNav={activeNav} onNavigate={onNavigate} onLogout={onLogout} usuario={usuario} />
       {/* ── Edit success toast ── */}
       {editSuccessMsg && (
         <div className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl text-white text-sm"

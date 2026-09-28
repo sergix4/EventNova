@@ -5,6 +5,13 @@
 
 const bcrypt = require('bcryptjs');
 const UsuarioModel = require('../models/usuarioModel');
+const PlanModel = require('../models/planModel'); 
+
+const PLANES = {                                   
+  basico: 'Plan Básico',
+  profesional: 'Plan Profesional',
+  empresa: 'Plan Empresa',
+};
 
 const authController = {
   async login(req, res) {
@@ -34,7 +41,9 @@ const authController = {
         numero_id: usuario.numero_id,
         correo: usuario.correo,
         nombre: usuario.nombre,
+        direccion: usuario.direccion,
         rol: usuario.rol,
+        agente: usuario.agente,  
       };
 
       return res.json({ mensaje: 'Inicio de sesión exitoso', usuario: req.session.usuario });
@@ -73,6 +82,51 @@ const authController = {
       return res.status(201).json({ mensaje: 'Cuenta creada correctamente', usuario });
     } catch (error) {
       console.error('Error en registro:', error);
+      return res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+  },
+
+    async registerAgente(req, res) {
+    const { identificacion, nombre, correo, password, direccion, empresa, descripcionNegocio, plan } = req.body;
+
+    if (!identificacion || !nombre || !correo || !password || !empresa || !plan) {
+      return res.status(400).json({ error: 'Identificación, nombre, correo, contraseña, empresa y plan son obligatorios.' });
+    }
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres.' });
+    }
+    if (!PLANES[plan]) {
+      return res.status(400).json({ error: 'El plan seleccionado no es válido.' });
+    }
+
+    try {
+      const yaExiste = await UsuarioModel.existsByEmailOrId(correo, identificacion);
+      if (yaExiste) {
+        return res.status(409).json({ error: 'Ya existe una cuenta con ese correo o número de identificación.' });
+      }
+
+      const planDb = await PlanModel.findByNombre(PLANES[plan]);
+      if (!planDb) {
+        return res.status(400).json({ error: 'El plan no existe en la base de datos. Ejecuta seed_planes.sql.' });
+      }
+
+      const contraseñaHash = await bcrypt.hash(password, 10);
+      const usuario = await UsuarioModel.createAgente({
+        numero_id: identificacion,
+        correo,
+        nombre,
+        contraseñaHash,
+        direccion,
+        id_plan: planDb.id_plan,
+        nombre_plan: planDb.nombre_plan,
+        nombre_empresa: empresa,
+        descripcion_agente: descripcionNegocio,
+      });
+
+      req.session.usuario = usuario; // registro con auto-login
+      return res.status(201).json({ mensaje: 'Cuenta de agente creada correctamente', usuario });
+    } catch (error) {
+      console.error('Error en registro de agente:', error);
       return res.status(500).json({ error: 'Error interno del servidor.' });
     }
   },

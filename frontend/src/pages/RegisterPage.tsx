@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { registerClienteApi, UsuarioSesion } from '../services/api'
+import { registerClienteApi, registerAgenteApi, UsuarioSesion } from '../services/api'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -409,7 +409,7 @@ const AGENT_PLANS: { key: PlanKey; name: string; price: string; priceNum: string
 interface RegisterPageProps {
   onBack: () => void
   onLogin: () => void
-  onAgentRegister?: () => void
+  onAgentRegister?: (usuario: UsuarioSesion) => void
   onClientRegister?: (usuario: UsuarioSesion) => void
 }
 
@@ -509,7 +509,7 @@ export default function RegisterPage({ onBack, onLogin, onAgentRegister, onClien
   }
 
   // ── Agent submit ───────────────────────────────────────────────────────────
-  const handleAgentSubmit = (e: React.FormEvent) => {
+  const handleAgentSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const allFields: (keyof FormData)[] = ['identificacion','nombre','correo','password','confirmar','direccion','pais','departamento','ciudad','telefono','empresa','descripcionNegocio','ciudadOperacion','tipoEventos']
     setTouched(Object.fromEntries(allFields.map((k) => [k, true])))
@@ -522,12 +522,28 @@ export default function RegisterPage({ onBack, onLogin, onAgentRegister, onClien
     if (hasErrors || missing) return
 
     setPlanError(false)
+    setServerError('')
     setLoading(true)
-    setSuccess(true)
-    setTimeout(() => {
+    try {
+      const data = await registerAgenteApi({
+        identificacion: form.identificacion,
+        nombre: form.nombre,
+        correo: form.correo,
+        password: form.password,
+        direccion: form.direccion,
+        empresa: form.empresa,
+        descripcionNegocio: form.descripcionNegocio,
+        plan: selectedPlan,
+      })
+      setSuccess(true) // muestra el toast verde y luego entra al panel
+      setTimeout(() => {
+        setLoading(false)
+        onAgentRegister?.(data.usuario)
+      }, 1500)
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : 'Error al crear la cuenta de agente')
       setLoading(false)
-      onAgentRegister?.()
-    }, 1800)
+    }
   }
 
   // ── Shared form sections ───────────────────────────────────────────────────
@@ -702,7 +718,7 @@ export default function RegisterPage({ onBack, onLogin, onAgentRegister, onClien
                   <button
                     key={key}
                     type="button"
-                    onClick={() => setRole(key)}
+                    onClick={() => { setRole(key); setServerError('') }}
                     className="flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all text-center"
                     style={{ borderColor: role === key ? '#4f46e5' : '#e5e7eb', background: role === key ? '#eef2ff' : '#fff' }}
                   >
@@ -891,6 +907,12 @@ export default function RegisterPage({ onBack, onLogin, onAgentRegister, onClien
                       </span>
                     }
                   />
+                                    {serverError && (
+                    <p className="text-xs text-center" style={{ color: '#ef4444', fontWeight: 500 }}>
+                      {serverError}
+                    </p>
+                  )}
+                  
                   <button
                     type="submit"
                     disabled={loading || !form.terminos}

@@ -386,6 +386,7 @@ type AgentNavKey = 'mis-eventos' | 'registrar-evento' | 'reservas' | 'perfil'
         activeNav={agentActiveNav(page)}
         onLogout={() => setPage('home')}
         onNavigate={handleAgentNav}
+        usuario={usuarioActual}
       />
     )
   if (page === 'agent-register-event')
@@ -394,6 +395,7 @@ type AgentNavKey = 'mis-eventos' | 'registrar-evento' | 'reservas' | 'perfil'
         activeNav={agentActiveNav(page)}
         onLogout={() => setPage('home')}
         onNavigate={handleAgentNav}
+        usuario={usuarioActual}
       />
     )
   if (page === 'agent-reservations')
@@ -402,6 +404,7 @@ type AgentNavKey = 'mis-eventos' | 'registrar-evento' | 'reservas' | 'perfil'
         activeNav={agentActiveNav(page)}
         onLogout={() => setPage('home')}
         onNavigate={handleAgentNav}
+        usuario={usuarioActual}
       />
     )
   if (page === 'agent-profile')
@@ -410,6 +413,7 @@ type AgentNavKey = 'mis-eventos' | 'registrar-evento' | 'reservas' | 'perfil'
         activeNav={agentActiveNav(page)}
         onLogout={() => setPage('home')}
         onNavigate={handleAgentNav}
+        usuario={usuarioActual}
       />
     )
 
@@ -487,8 +491,7 @@ const adminActiveNav = (p: Page): AdminNavKey => {
   if (page === 'admin-ubicacion')
     return <AdminLocationsPage />
   if (page === 'login') return <LoginPage onBack={() => setPage('home')} onRegister={() => setPage('register')} onLogin={handleAuthSuccess} />
-  if (page === 'register') return <RegisterPage onBack={() => setPage('home')} onLogin={() => setPage('login')} onAgentRegister={() => setPage('agent-dashboard')} onClientRegister={handleAuthSuccess} />
-
+if (page === 'register') return <RegisterPage onBack={() => setPage('home')} onLogin={() => setPage('login')} onAgentRegister={handleAuthSuccess} onClientRegister={handleAuthSuccess} />
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
@@ -529,13 +532,7 @@ const adminActiveNav = (p: Page): AdminNavKey => {
             >
               Panel Admin
             </button>
-            <button
-              onClick={() => setPage('agent-dashboard')}
-              className="text-sm font-500 text-gray-600 px-4 py-2 rounded-xl border border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all"
-              style={{ fontWeight: 500 }}
-            >
-              Panel Agente
-            </button>
+
             <button
               onClick={() => setPage('login')}
               className="text-sm font-500 text-gray-700 px-4 py-2 rounded-xl border border-gray-200 hover:border-indigo-300 hover:text-indigo-600 transition-all"
