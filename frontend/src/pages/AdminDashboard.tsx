@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend,
@@ -7,7 +7,7 @@ import { SHARED_PAYMENTS } from '../sharedData'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'perfil'
+type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'ubicacion' | 'perfil'
 
 interface Props {
   onLogout: () => void
@@ -101,8 +101,7 @@ function IconChevronDown() {
 
 // ─── Nav items ────────────────────────────────────────────────────────────────
 
-const NAV_ITEMS: { key: AdminNavKey; label: string; icon: React.ReactNode }[] = [
-  {
+const NAV_ITEMS: { key: AdminNavKey; label: string; icon: ReactNode }[] = [  {
     key: 'dashboard',
     label: 'Dashboard',
     icon: (
@@ -153,6 +152,11 @@ const NAV_ITEMS: { key: AdminNavKey; label: string; icon: React.ReactNode }[] = 
         <path d="M13 5v2M13 17v2M13 11v2" />
       </svg>
     ),
+  },
+   {
+    key: 'ubicacion',
+    label: 'Ubicación geográfica',
+    icon: <IconMapPin />,
   },
   {
     key: 'perfil',
@@ -513,7 +517,7 @@ export default function AdminDashboard({ onLogout, onNavigate, activeNav }: Prop
                 <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={28} />
                 <Tooltip
                   contentStyle={{ border: '1px solid #f3f4f6', borderRadius: 12, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', fontSize: 13 }}
-                  formatter={(v: number) => [`${v} eventos`, 'Creados']}
+                  formatter={(v: any) => [`${v} eventos`, 'Creados']}
                   labelStyle={{ fontWeight: 600, color: '#374151', marginBottom: 4 }}
                 />
                 <Bar dataKey="eventos" fill="#7c3aed" radius={[4, 4, 0, 0]}
@@ -696,7 +700,7 @@ function AdminPaymentSummary() {
             <XAxis dataKey="mes" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
             <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false}
               tickFormatter={v => v >= 1000000 ? `$${(v/1000000).toFixed(1)}M` : v >= 1000 ? `$${(v/1000).toFixed(0)}k` : `$${v}`} width={56} />
-            <Tooltip formatter={(v: number) => [`$ ${v.toLocaleString('es-CO')}`, 'Ingresos']}
+            <Tooltip formatter={(v: any) => [`$ ${v.toLocaleString('es-CO')}`, 'Ingresos']}
               contentStyle={{ borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 12 }} />
             <Bar dataKey="ingresos" fill="#4f46e5" radius={[6, 6, 0, 0]} />
           </BarChart>

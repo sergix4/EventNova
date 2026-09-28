@@ -7,14 +7,12 @@ const express = require('express');
 const router = express.Router();
 const homeController = require('../controllers/homeController');
 const authRoutes = require('./authRoutes');
+const paisRoutes = require('./paisRoutes');   
 
 router.get('/status', homeController.estado);
 
-router.use('/auth', authRoutes);
 
-// A medida que se agreguen mas modulos (paises, departamentos, ciudades,
-// eventos, reservas) se agregan aqui, por ejemplo:
-// const paisRoutes = require('./paisRoutes');
-// router.use('/paises', paisRoutes);
+router.use('/auth', authRoutes);
+router.use('/paises', paisRoutes);           
 
 module.exports = router;

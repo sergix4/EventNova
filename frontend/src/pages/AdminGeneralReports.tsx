@@ -7,7 +7,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'perfil'
+type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'ubicacion'  | 'perfil'
 
 interface Props {
   onLogout: () => void
@@ -396,7 +396,7 @@ export default function AdminGeneralReports({ onLogout, onNavigate, activeNav }:
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(v: number, name: string) => [`${v.toLocaleString('es-CO')} (${((v / TOTAL_USERS) * 100).toFixed(1)}%)`, name]}
+                      formatter={(v: any, name: any) => [`${v.toLocaleString('es-CO')} (${((v / TOTAL_USERS) * 100).toFixed(1)}%)`, name]}
                       contentStyle={{ border: '1px solid #f3f4f6', borderRadius: 12, boxShadow: '0 4px 24px rgba(0,0,0,0.08)', fontSize: 13 }}
                     />
                     <Legend iconType="circle" iconSize={10} formatter={(v) => <span style={{ color: '#6b7280', fontWeight: 500, fontSize: 12 }}>{v}</span>} />

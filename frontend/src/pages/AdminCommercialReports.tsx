@@ -7,7 +7,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'perfil'
+type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'ubicacion'  | 'perfil'
 
 interface Props {
   onLogout: () => void
@@ -551,7 +551,7 @@ export default function AdminCommercialReports({ onLogout, onNavigate, activeNav
                   <XAxis type="number" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false}
                     tickFormatter={v => `$${(v / 1_000_000).toFixed(1)}M`} />
                   <YAxis type="category" dataKey="name" width={160} tick={{ fontSize: 12, fill: '#374151' }} axisLine={false} tickLine={false} />
-                  <Tooltip formatter={(v: number) => [COP(v), 'Promedio']}
+                  <Tooltip formatter={(v: any) => [COP(v), 'Promedio']}
                     contentStyle={{ border: '1px solid #f3f4f6', borderRadius: 12, fontSize: 13 }} />
                   <Bar dataKey="promedio" fill="#4f46e5" radius={[0, 5, 5, 0]} />
                 </BarChart>
