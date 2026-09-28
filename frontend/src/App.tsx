@@ -18,6 +18,7 @@ import AdminCommercialReports from './pages/AdminCommercialReports'
 import AdminCoverageEvents from './pages/AdminCoverageEvents'
 import AdminOperations from './pages/AdminOperations'
 import AdminProfile from './pages/AdminProfile'
+import AdminLocationsPage from './pages/AdminLocationsPage'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -309,10 +310,10 @@ function EventCard({ event }: { event: typeof events[0] }) {
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
-  type Page = 'home' | 'login' | 'register' | 'dashboard' | 'explore-events' | 'event-detail' | 'my-reservations' | 'profile' | 'agent-dashboard' | 'agent-register-event' | 'agent-reservations' | 'agent-profile' | 'admin-dashboard' | 'admin-general-reports' | 'admin-commercial-reports' | 'admin-coverage' | 'admin-operations' | 'admin-profile'
-  type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'perfil'
-  type NavKey = 'inicio' | 'explorar' | 'reservas' | 'perfil'
-  type AgentNavKey = 'mis-eventos' | 'registrar-evento' | 'reservas' | 'perfil'
+type Page = 'home' | 'login' | 'register' | 'dashboard' | 'explore-events' | 'event-detail' | 'my-reservations' | 'profile' | 'agent-dashboard' | 'agent-register-event' | 'agent-reservations' | 'agent-profile' | 'admin-dashboard' | 'admin-general-reports' | 'admin-commercial-reports' | 'admin-coverage' | 'admin-operations' | 'admin-profile' | 'admin-ubicacion'  
+type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'ubicacion'| 'perfil'
+type NavKey = 'inicio' | 'explorar' | 'reservas' | 'perfil'
+type AgentNavKey = 'mis-eventos' | 'registrar-evento' | 'reservas' | 'perfil'
 
   const [page, setPage] = useState<Page>('home')
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -412,23 +413,25 @@ export default function App() {
       />
     )
 
-  const handleAdminNav = (key: AdminNavKey) => {
+const handleAdminNav = (key: AdminNavKey) => {
     const adminMap: Record<AdminNavKey, Page> = {
       'dashboard':            'admin-dashboard',
       'reportes-generales':   'admin-general-reports',
       'reportes-comerciales': 'admin-commercial-reports',
       'cobertura':            'admin-coverage',
       'reservas-operacion':   'admin-operations',
+      'ubicacion':            'admin-ubicacion',
       'perfil':               'admin-profile',
     }
     setPage(adminMap[key])
   }
 
-  const adminActiveNav = (p: Page): AdminNavKey => {
+const adminActiveNav = (p: Page): AdminNavKey => {
     if (p === 'admin-general-reports')    return 'reportes-generales'
     if (p === 'admin-commercial-reports') return 'reportes-comerciales'
     if (p === 'admin-coverage')           return 'cobertura'
     if (p === 'admin-operations')         return 'reservas-operacion'
+    if (p === 'admin-ubicacion')          return 'ubicacion'
     if (p === 'admin-profile')            return 'perfil'
     return 'dashboard'
   }
@@ -481,6 +484,8 @@ export default function App() {
         onNavigate={handleAdminNav}
       />
     )
+  if (page === 'admin-ubicacion')
+    return <AdminLocationsPage />
   if (page === 'login') return <LoginPage onBack={() => setPage('home')} onRegister={() => setPage('register')} onLogin={handleAuthSuccess} />
   if (page === 'register') return <RegisterPage onBack={() => setPage('home')} onLogin={() => setPage('login')} onAgentRegister={() => setPage('agent-dashboard')} onClientRegister={handleAuthSuccess} />
 

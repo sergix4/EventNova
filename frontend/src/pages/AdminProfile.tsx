@@ -2,7 +2,7 @@ import { useState } from 'react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'perfil'
+type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'ubicacion' |  'perfil'
 interface Props { onLogout: () => void; onNavigate: (key: AdminNavKey) => void; activeNav: AdminNavKey }
 
 // ─── Icons ────────────────────────────────────────────────────────────────────

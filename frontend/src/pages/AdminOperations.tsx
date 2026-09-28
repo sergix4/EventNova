@@ -7,7 +7,7 @@ import {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'perfil'
+type AdminNavKey = 'dashboard' | 'reportes-generales' | 'reportes-comerciales' | 'cobertura' | 'reservas-operacion' | 'ubicacion'  | 'perfil'
 
 interface Props { onLogout: () => void; onNavigate: (key: AdminNavKey) => void; activeNav: AdminNavKey }
 
@@ -730,7 +730,7 @@ export default function AdminOperations({ onLogout, onNavigate, activeNav }: Pro
                   <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={24} />
-                  <Tooltip formatter={(v: number) => [v, 'Eventos']} contentStyle={{ border: '1px solid #f3f4f6', borderRadius: 12, fontSize: 13 }} />
+                  <Tooltip formatter={(v: any) => [v, 'Eventos']} contentStyle={{ border: '1px solid #f3f4f6', borderRadius: 12, fontSize: 13 }} />
                   <Bar dataKey="value" radius={[5, 5, 0, 0]}>
                     {causesEv.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
                   </Bar>
@@ -778,7 +778,7 @@ export default function AdminOperations({ onLogout, onNavigate, activeNav }: Pro
                     <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
                     <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#9ca3af' }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} axisLine={false} tickLine={false} width={24} />
-                    <Tooltip formatter={(v: number, name: string) => [v, name]} contentStyle={{ border: '1px solid #f3f4f6', borderRadius: 12, fontSize: 13 }} />
+                    <Tooltip formatter={(v: any, name: any) => [v, name]} contentStyle={{ border: '1px solid #f3f4f6', borderRadius: 12, fontSize: 13 }} />
                     <Bar dataKey="value" name="Reservas" radius={[5, 5, 0, 0]}>
                       {resumeBarData.map((d, i) => <Cell key={i} fill={d.fill} />)}
                     </Bar>

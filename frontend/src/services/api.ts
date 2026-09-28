@@ -57,3 +57,42 @@ export async function registerClienteApi(datos: {
   }
   return data
 }
+
+// ─── Ubicación geográfica: Países ──────────────────────────────────────────
+
+export interface Pais {
+  id_pais: number
+  nombre_pais: string
+}
+
+async function manejarRespuesta(respuesta: Response) {
+  const data = await respuesta.json()
+  if (!respuesta.ok) {
+    throw new Error(data.error || 'Ocurrió un error inesperado')
+  }
+  return data
+}
+
+export function getPaisesApi(): Promise<Pais[]> {
+  return fetch(`${API_URL}/paises`).then(manejarRespuesta)
+}
+
+export function crearPaisApi(nombre_pais: string): Promise<Pais> {
+  return fetch(`${API_URL}/paises`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre_pais }),
+  }).then(manejarRespuesta)
+}
+
+export function actualizarPaisApi(id: number, nombre_pais: string): Promise<Pais> {
+  return fetch(`${API_URL}/paises/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ nombre_pais }),
+  }).then(manejarRespuesta)
+}
+
+export function eliminarPaisApi(id: number): Promise<{ mensaje: string }> {
+  return fetch(`${API_URL}/paises/${id}`, { method: 'DELETE' }).then(manejarRespuesta)
+}
