@@ -12,6 +12,12 @@ export interface UsuarioSesion {
   nombre: string
   direccion?: string | null
   rol: 'cliente' | 'agente' | 'administrador'
+  // Solo viene lleno cuando el rol es 'agente'
+  agente?: {
+    nombre_empresa: string
+    descripcion_agente: string | null
+    plan: string
+  } | null
 }
 
 export async function getEstadoApi() {
@@ -54,6 +60,30 @@ export async function registerClienteApi(datos: {
   const data = await respuesta.json()
   if (!respuesta.ok) {
     throw new Error(data.error || 'No se pudo crear la cuenta')
+  }
+  return data
+}
+
+export async function registerAgenteApi(datos: {
+  identificacion: string
+  nombre: string
+  correo: string
+  password: string
+  direccion?: string
+  empresa: string
+  descripcionNegocio?: string
+  plan: 'basico' | 'profesional' | 'empresa'
+}): Promise<{ mensaje: string; usuario: UsuarioSesion }> {
+  const respuesta = await fetch(`${API_URL}/auth/register-agente`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(datos),
+  })
+
+  const data = await respuesta.json()
+  if (!respuesta.ok) {
+    throw new Error(data.error || 'No se pudo crear la cuenta de agente')
   }
   return data
 }

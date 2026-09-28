@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { UsuarioSesion } from '../services/api'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -8,8 +9,8 @@ interface Props {
   onLogout: () => void
   onNavigate: (key: AgentNavKey) => void
   activeNav: AgentNavKey
+  usuario?: UsuarioSesion | null   // ← NUEVA
 }
-
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
 function IconTicket() {
@@ -165,7 +166,7 @@ const NAV_ITEMS: { key: AgentNavKey; label: string; icon: React.ReactNode }[] = 
 
 // ─── Sidebar ──────────────────────────────────────────────────────────────────
 
-function AgentSidebar({ activeNav, onNavigate, onLogout }: Props) {
+function AgentSidebar({ activeNav, onNavigate, onLogout, usuario }: Props) {
   return (
     <aside className="w-64 shrink-0 bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0">
       <div className="px-6 py-5 border-b border-gray-100">
@@ -203,10 +204,10 @@ function AgentSidebar({ activeNav, onNavigate, onLogout }: Props) {
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm shrink-0"
             style={{ background: 'linear-gradient(135deg, #4f46e5, #6366f1)', fontWeight: 700 }}>
-            CM
+            {(usuario?.nombre || 'Agente').split(' ').slice(0, 2).map(p => p[0]).join('').toUpperCase()}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm text-gray-900 truncate" style={{ fontWeight: 600 }}>Carlos Martínez</p>
+            <p className="text-sm text-gray-900 truncate" style={{ fontWeight: 600 }}>{usuario?.nombre || 'Agente'}</p>
             <p className="text-xs text-gray-400">Agente</p>
           </div>
         </div>
@@ -241,7 +242,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-1 py-3 border-b border-gray-50 last:border-0">
       <span className="text-xs text-gray-400 sm:w-44 shrink-0" style={{ fontWeight: 500 }}>{label}</span>
-      <span className="text-sm text-gray-800" style={{ fontWeight: 500 }}>{value}</span>
+      <span className="text-sm text-gray-800" style={{ fontWeight: 500 }}>{value || 'No registrado'}</span>
     </div>
   )
 }
@@ -550,25 +551,27 @@ function ChangePasswordModal({ onClose }: { onClose: () => void }) {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function AgentProfilePage({ onLogout, onNavigate, activeNav }: Props) {
+export default function AgentProfilePage({ onLogout, onNavigate, activeNav, usuario }: Props) {
   // Personal info state
   const [personal, setPersonal] = useState<PersonalInfo>({
-    name: 'Carlos Martínez',
-    email: 'carlos.martinez@eventnova.co',
-    idNumber: 'CC 1.023.456.789',
-    phone: '+57 310 456 7890',
-    address: 'Cra 15 # 93-47, Apto 302',
-    country: 'Colombia',
-    department: 'Bogotá D.C.',
-    city: 'Bogotá',
+    name: usuario?.nombre || '',
+    email: usuario?.correo || '',
+    idNumber: usuario?.numero_id || '',
+    phone: '',        // pendiente: tabla TELEFONOS (CRUD de personas)
+    address: usuario?.direccion || '',
+    country: '',      // pendiente: se obtendrá con id_ciudad
+    department: '',
+    city: '',
   })
   const [agentInfo, setAgentInfo] = useState<AgentInfo>({
-    agentName: 'Carlos Martínez',
-    businessName: 'CM Eventos & Producción',
-    businessDesc: 'Empresa de producción y organización de eventos culturales, musicales y gastronómicos en Colombia.',
-    mainCity: 'Bogotá',
+    agentName: usuario?.nombre || '',
+    businessName: usuario?.agente?.nombre_empresa || '',
+    businessDesc: usuario?.agente?.descripcion_agente || '',
+    mainCity: '',     // pendiente: el esquema aún no tiene esta columna
   })
-  const [currentPlan, setCurrentPlan] = useState<PlanKey>('profesional')
+    const [currentPlan, setCurrentPlan] = useState<PlanKey>(
+    PLANS.find(p => p.name === usuario?.agente?.plan)?.key ?? 'basico'
+  )
 
   // Modal states
   const [editPersonal, setEditPersonal] = useState(false)
@@ -604,8 +607,7 @@ export default function AgentProfilePage({ onLogout, onNavigate, activeNav }: Pr
 
   return (
     <div className="flex h-screen overflow-hidden" style={{ fontFamily: "'Inter', system-ui, sans-serif", background: '#f8f9fc' }}>
-      <AgentSidebar activeNav={activeNav} onNavigate={onNavigate} onLogout={onLogout} />
-
+      <AgentSidebar activeNav={activeNav} onNavigate={onNavigate} onLogout={onLogout} usuario={usuario} />
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
         <div className="bg-white border-b border-gray-100 px-8 py-5 sticky top-0 z-20">
