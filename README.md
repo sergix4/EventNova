@@ -14,10 +14,9 @@ EventNova permite a **clientes** explorar y reservar eventos, a **agentes** publ
 4. [Base de datos](#base-de-datos)
 5. [Instalación y ejecución](#instalación-y-ejecución)
 6. [API REST (endpoints)](#api-rest-endpoints)
-7. [Estado del proyecto](#estado-del-proyecto)
-8. [Flujo de trabajo con Git](#flujo-de-trabajo-con-git)
-9. [Convención de nombres](#convención-de-nombres)
-10. [Equipo](#equipo)
+7. [Flujo de trabajo con Git](#flujo-de-trabajo-con-git)
+8. [Convención de nombres](#convención-de-nombres)
+9. [Equipo](#equipo)
 
 ---
 
