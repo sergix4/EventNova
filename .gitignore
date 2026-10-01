@@ -1,20 +1,17 @@
 # Dependencias
 node_modules/
 backend/node_modules/
-frontend/node_modules/
 
-# Variables de entorno reales
+# Variables de entorno reales (nunca se suben)
 .env
 backend/.env
-frontend/.env
-
-# Builds
-frontend/dist/
 
 # Logs
 *.log
+npm-debug.log*
 
 # Sistema operativo / editores
 .DS_Store
+Thumbs.db
 .vscode/
 .idea/

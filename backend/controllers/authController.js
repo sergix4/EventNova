@@ -131,6 +131,13 @@ const authController = {
     }
   },
 
+  // Devuelve el usuario que tiene la sesion abierta (o null si no hay sesion).
+  // Las paginas HTML lo usan para mostrar el nombre del usuario y para
+  // proteger los paneles de cliente y agente.
+  sesion(req, res) {
+    return res.json({ usuario: req.session.usuario || null });
+  },
+
   logout(req, res) {
     req.session.destroy(() => res.json({ mensaje: 'Sesión cerrada' }));
   },

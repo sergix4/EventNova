@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservas y operación · EventNova</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/panel.css">
+  <link rel="stylesheet" href="/css/admin.css">
+  <script src="/vendor/chart.js/chart.umd.js"></script>
+</head>
+<body class="panel panel--gestion">
+  <div class="panel__velo"></div>
+
+  <!-- Barra lateral: la dibuja js/views/componentes/panel.js -->
+  <aside class="barra-lateral barra-lateral--gestion" id="barra-lateral"></aside>
+
+  <main class="panel__principal" id="principal">
+    <header class="cabecera-gestion">
+      <div class="cabecera-gestion__izq">
+        <button type="button" class="boton-menu" data-accion="abrir-menu" aria-label="Abrir menú"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg></button>
+        <div>
+          <h1 class="cabecera-gestion__titulo">Reservas y operación</h1>
+          <p class="cabecera-gestion__subtitulo">Consulta el historial de reservas y los eventos y reservas cancelados.</p>
+        </div>
+      </div>
+      <div class="cabecera-gestion__acciones">
+        <div class="envoltura-select envoltura-select--negrita">
+          <select class="selector" id="periodo" aria-label="Período"><option value="2026" selected>2026</option><option value="Todo el período">Todo el período</option></select>
+        </div>
+        <button type="button" class="boton boton--secundario" id="boton-actualizar"><span class="icono-girar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></span>Actualizar</button>
+      </div>
+    </header>
+    <!-- Filtros de reservas: las opciones las dibuja la vista -->
+    <form class="barra-filtros barra-filtros--abajo" id="barra-filtros"></form>
+    <div class="panel__contenido" id="contenido">
+      <!-- El contenido lo dibuja la vista (js/views/admin/...) con los datos del modelo -->
+    </div>
+  </main>
+
+  <script type="module" src="/js/controllers/admin/operacionController.js"></script>
+</body>
+</html>

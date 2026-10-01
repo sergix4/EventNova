@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi perfil · EventNova</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/panel.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="panel panel--gestion">
+  <div class="panel__velo"></div>
+
+  <!-- Barra lateral: la dibuja js/views/componentes/panel.js -->
+  <aside class="barra-lateral barra-lateral--gestion" id="barra-lateral"></aside>
+
+  <main class="panel__principal" id="principal">
+    <header class="cabecera-gestion">
+      <div class="cabecera-gestion__izq">
+        <button type="button" class="boton-menu" data-accion="abrir-menu" aria-label="Abrir menú"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg></button>
+        <div>
+          <h1 class="cabecera-gestion__titulo">Mi perfil</h1>
+          <p class="cabecera-gestion__subtitulo">Administra tu información personal y la configuración de tu cuenta.</p>
+        </div>
+      </div>
+
+    </header>
+
+    <div class="panel__contenido" id="contenido">
+      <!-- El contenido lo dibuja la vista (js/views/admin/...) con los datos del modelo -->
+    </div>
+  </main>
+
+  <script type="module" src="/js/controllers/admin/perfilController.js"></script>
+</body>
+</html>

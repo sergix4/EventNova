@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inicio · EventNova</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/panel.css">
+  <link rel="stylesheet" href="/css/cliente.css">
+</head>
+<body class="panel">
+  <div class="panel__velo"></div>
+
+  <!-- Barra lateral: la dibuja js/views/componentes/panel.js -->
+  <aside class="barra-lateral barra-lateral--cliente" id="barra-lateral"></aside>
+
+  <div class="panel__principal">
+    <header class="cabecera-cliente">
+      <div class="cabecera-cliente__izq">
+        <button type="button" class="boton-menu" data-accion="abrir-menu" aria-label="Abrir menú"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg></button>
+        <div>
+          <h1 class="cabecera-cliente__titulo" id="saludo">Hola, Cliente 👋</h1>
+          <p class="cabecera-cliente__subtitulo">Encuentra tu próximo evento.</p>
+        </div>
+      </div>
+      <div class="cabecera-cliente__der">
+        <div class="notificaciones">
+          <button type="button" class="boton-icono" data-accion="notificaciones" aria-label="Notificaciones"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="notificaciones__punto"></span></button>
+        <div class="notificaciones__panel" hidden></div>
+        </div>
+        <div class="avatar-cabecera" id="avatar-cabecera" aria-hidden="true"></div>
+      </div>
+    </header>
+
+    <main class="panel__contenido">
+      <!-- Tarjetas de resumen (las llena la Vista) -->
+      <section class="grid-kpi grid-kpi--3" id="estadisticas" aria-label="Resumen de tus reservas"></section>
+
+      <!-- Búsqueda y filtros -->
+      <section class="panel-filtros" aria-label="Buscar eventos">
+        <div class="barra-busqueda">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="search" id="buscar" placeholder="Buscar eventos por nombre, ciudad o categoría…" aria-label="Buscar eventos">
+          <button type="button" class="barra-busqueda__limpiar" id="limpiar-busqueda" aria-label="Borrar búsqueda" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+        <div class="fila-filtros">
+          <div class="filtro">
+            <select id="filtro-pais" aria-label="País"><option value="">País</option><option value="Colombia">Colombia</option><option value="México">México</option><option value="Argentina">Argentina</option></select>
+            <span class="filtro__flecha"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+          </div>
+          <div class="filtro">
+            <select id="filtro-departamento" aria-label="Departamento"><option value="">Departamento</option><option value="Antioquia">Antioquia</option><option value="Bogotá D.C.">Bogotá D.C.</option><option value="Valle del Cauca">Valle del Cauca</option></select>
+            <span class="filtro__flecha"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+          </div>
+          <div class="filtro">
+            <select id="filtro-ciudad" aria-label="Ciudad"><option value="">Ciudad</option><option value="Bogotá">Bogotá</option><option value="Medellín">Medellín</option><option value="Cali">Cali</option><option value="Barranquilla">Barranquilla</option></select>
+            <span class="filtro__flecha"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+          </div>
+          <div class="filtro">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+            <input type="date" id="filtro-fecha" aria-label="Fecha">
+          </div>
+          <div class="filtro">
+            <select id="filtro-estado" aria-label="Estado"><option value="">Estado</option><option value="Programado">Programado</option><option value="En Boletería">En Boletería</option><option value="En Vivo">En Vivo</option></select>
+            <span class="filtro__flecha"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+          </div>
+          <button type="button" class="boton-filtrar" id="boton-filtros"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg><span>Filtrar</span></button>
+        </div>
+      </section>
+
+      <!-- Resultados -->
+      <section class="bloque-resultados">
+        <div class="resultados-cabecera">
+          <div>
+            <h2>Eventos disponibles</h2>
+            <p id="conteo"></p>
+          </div>
+          <span class="etiqueta-filtros-activos" id="filtros-activos" hidden>Filtros activos</span>
+        </div>
+        <div id="resultados"></div>
+      </section>
+      <div class="panel__espaciador"></div>
+    </main>
+  </div>
+
+  <script type="module" src="/js/controllers/cliente/inicioController.js"></script>
+</body>
+</html>

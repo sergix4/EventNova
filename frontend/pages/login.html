@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar sesión · EventNova</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body class="auth">
+
+  <header class="auth__barra">
+    <a href="/" class="logo">
+      <span class="logo__icono"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg></span>
+      <span class="logo__texto">Event<span>Nova</span></span>
+    </a>
+    <a href="/" class="auth__volver">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+      Volver al inicio
+    </a>
+  </header>
+
+  <main class="auth__principal">
+    <div class="auth__columna">
+      <p class="auth__pildora"><span class="punto-pulso"></span>Acceso seguro a tu cuenta</p>
+
+      <section class="tarjeta auth__tarjeta" aria-labelledby="titulo-login">
+        <header class="auth__encabezado">
+          <h1 class="auth__titulo" id="titulo-login">Bienvenido de nuevo</h1>
+          <p class="auth__subtitulo">Ingresa a tu cuenta para continuar.</p>
+        </header>
+
+        <form class="formulario" id="form-login" novalidate>
+          <div class="campo" id="campo-correo">
+            <label class="campo__etiqueta" for="correo">Correo electrónico</label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
+              <input type="email" id="correo" name="correo" placeholder="ejemplo@correo.com" autocomplete="email">
+            </div>
+            <span class="campo__error" id="error-correo" role="alert"></span>
+          </div>
+
+          <div class="campo" id="campo-clave">
+            <div class="auth__fila-etiqueta">
+              <label class="campo__etiqueta" for="clave">Contraseña</label>
+              <a href="#" class="auth__enlace-chico">¿Olvidaste tu contraseña?</a>
+            </div>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+              <input type="password" id="clave" name="clave" placeholder="••••••••" autocomplete="current-password">
+              <button type="button" class="campo-icono__extra" data-mostrar="clave" tabindex="-1" aria-label="Mostrar contraseña"></button>
+            </div>
+            <span class="campo__error" id="error-clave" role="alert"></span>
+          </div>
+
+          <label class="casilla">
+            <input type="checkbox" name="recordarme">
+            <span class="casilla__caja"><svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden="true"><polyline points="2 6 5 9 10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span>Recordarme</span>
+          </label>
+
+          <p class="auth__error-servidor" id="error-servidor" role="alert" hidden></p>
+          <button type="submit" class="boton boton--coral boton--bloque boton--grande" id="boton-login">Iniciar sesión</button>
+        </form>
+
+        <p class="separador">o</p>
+
+        <p class="auth__pregunta">¿No tienes una cuenta? <a href="/pages/registro.html">Crear cuenta</a></p>
+      </section>
+
+      <p class="auth__seguridad">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Conexión segura — tus datos están protegidos
+      </p>
+    </div>
+  </main>
+
+  <footer class="auth__pie">
+    <div class="auth__pie-fila">
+      <p>© 2025 EventNova. Todos los derechos reservados.</p>
+      <nav aria-label="Enlaces legales"><a href="#">Términos</a><a href="#">Privacidad</a><a href="#">Ayuda</a></nav>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/controllers/loginController.js"></script>
+</body>
+</html>

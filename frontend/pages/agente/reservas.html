@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reservas · EventNova</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/panel.css">
+  <link rel="stylesheet" href="/css/agente.css">
+</head>
+<body class="panel panel--gestion">
+  <div class="panel__velo"></div>
+
+  <!-- Barra lateral: la dibuja js/views/componentes/panel.js -->
+  <aside class="barra-lateral barra-lateral--gestion" id="barra-lateral"></aside>
+
+  <main class="panel__principal" id="principal">
+    <header class="cabecera-gestion">
+      <div class="cabecera-gestion__izq">
+        <button type="button" class="boton-menu" data-accion="abrir-menu" aria-label="Abrir menú"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg></button>
+        <div>
+          <h1 class="cabecera-gestion__titulo">Reservas</h1>
+          <p class="cabecera-gestion__subtitulo">Administra las reservas solicitadas para tus eventos.</p>
+        </div>
+      </div>
+
+    </header>
+
+    <div class="panel__contenido" id="contenido">
+      <section class="grid-kpi grid-kpi--4" id="estadisticas" aria-label="Resumen de reservas"></section>
+
+      <section class="tarjeta tarjeta--recortada" aria-labelledby="titulo-reservas">
+        <div class="tarjeta__cabecera">
+          <div>
+            <h2 class="tarjeta__titulo" id="titulo-reservas">Listado de reservas</h2>
+            <p class="tarjeta__subtitulo" id="conteo"></p>
+          </div>
+        </div>
+        <div class="filtros-tabla">
+          <label class="buscador buscador--ancho">
+            <span class="buscador__icono"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+            <input type="search" class="entrada" id="buscar" placeholder="Buscar por cliente o evento…" aria-label="Buscar por cliente o evento">
+          </label>
+          <div class="envoltura-select envoltura-select--gris"><select class="selector" id="filtro-evento" aria-label="Evento"></select></div>
+            <div class="envoltura-select envoltura-select--gris">
+              <select class="selector" id="filtro-estado" aria-label="Estado"><option value="Todos">Todos los estados</option><option value="Pendiente">Pendiente</option><option value="Confirmada">Confirmada</option><option value="Cancelada">Cancelada</option></select>
+            </div>
+          <input type="text" class="entrada entrada--fecha" id="filtro-fecha" placeholder="Filtrar por fecha…" aria-label="Filtrar por fecha">
+        </div>
+        <div class="tabla-contenedor">
+          <table class="tabla tabla-agente">
+            <thead><tr><th>Cliente</th><th>Evento</th><th>Fecha del evento</th><th>Entradas</th><th>Valor total</th><th>Fecha de reserva</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="tabla-reservas"></tbody>
+          </table>
+        </div>
+        <div id="paginacion-reservas"></div>
+      </section>
+
+      <!-- Pagos recibidos -->
+      <section class="seccion" aria-labelledby="titulo-pagos">
+        <div>
+          <h2 class="seccion-titulo" id="titulo-pagos">Pagos recibidos</h2>
+          <p class="seccion-subtitulo">Historial de pagos de los clientes por reservas en tus eventos.</p>
+        </div>
+        <div class="grid-kpi grid-kpi--4" id="estadisticas-pagos"></div>
+        <div class="tarjeta tarjeta--recortada">
+          <div class="filtros-tabla filtros-tabla--centro">
+            <label class="buscador buscador--estrecho">
+              <span class="buscador__icono"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+              <input type="search" class="entrada" id="buscar-pagos" placeholder="Buscar cliente, evento o TXN…" aria-label="Buscar pagos">
+            </label>
+            <div class="envoltura-select envoltura-select--gris">
+              <select class="selector" id="filtro-pagos" aria-label="Estado del pago"><option value="Todos">Todos</option><option value="Pagado">Pagado</option><option value="Pendiente">Pendiente</option><option value="Cancelado">Cancelado</option><option value="Reembolsado">Reembolsado</option></select>
+            </div>
+          </div>
+          <div class="tabla-contenedor">
+            <table class="tabla tabla-agente">
+              <thead><tr><th>Cliente</th><th>Evento</th><th>Fecha pago</th><th>Entradas</th><th>Método</th><th>Valor</th><th>Estado</th><th>Código TXN</th><th><span class="solo-lector">Acciones</span></th></tr></thead>
+              <tbody id="tabla-pagos"></tbody>
+            </table>
+          </div>
+          <div id="paginacion-pagos"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="/js/controllers/agente/reservasController.js"></script>
+</body>
+</html>

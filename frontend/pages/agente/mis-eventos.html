@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis eventos · EventNova</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/panel.css">
+  <link rel="stylesheet" href="/css/agente.css">
+</head>
+<body class="panel panel--gestion">
+  <div class="panel__velo"></div>
+
+  <!-- Barra lateral: la dibuja js/views/componentes/panel.js -->
+  <aside class="barra-lateral barra-lateral--gestion" id="barra-lateral"></aside>
+
+  <main class="panel__principal" id="principal">
+    <header class="cabecera-gestion">
+      <div class="cabecera-gestion__izq">
+        <button type="button" class="boton-menu" data-accion="abrir-menu" aria-label="Abrir menú"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg></button>
+        <div>
+          <h1 class="cabecera-gestion__titulo" id="titulo-pagina">Panel del agente</h1>
+          <p class="cabecera-gestion__subtitulo" id="subtitulo-pagina">Administra tus eventos y reservas.</p>
+        </div>
+      </div>
+      <a href="/pages/agente/registrar-evento.html" class="boton boton--coral boton--seminegrita" id="boton-crear"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>Crear evento</a>
+    </header>
+
+    <div class="panel__contenido" id="contenido">
+      <!-- Vista de lista -->
+      <section class="grid-kpi grid-kpi--4" id="estadisticas" aria-label="Resumen de eventos"></section>
+
+      <section class="tarjeta tarjeta--recortada" aria-labelledby="titulo-tabla">
+        <div class="tarjeta__cabecera">
+          <div>
+            <h2 class="tarjeta__titulo" id="titulo-tabla">Mis eventos</h2>
+            <p class="tarjeta__subtitulo" id="conteo"></p>
+          </div>
+        </div>
+        <div class="filtros-tabla">
+          <label class="buscador">
+            <span class="buscador__icono"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+            <input type="search" class="entrada" id="buscar" placeholder="Buscar evento o ciudad…" aria-label="Buscar evento o ciudad">
+          </label>
+            <div class="envoltura-select envoltura-select--gris">
+              <select class="selector" id="filtro-estado" aria-label="Estado"><option value="Todos">Todos los estados</option><option value="Programado">Programado</option><option value="En boletería">En boletería</option><option value="En vivo">En vivo</option><option value="Finalizado">Finalizado</option><option value="Cancelado">Cancelado</option></select>
+            </div>
+            <div class="envoltura-select envoltura-select--gris">
+              <select class="selector" id="filtro-ciudad" aria-label="Ciudad"><option value="Todas las ciudades">Todas las ciudades</option><option value="Bogotá">Bogotá</option><option value="Medellín">Medellín</option><option value="Cali">Cali</option><option value="Barranquilla">Barranquilla</option><option value="Manizales">Manizales</option></select>
+            </div>
+          <input type="text" class="entrada entrada--fecha" id="filtro-fecha" placeholder="Filtrar por fecha…" aria-label="Filtrar por fecha">
+        </div>
+        <div class="tabla-contenedor">
+          <table class="tabla tabla-agente">
+            <thead><tr><th>Evento</th><th>Ciudad</th><th>Fecha</th><th>Capacidad</th><th>Precio</th><th>Reservas</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="tabla-eventos"></tbody>
+          </table>
+        </div>
+        <div id="paginacion"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="/js/controllers/agente/misEventosController.js"></script>
+</body>
+</html>

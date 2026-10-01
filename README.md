@@ -1,274 +1,126 @@
 # EventNova
 
-Sistema web de gestión y reserva de eventos y espectáculos — **Proyecto Integrador 2026-2** (Bases de Datos y Programación en Ambiente Web I).
+Sistema web de gestión y reserva de eventos y espectáculos — Proyecto Integrador.
 
-EventNova permite a **clientes** explorar y reservar eventos, a **agentes** publicar y administrar sus eventos y reservas, y a **administradores** consultar reportes del sistema. La información se guarda en una base de datos relacional **PostgreSQL**.
+**Tecnologías:** HTML5 · CSS3 · JavaScript (sin frameworks) · Node.js + Express · PostgreSQL · patrón MVC · Git/GitHub.
 
----
-
-## Tabla de contenido
-
-1. [Tecnologías](#tecnologías)
-2. [Arquitectura y patrón MVC](#arquitectura-y-patrón-mvc)
-3. [Estructura del proyecto](#estructura-del-proyecto)
-4. [Base de datos](#base-de-datos)
-5. [Instalación y ejecución](#instalación-y-ejecución)
-6. [API REST (endpoints)](#api-rest-endpoints)
-7. [Flujo de trabajo con Git](#flujo-de-trabajo-con-git)
-8. [Convención de nombres](#convención-de-nombres)
-9. [Equipo](#equipo)
-
----
-
-## Tecnologías
-
-| Capa | Tecnologías |
-| --- | --- |
-| Backend | Node.js, Express, `pg` (PostgreSQL), `bcryptjs`, `express-session`, `cors`, `dotenv`, `nodemon` |
-| Frontend | React 19, Vite, TypeScript, Tailwind CSS, Recharts |
-| Base de datos | PostgreSQL 18 (administrada con pgAdmin 4) |
-| Gestión del proyecto | Jira (Scrum, 3 sprints) |
-| Diseño | Figma (Figma Make) |
-| Control de versiones | Git + GitHub |
-
----
-
-## Arquitectura y patrón MVC
-
-El proyecto se divide en dos aplicaciones que se ejecutan por separado: una **API REST** (backend) y una **interfaz React** (frontend). Así se conserva el patrón **Modelo–Vista–Controlador** exigido por el curso:
-
-| Capa MVC | Dónde vive | Responsabilidad |
-| --- | --- | --- |
-| **Modelo** | `backend/models` | Consultas SQL a PostgreSQL. No sabe nada de HTTP ni de sesiones. |
-| **Controlador** | `backend/controllers` | Recibe la petición, valida datos, llama al Modelo y responde con JSON. |
-| **Rutas** | `backend/routes` | Conectan una URL + verbo HTTP con un método del Controlador. |
-| **Vista** | `frontend/src/pages` | Componentes React (`.tsx`) que dibujan cada pantalla con los datos recibidos. |
-
-Flujo de una petición:
-
-```
-Vista (React) → services/api.ts → Ruta → Controlador → Modelo → PostgreSQL
-                                                                    │
-Vista (React) ← JSON ←──────────── Controlador ←────────────────────┘
-```
-
-> La versión original del proyecto (Express + EJS) quedó archivada en la rama `archive/estructura-mvc`.
-
----
+> El frontend se construyó inicialmente en React a partir del prototipo de Figma.
+> Por requisito del curso se tradujo a **HTML5 + CSS + JavaScript puro**,
+> conservando el mismo diseño, la conexión a PostgreSQL y el patrón MVC.
 
 ## Estructura del proyecto
 
 ```
 EventNova/
-├── backend/
-│   ├── app.js                  # Punto de entrada: middlewares, sesión, CORS y rutas /api
-│   ├── conectarsql.js          # Script auxiliar: ejecuta database/develop.sql para crear las tablas
-│   ├── config/
-│   │   └── db.js               # Pool de conexión a PostgreSQL (reutilizable)
-│   ├── controllers/
-│   │   ├── authController.js   # login, register, registerAgente, logout
-│   │   ├── homeController.js   # estado de la API
-│   │   └── paisController.js   # CRUD de países
-│   ├── models/
-│   │   ├── usuarioModel.js     # Acceso a datos de usuarios (login y registro)
-│   │   ├── planModel.js        # Consulta de planes de agente
-│   │   └── paisModel.js        # Consultas SQL de países
-│   ├── routes/
-│   │   ├── index.js            # Agrupa todas las rutas bajo /api
-│   │   ├── authRoutes.js       # /api/auth/*
-│   │   └── paisRoutes.js       # /api/paises/*
-│   ├── database/
-│   │   ├── develop.sql         # DDL: creación de las tablas
-│   │   └── seed_planes.sql     # Datos iniciales: planes de agente
-│   ├── .env.example            # Plantilla de variables de entorno
-│   └── package.json
-├── frontend/
-│   ├── src/
-│   │   ├── App.tsx             # Página de inicio + navegación entre pantallas según el rol
-│   │   ├── main.tsx            # Punto de entrada de React
-│   │   ├── pages/              # Una pantalla por archivo (login, registro, paneles, reportes...)
-│   │   ├── services/api.ts     # Punto único de comunicación con el backend
-│   │   └── sharedData.ts       # Datos de ejemplo temporales (se reemplazan por datos reales)
-│   ├── .env.example
-│   └── package.json
-├── docs/                       # Diagramas UML, ER y documentación
-└── README.md
+├── backend/                  # Servidor Express (API REST + archivos estáticos)
+│   ├── app.js                # Punto de entrada: /api + sirve la carpeta frontend/
+│   ├── config/db.js          # Conexión a PostgreSQL (pg)
+│   ├── models/               # MODELO: consultas SQL (usuario, plan, país)
+│   ├── controllers/          # CONTROLADOR: reciben la petición y responden JSON
+│   ├── routes/               # Rutas /api/auth, /api/paises, /api/status
+│   ├── database/             # Scripts SQL (develop.sql, seed_planes.sql)
+│   └── .env.example          # Plantilla de variables de entorno
+│
+└── frontend/                 # Interfaz HTML5 + CSS + JavaScript
+    ├── index.html            # Página de inicio pública
+    ├── 404.html
+    ├── pages/                # Una página .html por pantalla
+    │   ├── login.html, registro.html
+    │   ├── cliente/          # inicio, explorar, detalle-evento, mis-reservas, perfil
+    │   ├── agente/           # mis-eventos, registrar-evento, reservas, perfil
+    │   └── admin/            # dashboard, reportes, cobertura, operación, ubicación, perfil
+    ├── css/                  # base.css (diseño común) + una hoja por sección
+    └── js/                   # MVC del lado del cliente
+        ├── models/           # MODELO: fetch a la API y datos de ejemplo
+        ├── views/            # VISTA: generan el HTML de cada pantalla
+        ├── controllers/      # CONTROLADOR: eventos del usuario y lógica de pantalla
+        └── utils/            # Formato de pesos, fechas, etc.
 ```
 
----
+## ¿Cómo se aplica el patrón MVC?
 
-## Base de datos
+El patrón se aplica en las dos partes del sistema:
 
-Motor: **PostgreSQL**. El script `backend/database/develop.sql` crea las siguientes tablas:
+| Capa | Backend (servidor) | Frontend (navegador) |
+| --- | --- | --- |
+| **Modelo** | `backend/models/*.js` — consultas SQL a PostgreSQL | `frontend/js/models/*.js` — piden los datos a la API con `fetch` |
+| **Vista** | Respuestas JSON de la API | `frontend/pages/*.html` + `frontend/js/views/*.js` + `frontend/css/` |
+| **Controlador** | `backend/controllers/*.js` — validan y deciden la respuesta | `frontend/js/controllers/*.js` — escuchan clics/formularios y coordinan modelo y vista |
 
-| Grupo | Tablas |
-| --- | --- |
-| Catálogos | `PAIS`, `TIPO_PLAN`, `CATEGORIA`, `ESTADO`, `TIPO`, `METODO_PAGO` |
-| Ubicación | `DEPARTAMENTO` (→ `PAIS`), `CIUDAD` (→ `DEPARTAMENTO`) |
-| Personas | `USUARIO` (→ `CIUDAD`), `TELEFONOS` (→ `USUARIO`), `CLIENTE`, `AGENTE` (→ `TIPO_PLAN`), `ADMINISTRADOR` |
-| Eventos y reservas | `EVENTO`, `AGRUPA` (evento–categoría), `RESERVA`, `RESEÑA` |
+Ejemplo — CRUD de países (`Panel administrador → Ubicación geográfica`):
 
-Notas de diseño:
-
-- `USUARIO` guarda los datos comunes; `CLIENTE`, `AGENTE` y `ADMINISTRADOR` comparten su llave primaria (`numero_id`) con `USUARIO`. **El rol de una persona se determina por la tabla en la que aparece.**
-- Las contraseñas se almacenan **con hash** (`bcryptjs`), nunca en texto plano.
-- Un usuario puede tener varios teléfonos (relación 1 a muchos en `TELEFONOS`).
-
-> ⚠️ `develop.sql` ejecuta `DROP TABLE ... CASCADE` antes de cada `CREATE TABLE`: **borra todos los datos** cada vez que se ejecuta.
-
----
+```
+ubicacion.html ──► ubicacionController.js ──► PaisModel (js/models/paisModel.js)
+                         │                          │  fetch('/api/paises')
+                         ▼                          ▼
+                  ubicacionView.js          backend/routes/paisRoutes.js
+               (dibuja tabla/errores)               │
+                                            backend/controllers/paisController.js
+                                                    │
+                                            backend/models/paisModel.js ──► PostgreSQL (tabla pais)
+```
 
 ## Instalación y ejecución
 
-### Requisitos
+### 1. Base de datos (PostgreSQL)
 
-- [Node.js](https://nodejs.org/) (el equipo usa v24.2.0)
-- PostgreSQL 18 y pgAdmin 4
-- Git
+1. Crear la base de datos `eventnova_db` y el usuario `eventnova_user` con permisos sobre ella.
+2. Ejecutar en pgAdmin (Query Tool) los scripts de `backend/database/`:
+   `develop.sql` y luego `seed_planes.sql`.
 
-### 1. Clonar el repositorio
-
-```bash
-git clone https://github.com/sergix4/EventNova.git
-cd EventNova
-git checkout develop
-```
-
-### 2. Configurar la base de datos
-
-1. En pgAdmin, crear una base de datos llamada `eventnova_db`.
-2. Crear un usuario `eventnova_user` con todos los permisos sobre esa base.
-3. Crear las tablas (desde la carpeta `backend/`, después de configurar el `.env` del paso 3):
-
-   ```bash
-   node conectarsql.js
-   ```
-
-   Debe aparecer: `¡Las tablas se crearon correctamente!`
-4. Cargar los planes de agente: abrir `backend/database/seed_planes.sql` en pgAdmin (Query Tool) y ejecutarlo. **Es obligatorio** para poder registrar agentes.
-
-### 3. Configurar y levantar el backend
+### 2. Servidor
 
 ```bash
 cd backend
 npm install
-cp .env.example .env      # en Windows PowerShell: copy .env.example .env
-```
-
-Completar el archivo `.env` con tus datos:
-
-| Variable | Descripción | Ejemplo |
-| --- | --- | --- |
-| `PORT` | Puerto de la API | `3000` |
-| `NODE_ENV` | Entorno | `development` |
-| `DB_HOST` | Servidor de PostgreSQL | `localhost` |
-| `DB_PORT` | Puerto de PostgreSQL | `5432` |
-| `DB_NAME` | Nombre de la base | `eventnova_db` |
-| `DB_USER` | Usuario de la base | `eventnova_user` |
-| `DB_PASSWORD` | Contraseña del usuario | *(la tuya)* |
-| `SESSION_SECRET` | Secreto para firmar la sesión (largo y aleatorio) | *(cadena aleatoria)* |
-| `FRONTEND_URL` | URL del frontend permitida por CORS | `http://localhost:5173` |
-
-```bash
+cp .env.example .env      # en Windows: copy .env.example .env
+# editar .env con tus credenciales de PostgreSQL
 npm run dev
 ```
 
-En la terminal deben aparecer:
+En la terminal debe aparecer:
 
 ```
-API de EventNova corriendo en http://localhost:3000
 Conexion a PostgreSQL establecida correctamente.
+EventNova corriendo en http://localhost:3000
 ```
 
-### 4. Configurar y levantar el frontend
+### 3. Abrir la aplicación
 
-En **otra terminal**:
+Abrir **http://localhost:3000** en el navegador. Un solo comando levanta todo:
+el mismo servidor entrega las páginas HTML y responde la API.
 
-```bash
-cd frontend
-npm install
-cp .env.example .env      # en Windows PowerShell: copy .env.example .env
-npm run dev
-```
+> ⚠️ No abrir los `.html` con doble clic ni con *Live Server*: las páginas usan
+> módulos de JavaScript y la sesión del servidor, así que deben abrirse desde
+> `http://localhost:3000`.
 
-Abrir `http://localhost:5173` en el navegador.
-
-> Se necesitan **las dos terminales abiertas a la vez**: backend (puerto 3000) y frontend (puerto 5173). No uses la extensión Live Server de VS Code para este proyecto.
-
-
-
----
-
-## API REST (endpoints)
-
-Todas las rutas están bajo el prefijo `/api`.
-
-### Estado
+## API disponible
 
 | Método | Ruta | Descripción |
 | --- | --- | --- |
-| GET | `/api/status` | Verifica que la API esté funcionando. |
+| GET | `/api/status` | Estado del servidor |
+| POST | `/api/auth/login` | Iniciar sesión |
+| POST | `/api/auth/register` | Registrar cliente |
+| POST | `/api/auth/register-agente` | Registrar agente (con plan) |
+| GET | `/api/auth/sesion` | Usuario con sesión activa (o `null`) |
+| POST | `/api/auth/logout` | Cerrar sesión |
+| GET/POST | `/api/paises` | Listar / crear países |
+| GET/PUT/DELETE | `/api/paises/:id` | Consultar / editar / eliminar un país |
 
-### Autenticación — `/api/auth`
+## Estado actual
 
-| Método | Ruta | Descripción |
-| --- | --- | --- |
-| POST | `/api/auth/login` | Inicia sesión con correo y contraseña. Devuelve el usuario y su rol. |
-| POST | `/api/auth/register` | Registra un **cliente** (con inicio de sesión automático). |
-| POST | `/api/auth/register-agente` | Registra un **agente** con empresa y plan (con inicio de sesión automático). |
-| POST | `/api/auth/logout` | Cierra la sesión. |
+- ✅ Registro e inicio de sesión de clientes y agentes contra PostgreSQL.
+- ✅ CRUD de países (Ubicación geográfica) contra PostgreSQL.
+- 🟡 Eventos, reservas y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
+  Cuando exista cada endpoint solo se cambia el modelo correspondiente
+  (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y
+  controladores no cambian.
 
-Validaciones principales: campos obligatorios, contraseña de mínimo 8 caracteres, correo e identificación únicos, plan válido, y registro transaccional (`BEGIN / COMMIT / ROLLBACK`) en `USUARIO` + `CLIENTE`/`AGENTE`.
+## Convenciones
 
-### Países — `/api/paises`
-
-| Método | Ruta | Descripción |
-| --- | --- | --- |
-| GET | `/api/paises` | Lista todos los países (orden alfabético). |
-| GET | `/api/paises/:id` | Consulta un país. |
-| POST | `/api/paises` | Crea un país (nombre obligatorio y sin repetir). |
-| PUT | `/api/paises/:id` | Modifica un país. |
-| DELETE | `/api/paises/:id` | Elimina un país (se bloquea si tiene departamentos asociados). |
-
----
-
-
-## Flujo de trabajo con Git
-
-Ramas:
-
-- `main` → versión estable.
-- `develop` → integración diaria del equipo.
-- `feature/<nombre>` → una rama por tarea, creada desde `develop`.
-- `archive/estructura-mvc` → versión anterior (EJS), conservada como respaldo.
-
-Pasos para cada tarea:
-
-```bash
-git checkout develop
-git pull origin develop
-git checkout -b feature/nombre-de-la-tarea
-
-# ... trabajar y probar ...
-
-git add .
-git commit -m "feat: descripción corta del cambio"
-git push origin feature/nombre-de-la-tarea
-```
-
-Luego abrir un **Pull Request** en GitHub hacia `develop`, revisarlo y hacer el merge.
-
----
-
-## Convención de nombres
-
-- Modelos: `nombreEntidadModel.js`
-- Controladores: `nombreEntidadController.js`
-- Rutas: `nombreEntidadRoutes.js`
-- Páginas del frontend: `NombrePantallaPage.tsx` o `NombreRolDashboard.tsx`
-- Ramas de Git: `feature/nombre-funcionalidad`
-
----
+- Modelos: `nombreEntidadModel.js` · Controladores: `nombreEntidadController.js` · Vistas: `nombrePantallaView.js`
+- Páginas HTML en minúsculas con guiones: `mis-reservas.html`
+- Ramas de Git: `feature/nombre-funcionalidad`, que se integran a `main` mediante Pull Request.
 
 ## Equipo
 

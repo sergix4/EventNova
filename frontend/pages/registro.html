@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear cuenta · EventNova</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/auth.css">
+</head>
+<body class="auth">
+
+  <header class="auth__barra">
+    <a href="/" class="logo">
+      <span class="logo__icono"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg></span>
+      <span class="logo__texto">Event<span>Nova</span></span>
+    </a>
+    <a href="/" class="auth__volver">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7M19 12H5"/></svg>
+      Volver al inicio
+    </a>
+  </header>
+
+  <main class="auth__principal auth__principal--arriba">
+    <div class="auth__columna auth__columna--ancha">
+      <p class="auth__pildora"><span class="punto-pulso"></span>Registro gratuito — sin tarjeta de crédito</p>
+
+      <section class="tarjeta auth__tarjeta auth__tarjeta--registro" aria-labelledby="titulo-registro">
+        <header class="auth__encabezado">
+          <h1 class="auth__titulo" id="titulo-registro">Crea tu cuenta</h1>
+          <p class="auth__subtitulo">Únete a EventNova y comienza a gestionar o reservar eventos.</p>
+        </header>
+
+        <!-- Selector de tipo de cuenta -->
+        <div class="selector-rol">
+          <p class="selector-rol__pregunta">¿Cómo deseas registrarte?</p>
+          <div class="selector-rol__opciones">
+            <button type="button" class="opcion-rol" data-rol="cliente" aria-pressed="true">
+              <span class="opcion-rol__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+              <span><span class="opcion-rol__nombre">Cliente</span><span class="opcion-rol__desc">Reserva y descubre eventos</span></span>
+              <span class="opcion-rol__check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+            <button type="button" class="opcion-rol" data-rol="agente" aria-pressed="false">
+              <span class="opcion-rol__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span>
+              <span><span class="opcion-rol__nombre">Agente</span><span class="opcion-rol__desc">Gestiona y publica eventos</span></span>
+              <span class="opcion-rol__check"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+            </button>
+          </div>
+        </div>
+
+        <form class="formulario formulario--secciones" id="form-registro" novalidate>
+
+          <section class="seccion-form">
+            <h2 class="seccion-form__titulo">Datos personales</h2>
+            <div class="grid-campos">
+          <div class="campo" data-campo="identificacion">
+            <label class="campo__etiqueta" for="identificacion">Número de identificación <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="14" x="2" y="5" rx="2"/><path d="M16 10h2M16 14h2M7 10h2a2 2 0 1 1 0 4H7z"/></svg></span>
+              <input type="text" id="identificacion" name="identificacion" placeholder="Cédula o pasaporte">
+              <span class="campo-icono__estado campo-icono__estado--valido"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span><span class="campo-icono__estado campo-icono__estado--invalido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+            </div>
+            <p class="campo__error campo__mensaje"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg> Mínimo 6 caracteres</p>
+          </div>
+          <div class="campo" data-campo="nombre">
+            <label class="campo__etiqueta" for="nombre">Nombre completo <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+              <input type="text" id="nombre" name="nombre" placeholder="Tu nombre completo" autocomplete="name">
+              <span class="campo-icono__estado campo-icono__estado--valido"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span><span class="campo-icono__estado campo-icono__estado--invalido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+            </div>
+            
+          </div>
+          <div class="campo" data-campo="correo">
+            <label class="campo__etiqueta" for="correo">Correo electrónico <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></span>
+              <input type="email" id="correo" name="correo" placeholder="ejemplo@correo.com" autocomplete="email">
+              <span class="campo-icono__estado campo-icono__estado--valido"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span><span class="campo-icono__estado campo-icono__estado--invalido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+            </div>
+            <p class="campo__error campo__mensaje"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg> Ingresa un correo válido</p>
+          </div>
+          <div class="campo" data-campo="telefono">
+            <label class="campo__etiqueta" for="telefono">Número de teléfono <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></span>
+              <input type="tel" id="telefono" name="telefono" placeholder="+57 300 000 0000" autocomplete="tel">
+              <span class="campo-icono__estado campo-icono__estado--valido"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span><span class="campo-icono__estado campo-icono__estado--invalido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+            </div>
+            <p class="campo__error campo__mensaje"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg> Número inválido</p>
+          </div>
+            </div>
+          </section>
+
+          <section class="seccion-form">
+            <h2 class="seccion-form__titulo">Seguridad</h2>
+            <div class="grid-campos">
+          <div class="campo" data-campo="password">
+            <label class="campo__etiqueta" for="password">Contraseña <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+              <input type="password" id="password" name="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+              <button type="button" class="campo-icono__extra" data-mostrar="password" tabindex="-1" aria-label="Mostrar contraseña"></button><span class="campo-icono__estado campo-icono__estado--valido"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span><span class="campo-icono__estado campo-icono__estado--invalido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+            </div>
+            <p class="campo__error campo__mensaje"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg> Mínimo 8 caracteres</p>
+          </div>
+          <div class="campo" data-campo="confirmar">
+            <label class="campo__etiqueta" for="confirmar">Confirmar contraseña <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+              <input type="password" id="confirmar" name="confirmar" placeholder="Repite tu contraseña" autocomplete="new-password">
+              <button type="button" class="campo-icono__extra" data-mostrar="confirmar" tabindex="-1" aria-label="Mostrar contraseña"></button><span class="campo-icono__estado campo-icono__estado--valido"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span><span class="campo-icono__estado campo-icono__estado--invalido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+            </div>
+            <p class="campo__error campo__mensaje"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg> Las contraseñas no coinciden</p>
+          </div>
+            </div>
+            <div class="fuerza" id="fuerza-clave" hidden>
+              <div class="fuerza__barras"><span></span><span></span><span></span><span></span></div>
+              <p class="fuerza__texto"></p>
+            </div>
+          </section>
+
+          <section class="seccion-form">
+            <h2 class="seccion-form__titulo">Ubicación</h2>
+            <div class="grid-campos">
+          <div class="campo grid-campos__completo" data-campo="direccion">
+            <label class="campo__etiqueta" for="direccion">Dirección <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+              <input type="text" id="direccion" name="direccion" placeholder="Calle, número, barrio" autocomplete="street-address">
+              <span class="campo-icono__estado campo-icono__estado--valido"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span><span class="campo-icono__estado campo-icono__estado--invalido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+            </div>
+            
+          </div>
+          <div class="campo" data-campo="pais">
+            <label class="campo__etiqueta" for="pais">País <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+              <select id="pais" name="pais"><option value="" disabled selected>Selecciona un país</option></select>
+              <span class="campo-icono__extra" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+            </div>
+          </div>
+          <div class="campo" data-campo="departamento">
+            <label class="campo__etiqueta" for="departamento">Departamento / Estado <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+              <select id="departamento" name="departamento"><option value="" disabled selected>Selecciona...</option></select>
+              <span class="campo-icono__extra" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+            </div>
+          </div>
+          <div class="campo" data-campo="ciudad">
+            <label class="campo__etiqueta" for="ciudad">Ciudad <span class="campo__requerido">*</span></label>
+            <div class="campo-icono campo-icono--deshabilitado">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+              <select id="ciudad" name="ciudad" disabled><option value="" disabled selected>Primero selecciona departamento</option></select>
+              <span class="campo-icono__extra" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+            </div>
+          </div>
+            </div>
+          </section>
+
+          <!-- Solo para clientes -->
+          <section class="seccion-form" data-solo="cliente">
+            <h2 class="seccion-form__titulo">Preferencias</h2>
+            <div class="preferencia">
+              <div>
+                <p class="preferencia__titulo" id="etiqueta-publicidad">Mostrar publicidad personalizada</p>
+                <p class="preferencia__texto">Recibe sugerencias de eventos según tus intereses. Puedes cambiar esto en cualquier momento.</p>
+              </div>
+              <button type="button" class="interruptor" role="switch" aria-checked="true" aria-labelledby="etiqueta-publicidad" id="publicidad"></button>
+            </div>
+          </section>
+
+          <!-- Solo para agentes -->
+          <section class="seccion-form" data-solo="agente" hidden>
+            <h2 class="seccion-form__titulo">Datos del agente</h2>
+            <div class="grid-campos">
+          <div class="campo grid-campos__completo" data-campo="empresa">
+            <label class="campo__etiqueta" for="empresa">Nombre de la empresa o negocio <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="16" height="20" x="4" y="2" rx="2"/><path d="M9 22v-4h6v4M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01"/></svg></span>
+              <input type="text" id="empresa" name="empresa" placeholder="Ej. CM Eventos &amp; Producción">
+              <span class="campo-icono__estado campo-icono__estado--valido"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span><span class="campo-icono__estado campo-icono__estado--invalido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+            </div>
+            
+          </div>
+              <div class="campo grid-campos__completo">
+                <label class="campo__etiqueta" for="descripcionNegocio">Descripción del negocio <span class="campo__requerido">*</span></label>
+                <div class="area-icono">
+                  <span class="area-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span>
+                  <textarea id="descripcionNegocio" name="descripcionNegocio" rows="3" placeholder="Describe brevemente tu empresa o actividad de organización de eventos…"></textarea>
+                </div>
+              </div>
+          <div class="campo" data-campo="ciudadOperacion">
+            <label class="campo__etiqueta" for="ciudadOperacion">Ciudad principal de operación <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg></span>
+              <input type="text" id="ciudadOperacion" name="ciudadOperacion" placeholder="Ej. Bogotá">
+              <span class="campo-icono__estado campo-icono__estado--valido"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span><span class="campo-icono__estado campo-icono__estado--invalido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg></span>
+            </div>
+            
+          </div>
+          <div class="campo" data-campo="tipoEventos">
+            <label class="campo__etiqueta" for="tipoEventos">Tipo de eventos que organiza <span class="campo__requerido">*</span></label>
+            <div class="campo-icono">
+              <span class="campo-icono__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l6.58-6.58a1 1 0 0 0 0-1.41z"/><circle cx="7" cy="7" r="1"/></svg></span>
+              <select id="tipoEventos" name="tipoEventos"><option value="" disabled selected>Selecciona una categoría</option><option value="Conciertos y música">Conciertos y música</option><option value="Teatro y artes escénicas">Teatro y artes escénicas</option><option value="Festivales">Festivales</option><option value="Gastronomía">Gastronomía</option><option value="Deportes">Deportes</option><option value="Conferencias y foros">Conferencias y foros</option><option value="Entretenimiento familiar">Entretenimiento familiar</option><option value="Otro">Otro</option></select>
+              <span class="campo-icono__extra" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span>
+            </div>
+          </div>
+            </div>
+          </section>
+
+          <section class="seccion-form" data-solo="agente" hidden>
+            <h2 class="seccion-form__titulo">Elige tu plan de EventNova</h2>
+            <!-- La Vista dibuja aquí las tarjetas de los planes -->
+            <div class="grid-planes" id="grid-planes"></div>
+            <p class="campo__error" id="error-plan" hidden><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg> Debes seleccionar un plan para continuar.</p>
+            <p class="planes__nota">Puedes cambiar tu plan posteriormente desde tu perfil.</p>
+          </section>
+
+          <section class="resumen-registro" id="resumen-registro" data-solo="agente" hidden>
+            <p class="resumen-registro__titulo">Resumen de registro</p>
+            <dl class="resumen-registro__datos" id="resumen-datos"></dl>
+          </section>
+
+          <div class="auth__terminos">
+            <label class="casilla">
+              <input type="checkbox" id="terminos" name="terminos">
+              <span class="casilla__caja"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></span>
+              <span>Acepto los <a href="#">términos y condiciones</a> y la <a href="#">política de privacidad</a> de EventNova.</span>
+            </label>
+            <p class="auth__error-servidor" id="error-servidor" role="alert" hidden></p>
+            <button type="submit" class="boton boton--coral boton--bloque boton--grande" id="boton-registro" disabled>Crear cuenta</button>
+            <p class="auth__pregunta">¿Ya tienes una cuenta? <a href="/pages/login.html">Iniciar sesión</a></p>
+          </div>
+        </form>
+      </section>
+
+      <p class="auth__seguridad">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Tus datos están protegidos con cifrado de extremo a extremo
+      </p>
+    </div>
+  </main>
+
+  <footer class="auth__pie">
+    <div class="auth__pie-fila">
+      <p>© 2025 EventNova. Todos los derechos reservados.</p>
+      <nav aria-label="Enlaces legales"><a href="#">Términos</a><a href="#">Privacidad</a><a href="#">Ayuda</a></nav>
+    </div>
+  </footer>
+
+  <script type="module" src="/js/controllers/registroController.js"></script>
+</body>
+</html>

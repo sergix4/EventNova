@@ -1,0 +1,184 @@
+/* ==========================================================================
+   EventNova · panel.css
+   Estructura de los paneles con barra lateral (cliente, agente y
+   administrador): barra lateral, cabeceras, área de contenido y las
+   tarjetas de indicadores (KPI) que se repiten en varias pantallas.
+   ========================================================================== */
+
+/* ─── Estructura general ────────────────────────────────────────────────────── */
+.panel { display: flex; height: 100vh; overflow: hidden; background: var(--fondo); }
+.panel__principal { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.panel--gestion .panel__principal { display: block; overflow-y: auto; }
+.panel__contenido { flex: 1; overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+.panel--gestion .panel__contenido { overflow: visible; padding: 28px 32px; gap: 28px; }
+.panel__contenido--estrecho { max-width: 768px; }
+.panel__contenido--medio { max-width: 1024px; }
+.panel__espaciador { height: 8px; flex-shrink: 0; }
+
+/* Fondo oscuro cuando el menú lateral está abierto en celular */
+.panel__velo { display: none; }
+
+/* ─── Barra lateral (base) ──────────────────────────────────────────────────── */
+.barra-lateral {
+  background: #fff; border-right: 1px solid var(--gris-100);
+  display: flex; flex-direction: column; height: 100vh; flex-shrink: 0;
+}
+.barra-lateral__nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+
+.enlace-nav {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 10px 14px; border-radius: var(--radio);
+  font-size: 14px; line-height: 20px; font-weight: 500; color: var(--gris-600);
+  transition: all 0.15s ease;
+}
+.enlace-nav__icono { color: var(--gris-400); flex-shrink: 0; display: flex; }
+.enlace-nav:hover { background: var(--gris-50); color: var(--gris-900); }
+
+/* Variante CLIENTE (220px, ítem activo en lila claro) */
+.barra-lateral--cliente { width: 220px; }
+.barra-lateral--cliente .barra-lateral__logo { height: 64px; padding: 0 20px; display: flex; align-items: center; border-bottom: 1px solid var(--gris-100); flex-shrink: 0; }
+.barra-lateral--cliente .barra-lateral__nav { gap: 4px; }
+.barra-lateral__titulo { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--gris-400); padding: 0 8px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; }
+.barra-lateral--cliente .enlace-nav { padding: 10px 12px; color: var(--gris-500); }
+.barra-lateral--cliente .enlace-nav:hover { background: transparent; color: var(--gris-500); }
+.barra-lateral--cliente .enlace-nav--activo,
+.barra-lateral--cliente .enlace-nav--activo:hover { background: var(--primario-suave); color: var(--primario-oscuro); font-weight: 700; }
+.barra-lateral--cliente .enlace-nav--activo .enlace-nav__icono { color: var(--primario); }
+.barra-lateral--cliente .enlace-nav__texto { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.enlace-nav__punto { margin-left: auto; width: 6px; height: 6px; border-radius: 50%; background: var(--primario); flex-shrink: 0; }
+
+.barra-lateral--cliente .barra-lateral__pie { border-top: 1px solid var(--gris-100); padding: 12px; }
+.usuario-mini { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: var(--radio); transition: background var(--transicion); }
+.usuario-mini:hover { background: var(--gris-50); }
+.usuario-mini__avatar { width: 36px; height: 36px; border-radius: var(--radio); background: linear-gradient(135deg, var(--primario-claro), var(--primario)); color: #fff; font-size: 14px; line-height: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.usuario-mini__nombre { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--gris-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.usuario-mini__rol { font-size: 12px; line-height: 16px; color: var(--gris-400); }
+.usuario-mini__texto { min-width: 0; flex: 1; }
+.boton-salir { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px; margin-top: 4px; border-radius: var(--radio); font-size: 14px; line-height: 20px; font-weight: 500; color: var(--gris-500); transition: all var(--transicion); }
+.boton-salir:hover { background: var(--rojo-suave); color: var(--rojo-claro); }
+
+/* Variante GESTIÓN (agente y administrador: 256px, ítem activo relleno) */
+.barra-lateral--gestion { width: 256px; position: sticky; top: 0; }
+.barra-lateral--gestion .barra-lateral__logo { padding: 20px 24px; border-bottom: 1px solid var(--gris-100); }
+.barra-lateral__insignia { margin-top: 10px; display: inline-flex; font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--primario-suave); color: var(--primario); }
+.barra-lateral__insignia--admin { background: #fef3c7; color: #92400e; }
+.barra-lateral--gestion .enlace-nav--activo,
+.barra-lateral--gestion .enlace-nav--activo:hover { background: var(--primario); color: #fff; font-weight: 600; box-shadow: var(--sombra-sm); }
+.barra-lateral--gestion .enlace-nav--activo .enlace-nav__icono { color: #fff; }
+.barra-lateral--gestion .barra-lateral__pie { padding: 16px; border-top: 1px solid var(--gris-100); }
+.usuario-gestion { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.usuario-gestion__avatar { width: 40px; height: 40px; border-radius: 50%; color: #fff; font-size: 14px; line-height: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: linear-gradient(135deg, var(--primario), var(--primario-claro)); }
+.usuario-gestion__avatar--admin { background: linear-gradient(135deg, #92400e, #d97706); }
+.barra-lateral--gestion .boton-salir { padding: 8px 12px; margin-top: 0; border-radius: var(--radio-sm); }
+.barra-lateral--gestion .boton-salir:hover { color: var(--rojo); }
+
+/* ─── Cabecera del panel de CLIENTE (64px, campana y avatar) ────────────────── */
+.cabecera-cliente {
+  height: 64px; flex-shrink: 0; background: #fff; border-bottom: 1px solid var(--gris-100);
+  padding: 0 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+}
+.cabecera-cliente__izq { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.cabecera-cliente__titulo { font-size: 18px; line-height: 1.25; font-weight: 700; color: var(--gris-900); }
+.cabecera-cliente__subtitulo { font-size: 12px; line-height: 1; color: var(--gris-400); }
+.cabecera-cliente__der { display: flex; align-items: center; gap: 12px; }
+.boton-menu { display: none; color: var(--gris-600); }
+.avatar-cabecera { width: 36px; height: 36px; border-radius: var(--radio); background: linear-gradient(135deg, var(--primario-claro), var(--primario)); color: #fff; font-size: 12px; line-height: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+
+/* Campana de notificaciones */
+.notificaciones { position: relative; }
+.notificaciones__punto { position: absolute; top: -2px; right: -2px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid #fff; background: var(--coral); }
+.notificaciones__panel { position: absolute; right: 0; top: 44px; z-index: 50; width: 320px; background: #fff; border-radius: var(--radio-lg); border: 1px solid var(--gris-100); box-shadow: var(--sombra-xl); overflow: hidden; }
+.notificaciones__cabecera { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--gris-100); }
+.notificaciones__cabecera strong { font-size: 14px; line-height: 20px; color: var(--gris-900); }
+.notificaciones__cabecera button { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--primario); }
+.notificaciones__cabecera button:hover { text-decoration: underline; }
+.notificacion { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--gris-50); background: #fafafe; }
+.notificacion:last-child { border-bottom: 0; }
+.notificacion--leida { background: #fff; }
+.notificacion__emoji { font-size: 16px; line-height: 24px; margin-top: 2px; }
+.notificacion__cuerpo { flex: 1; min-width: 0; }
+.notificacion__texto { flex: 1; font-size: 14px; line-height: 1.375; color: var(--gris-700); font-weight: 500; }
+.notificacion--leida .notificacion__texto { font-weight: 400; }
+.notificacion__tiempo { font-size: 12px; line-height: 16px; color: var(--gris-400); margin-top: 4px; }
+.notificacion__no-leida { width: 8px; height: 8px; border-radius: 50%; background: var(--primario); margin-top: 6px; flex-shrink: 0; }
+.notificacion--leida .notificacion__no-leida { display: none; }
+
+/* ─── Cabecera de los paneles de AGENTE y ADMINISTRADOR ────────────────────── */
+.cabecera-gestion {
+  position: sticky; top: 0; z-index: 20; background: #fff; border-bottom: 1px solid var(--gris-100);
+  padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+}
+.cabecera-gestion__izq { display: flex; align-items: center; gap: 16px; }
+.cabecera-gestion__titulo { font-size: 20px; line-height: 28px; font-weight: 700; color: var(--gris-900); }
+.cabecera-gestion__subtitulo { font-size: 14px; line-height: 20px; color: var(--gris-400); margin-top: 2px; }
+.cabecera-gestion__acciones { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
+.cabecera-gestion__acciones .boton { padding: 8px 16px; }
+
+/* Barra de filtros blanca bajo la cabecera (reportes) */
+.barra-filtros { background: #fff; border-bottom: 1px solid var(--gris-100); padding: 12px 32px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.barra-filtros--abajo { align-items: flex-end; }
+.etiqueta-filtros { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--gris-400); display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.filtro-columna { display: flex; flex-direction: column; gap: 4px; }
+.filtro-columna label { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--gris-400); }
+
+/* ─── Tarjetas de indicadores (KPI / estadísticas) ─────────────────────────── */
+.grid-kpi { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-kpi--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-kpi--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid-kpi--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.kpi { background: #fff; border: 1px solid var(--gris-100); border-radius: var(--radio-lg); box-shadow: var(--sombra-sm); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+.kpi--holgado { gap: 16px; }
+.kpi--fila { flex-direction: row; align-items: center; gap: 16px; }
+.kpi--fila-arriba { flex-direction: row; align-items: flex-start; gap: 16px; }
+.kpi__superior { display: flex; align-items: flex-start; justify-content: space-between; }
+.kpi__icono { width: 40px; height: 40px; border-radius: var(--radio); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.kpi__icono--grande { width: 44px; height: 44px; }
+.kpi__icono { background: var(--fondo-icono, var(--primario-suave)); color: var(--color-icono, var(--primario)); }
+.kpi__tendencia { background: var(--fondo-tendencia, var(--fondo-icono)); color: var(--color-tendencia, var(--color-icono)); }
+.kpi__tendencia { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; line-height: 16px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+.kpi__valor { font-size: 24px; line-height: 32px; font-weight: 800; color: var(--gris-900); letter-spacing: -0.01em; }
+.kpi__valor--grande { font-size: 30px; line-height: 36px; }
+.kpi__valor--medio { font-size: 20px; line-height: 28px; }
+.kpi__etiqueta { font-size: 12px; line-height: 16px; font-weight: 500; color: var(--gris-400); margin-top: 2px; }
+.kpi__etiqueta--fuerte { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--gris-700); }
+.kpi__etiqueta--sm { font-size: 14px; line-height: 20px; }
+.kpi__sub { font-size: 12px; line-height: 16px; color: var(--gris-400); margin-top: 2px; }
+.kpi__sub--claro { color: var(--gris-300); }
+
+/* Encabezado de sección suelto (sin tarjeta) */
+.seccion-titulo { font-size: 16px; line-height: 24px; font-weight: 700; color: var(--gris-900); }
+.seccion-subtitulo { font-size: 12px; line-height: 16px; color: var(--gris-400); margin-top: 2px; }
+.seccion { display: flex; flex-direction: column; gap: 20px; }
+.seccion--estrecha { gap: 16px; }
+
+/* Cuadrículas de dos columnas para gráficas */
+.grid-2 { display: grid; gap: 24px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid-5 { display: grid; gap: 24px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.col-2 { grid-column: span 2; }
+.col-3 { grid-column: span 3; }
+
+/* ─── Adaptación a pantallas pequeñas ───────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .grid-kpi--4, .grid-kpi--5 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid-2, .grid-5 { grid-template-columns: 1fr; }
+  .col-2, .col-3 { grid-column: auto; }
+}
+
+@media (max-width: 767px) {
+  .barra-lateral {
+    position: fixed; left: 0; top: 0; z-index: 40;
+    transform: translateX(-100%); transition: transform 0.2s ease;
+  }
+  .panel--menu-abierto .barra-lateral { transform: translateX(0); }
+  .panel--menu-abierto .panel__velo { display: block; position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,0.4); }
+  .boton-menu { display: inline-flex; }
+  .grid-kpi--3 { grid-template-columns: 1fr; }
+  .panel--gestion .panel__contenido { padding: 20px 16px; }
+  .cabecera-gestion { padding: 16px; }
+  .barra-filtros { padding: 12px 16px; }
+}
+
+@media (max-width: 639px) {
+  .grid-kpi--3-sm { grid-template-columns: 1fr; }
+}

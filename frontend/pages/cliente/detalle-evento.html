@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Detalle del evento · EventNova</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/panel.css">
+  <link rel="stylesheet" href="/css/cliente.css">
+</head>
+<body class="panel">
+  <div class="panel__velo"></div>
+
+  <!-- Barra lateral: la dibuja js/views/componentes/panel.js -->
+  <aside class="barra-lateral barra-lateral--cliente" id="barra-lateral"></aside>
+
+  <div class="panel__principal">
+    <header class="cabecera-cliente">
+      <div class="cabecera-cliente__izq">
+        <button type="button" class="boton-menu" data-accion="abrir-menu" aria-label="Abrir menú"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg></button>
+        <nav class="migas" aria-label="Ruta de navegación">
+          <a href="/pages/cliente/inicio.html">Inicio</a><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          <a href="/pages/cliente/explorar.html">Explorar eventos</a><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          <span>Detalle del evento</span>
+        </nav>
+      </div>
+      <div class="cabecera-cliente__der">
+        <div class="notificaciones">
+          <button type="button" class="boton-icono" data-accion="notificaciones" aria-label="Notificaciones"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span class="notificaciones__punto"></span></button>
+        <div class="notificaciones__panel" hidden></div>
+        </div>
+        <div class="avatar-cabecera" id="avatar-cabecera" aria-hidden="true"></div>
+      </div>
+    </header>
+
+    <main class="panel__contenido panel__contenido--sin-relleno">
+      <!-- La Vista (detalleEventoView.js) dibuja aquí la portada, la información y la tarjeta de reserva -->
+      <div id="detalle-evento"></div>
+    </main>
+  </div>
+
+  <script type="module" src="/js/controllers/cliente/detalleEventoController.js"></script>
+</body>
+</html>

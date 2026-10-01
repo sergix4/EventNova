@@ -1,7 +1,7 @@
 {
   "name": "eventnova-backend",
   "version": "1.0.0",
-  "description": "EventNova - API REST (Modelo, Controlador y Rutas) que se conecta a PostgreSQL",
+  "description": "EventNova - Servidor Express: API REST con PostgreSQL (MVC) que además sirve la interfaz HTML5/CSS/JS",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
@@ -17,7 +17,7 @@
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
+    "chart.js": "^4.5.1",
     "dotenv": "^16.6.1",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
