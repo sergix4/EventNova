@@ -81,27 +81,30 @@ CREATE TABLE public."TELEFONOS" (
     CONSTRAINT fk_telefonos_usuario FOREIGN KEY (numero_id) REFERENCES public."USUARIO" (numero_id)
 );
 
-DROP TABLE IF EXISTS public."AGENTE" CASCADE;
 CREATE TABLE public."AGENTE" (
     numero_id VARCHAR(20) PRIMARY KEY,
     id_plan INTEGER NOT NULL,
     nombre_empresa VARCHAR(150) NOT NULL,
     descripcion_agente TEXT,
+    comision NUMERIC(5,2) NOT NULL DEFAULT 0,
+    experiencia INTEGER NOT NULL DEFAULT 0,
     CONSTRAINT fk_agente_usuario FOREIGN KEY (numero_id) REFERENCES public."USUARIO" (numero_id),
     CONSTRAINT fk_agente_plan FOREIGN KEY (id_plan) REFERENCES public."TIPO_PLAN" (id_plan)
 );
 
-DROP TABLE IF EXISTS public."ADMINISTRADOR" CASCADE;
 CREATE TABLE public."ADMINISTRADOR" (
     numero_id VARCHAR(20) PRIMARY KEY,
     codigo_admin VARCHAR(50) NOT NULL,
+    salario NUMERIC(12,2) NOT NULL DEFAULT 0,
+    horario VARCHAR(100) NOT NULL DEFAULT 'Lunes a viernes 8:00 - 17:00',
     CONSTRAINT fk_admin_usuario FOREIGN KEY (numero_id) REFERENCES public."USUARIO" (numero_id)
 );
 
-DROP TABLE IF EXISTS public."CLIENTE" CASCADE;
 CREATE TABLE public."CLIENTE" (
     numero_id VARCHAR(20) PRIMARY KEY,
     codigo_cliente VARCHAR(50) NOT NULL,
+    puntos INTEGER NOT NULL DEFAULT 0,
+    visualizar_publicidad BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT fk_cliente_usuario FOREIGN KEY (numero_id) REFERENCES public."USUARIO" (numero_id)
 );
 
@@ -158,3 +161,13 @@ CREATE TABLE public."RESEÑA" (
     CONSTRAINT fk_resena_cliente FOREIGN KEY (numero_id_cliente) REFERENCES public."CLIENTE" (numero_id),
     CONSTRAINT fk_resena_evento FOREIGN KEY (id_evento) REFERENCES public."EVENTO" (id_evento)
 );
+
+-- UNIQUE sin distinguir mayúsculas (igual que la validación del backend)
+CREATE UNIQUE INDEX IF NOT EXISTS ux_pais_nombre
+  ON public."PAIS" (LOWER(nombre_pais));
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_departamento_nombre_pais
+  ON public."DEPARTAMENTO" (id_pais, LOWER(nombre_departamento));
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_ciudad_nombre_departamento
+  ON public."CIUDAD" (id_departamento, LOWER(nombre_ciudad));
