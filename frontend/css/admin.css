@@ -212,6 +212,7 @@
 .crud { max-width: 768px; }
 .crud__formulario { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
 .crud__formulario .entrada { flex: 1; min-width: 200px; }
+.crud__formulario .envoltura-select { flex: 1; min-width: 200px; }
 .crud__error { font-size: 14px; line-height: 20px; color: var(--rojo); margin-bottom: 16px; }
 .crud__acciones { text-align: right; white-space: nowrap; }
 .crud__acciones button { font-size: 14px; line-height: 20px; font-weight: 500; }
