@@ -7,12 +7,12 @@ const express = require('express');
 const router = express.Router();
 const homeController = require('../controllers/homeController');
 const authRoutes = require('./authRoutes');
-const paisRoutes = require('./paisRoutes');   
+const paisRoutes = require('./paisRoutes');  
+const departamentoRoutes = require('./departamentoRoutes');  
 
-router.get('/status', homeController.estado);
-
-
+router.get('/status', homeController.estado); 
 router.use('/auth', authRoutes);
 router.use('/paises', paisRoutes);           
+router.use('/departamentos', departamentoRoutes); 
 
 module.exports = router;
