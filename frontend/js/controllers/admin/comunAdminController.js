@@ -10,7 +10,7 @@ import { iniciarPanel } from '../comun/panelController.js'
  */
 export async function iniciarAdmin(activo, { alActualizar, alCambiarPeriodo } = {}) {
   // Mientras no exista el registro de administradores, el panel se puede ver sin sesión
-  const usuario = await iniciarPanel({ rol: 'administrador', activo, requiereSesion: false })
+  const usuario = await iniciarPanel({ rol: 'administrador', activo, requiereSesion: true })
 
   const periodo = document.getElementById('periodo')
   periodo?.addEventListener('change', () => alCambiarPeriodo?.(periodo.value))

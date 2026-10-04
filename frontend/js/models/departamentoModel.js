@@ -4,8 +4,8 @@
 import { peticion } from './api.js'
 
 export const DepartamentoModel = {
-  listar() {
-    return peticion('/departamentos')
+  listar(idPais) {
+    return peticion(idPais ? `/departamentos?id_pais=${idPais}` : '/departamentos')
   },
   obtener(id) {
     return peticion(`/departamentos/${id}`)

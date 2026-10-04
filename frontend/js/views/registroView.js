@@ -9,10 +9,10 @@ const COLORES_FUERZA = ['#ef4444', '#f59e0b', '#10b981', '#10b981']
 const TEXTOS_FUERZA = ['', 'Contraseña débil', 'Contraseña regular', 'Contraseña fuerte', 'Contraseña muy fuerte']
 
 export const RegistroView = {
-  /** Llena un <select> con opciones y lo habilita/deshabilita */
+  /** Llena un <select>. opciones = [{ valor, texto }] */
   llenarSelect(select, opciones, textoVacio, deshabilitado = false) {
     select.innerHTML = `<option value="" disabled selected>${esc(textoVacio)}</option>` +
-      opciones.map(o => `<option value="${esc(o)}">${esc(o)}</option>`).join('')
+      opciones.map(o => `<option value="${esc(String(o.valor))}">${esc(o.texto)}</option>`).join('')
     select.disabled = deshabilitado
     select.closest('.campo-icono').classList.toggle('campo-icono--deshabilitado', deshabilitado)
     this.colorSelect(select)

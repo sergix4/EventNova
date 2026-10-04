@@ -6,12 +6,27 @@
 const bcrypt = require('bcryptjs');
 const UsuarioModel = require('../models/usuarioModel');
 const PlanModel = require('../models/planModel'); 
+const CiudadModel = require('../models/ciudadModel');
 
 const PLANES = {                                   
   basico: 'Plan Básico',
   profesional: 'Plan Profesional',
   empresa: 'Plan Empresa',
 };
+
+const TELEFONO_VALIDO = /^\+?[\d\s-]{7,20}$/;
+
+// Valida ciudad (obligatoria y existente) y teléfono. Devuelve { error } o { idCiudad, tel }
+async function validarCiudadYTelefono({ id_ciudad, telefono }) {
+  const idCiudad = Number(id_ciudad);
+  if (!Number.isInteger(idCiudad) || idCiudad <= 0) return { error: 'Debes seleccionar una ciudad.' };
+  if (!(await CiudadModel.getById(idCiudad))) return { error: 'La ciudad seleccionada no existe.' };
+
+  const tel = (telefono || '').trim();
+  if (!TELEFONO_VALIDO.test(tel)) return { error: 'Ingresa un teléfono válido.' };
+
+  return { idCiudad, tel };
+}
 
 const authController = {
   async login(req, res) {
@@ -54,7 +69,9 @@ const authController = {
   },
 
   async register(req, res) {
-    const { identificacion, nombre, correo, password, direccion } = req.body;
+    // CAMBIO 1: ahora también leemos id_ciudad, telefono y publicidad del body
+    const { identificacion, nombre, correo, password, direccion,
+            id_ciudad, telefono, publicidad } = req.body;            // ← NUEVO
 
     if (!identificacion || !nombre || !correo || !password) {
       return res.status(400).json({ error: 'Identificación, nombre, correo y contraseña son obligatorios.' });
@@ -64,18 +81,27 @@ const authController = {
     }
 
     try {
+      // CAMBIO 2: validar ciudad y teléfono ANTES de tocar la BD
+      const ub = await validarCiudadYTelefono({ id_ciudad, telefono });   // ← NUEVO
+      if (ub.error) return res.status(400).json({ error: ub.error });    // ← NUEVO
+
       const yaExiste = await UsuarioModel.existsByEmailOrId(correo, identificacion);
       if (yaExiste) {
         return res.status(409).json({ error: 'Ya existe una cuenta con ese correo o número de identificación.' });
       }
 
       const contraseñaHash = await bcrypt.hash(password, 10);
+
+      // CAMBIO 3: pasar los datos nuevos al Modelo
       const usuario = await UsuarioModel.createCliente({
         numero_id: identificacion,
         correo,
         nombre,
         contraseñaHash,
         direccion,
+        id_ciudad: ub.idCiudad,                    // ← NUEVO
+        telefono: ub.tel,                          // ← NUEVO
+        visualizar_publicidad: publicidad !== false, // ← NUEVO
       });
 
       req.session.usuario = usuario; // registro con auto-login
@@ -86,8 +112,11 @@ const authController = {
     }
   },
 
-    async registerAgente(req, res) {
-    const { identificacion, nombre, correo, password, direccion, empresa, descripcionNegocio, plan } = req.body;
+  async registerAgente(req, res) {
+    // CAMBIO 1: ahora también leemos id_ciudad y telefono (SIN publicidad)
+    const { identificacion, nombre, correo, password, direccion,
+            id_ciudad, telefono,                                      // ← NUEVO
+            empresa, descripcionNegocio, plan } = req.body;
 
     if (!identificacion || !nombre || !correo || !password || !empresa || !plan) {
       return res.status(400).json({ error: 'Identificación, nombre, correo, contraseña, empresa y plan son obligatorios.' });
@@ -100,6 +129,10 @@ const authController = {
     }
 
     try {
+      // CAMBIO 2: validar ciudad y teléfono ANTES de tocar la BD
+      const ub = await validarCiudadYTelefono({ id_ciudad, telefono });   // ← NUEVO
+      if (ub.error) return res.status(400).json({ error: ub.error });    // ← NUEVO
+
       const yaExiste = await UsuarioModel.existsByEmailOrId(correo, identificacion);
       if (yaExiste) {
         return res.status(409).json({ error: 'Ya existe una cuenta con ese correo o número de identificación.' });
@@ -111,12 +144,16 @@ const authController = {
       }
 
       const contraseñaHash = await bcrypt.hash(password, 10);
+
+      // CAMBIO 3: pasar los datos nuevos al Modelo
       const usuario = await UsuarioModel.createAgente({
         numero_id: identificacion,
         correo,
         nombre,
         contraseñaHash,
         direccion,
+        id_ciudad: ub.idCiudad,                 // ← NUEVO
+        telefono: ub.tel,                       // ← NUEVO
         id_plan: planDb.id_plan,
         nombre_plan: planDb.nombre_plan,
         nombre_empresa: empresa,
