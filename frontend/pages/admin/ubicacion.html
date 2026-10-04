@@ -33,7 +33,7 @@
         <div class="pestanas" role="tablist" aria-label="Niveles de ubicación">
   <button type="button" class="pestana" role="tab" id="pestana-paises" data-pestana="paises" aria-controls="panel-paises" aria-selected="true">Países</button>
   <button type="button" class="pestana" role="tab" id="pestana-departamentos" data-pestana="departamentos" aria-controls="panel-departamentos" aria-selected="false">Departamentos</button>
-  <button type="button" class="pestana" role="tab" aria-selected="false" disabled>Ciudades<span class="etiqueta-pronto">Pronto</span></button>
+  <button type="button" class="pestana" role="tab" id="pestana-ciudades" data-pestana="ciudades" aria-controls="panel-ciudades" aria-selected="false">Ciudades</button>
 </div>
         <div class="tarjeta__cuerpo" id="panel-paises" role="tabpanel" aria-labelledby="pestana-paises">
           <h2 class="tarjeta__titulo crud__titulo" id="titulo-crud">Países</h2>
@@ -81,6 +81,33 @@
     </table>
   </div>
 </div>
+        <!-- ═════ Pestaña CIUDADES ═════ -->
+        <div class="tarjeta__cuerpo" id="panel-ciudades" role="tabpanel" aria-labelledby="pestana-ciudades" hidden>
+          <h2 class="tarjeta__titulo crud__titulo">Ciudades</h2>
+
+          <!-- Formulario: agregar / editar ciudad -->
+          <form class="crud__formulario" id="form-ciudad" novalidate>
+            <label for="nombre-ciudad" class="solo-lector">Nombre de la ciudad</label>
+            <input type="text" class="entrada" id="nombre-ciudad" placeholder="Nombre de la ciudad" maxlength="100" autocomplete="off">
+            <label for="departamento-ciudad" class="solo-lector">Departamento</label>
+            <div class="envoltura-select">
+              <select class="selector" id="departamento-ciudad">
+                <option value="">Selecciona un departamento</option>
+              </select>
+            </div>
+            <button type="submit" class="boton boton--primario boton--seminegrita" id="boton-guardar-ciu">Agregar</button>
+            <button type="button" class="boton boton--neutro" id="boton-cancelar-ciu" hidden>Cancelar</button>
+          </form>
+
+          <p class="crud__error" id="error-ciudad" role="alert" hidden></p>
+
+          <div class="tabla-contenedor">
+            <table class="tabla tabla--crud">
+              <thead><tr><th>Ciudad</th><th>Departamento</th><th>País</th><th class="crud__acciones">Acciones</th></tr></thead>
+              <tbody id="tabla-ciudades"><tr><td colspan="4" class="tabla__vacia">Cargando ciudades…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
       </section>
     </div>
   </main>

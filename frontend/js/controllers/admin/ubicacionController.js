@@ -8,6 +8,7 @@ import { UbicacionView } from '../../views/admin/ubicacionView.js'
 import { abrirModal, cerrarModal } from '../../views/componentes/modal.js'
 import { mostrarToast } from '../../views/componentes/toast.js'
 import { iniciarDepartamentos, cargarDepartamentos, cargarPaisesSelect } from './departamentoController.js'
+import { iniciarCiudades, cargarCiudades, cargarDepartamentosSelect } from './ciudadController.js'
 
 let paises = []
 let editandoId = null
@@ -89,12 +90,17 @@ function mostrarPestana(nombre) {
     cargarPaisesSelect()   // el <select> siempre refleja los países actuales
     cargarDepartamentos()
   }
+  if (nombre === 'ciudades') {
+    cargarDepartamentosSelect()   // el <select> siempre refleja los departamentos actuales
+    cargarCiudades()
+  }
 }
 
 await iniciarAdmin('ubicacion')
 document.querySelectorAll('[data-pestana]').forEach(boton =>
   boton.addEventListener('click', () => mostrarPestana(boton.dataset.pestana)))
 iniciarDepartamentos()
+iniciarCiudades()
 document.getElementById('form-pais').addEventListener('submit', guardar)
 document.getElementById('boton-cancelar').addEventListener('click', cancelarEdicion)
 document.getElementById('tabla-paises').addEventListener('click', (e) => {

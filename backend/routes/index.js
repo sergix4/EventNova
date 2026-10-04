@@ -9,10 +9,12 @@ const homeController = require('../controllers/homeController');
 const authRoutes = require('./authRoutes');
 const paisRoutes = require('./paisRoutes');  
 const departamentoRoutes = require('./departamentoRoutes');  
+const ciudadRoutes = require('./ciudadRoutes');   
 
 router.get('/status', homeController.estado); 
 router.use('/auth', authRoutes);
 router.use('/paises', paisRoutes);           
 router.use('/departamentos', departamentoRoutes); 
+router.use('/ciudades', ciudadRoutes);    
 
 module.exports = router;
