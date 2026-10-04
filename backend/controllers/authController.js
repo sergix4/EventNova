@@ -57,8 +57,12 @@ const authController = {
         correo: usuario.correo,
         nombre: usuario.nombre,
         direccion: usuario.direccion,
+        telefono: usuario.telefono,
+        ciudad: usuario.ciudad,
+        departamento: usuario.departamento,
+        pais: usuario.pais,
         rol: usuario.rol,
-        agente: usuario.agente,  
+        agente: usuario.agente,
       };
 
       return res.json({ mensaje: 'Inicio de sesión exitoso', usuario: req.session.usuario });

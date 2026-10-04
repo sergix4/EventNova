@@ -48,8 +48,8 @@ export const PerfilClienteView = {
         ${filaCampo('usuario', 'Nombre completo', usuario?.nombre || '—')}
         ${filaCampo('documentoId', 'N.° de identificación', usuario?.numero_id || '—')}
         ${filaCampo('correo', 'Correo electrónico', usuario?.correo || '—')}
-        ${filaCampo('telefono', 'Teléfono', 'No registrado')}
-        ${filaCampo('ubicacion', 'Ciudad', 'No registrada')}
+        ${filaCampo('telefono', 'Teléfono', usuario?.telefono || 'No registrado')}
+        ${filaCampo('ubicacion', 'Ciudad', usuario?.ciudad || 'No registrada')}
         ${filaCampo('ubicacion', 'Dirección', usuario?.direccion || '—')}
       </section>
 

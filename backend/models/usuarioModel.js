@@ -20,6 +20,32 @@ async function insertarUsuarioBase(client, { numero_id, correo, nombre, contrase
   );
 }
 
+// Trae el teléfono y la ciudad de un usuario (para mostrarlos en "Mi perfil").
+// 'db' puede ser el pool o un client de una transacción abierta.
+async function obtenerContacto(db, numero_id) {
+  const result = await db.query(
+    `SELECT (SELECT MIN(t.telefono) FROM public."TELEFONOS" t WHERE t.numero_id = u.numero_id) AS telefono,
+            u.id_ciudad,
+            c.nombre_ciudad,
+            d.nombre_departamento,
+            p.nombre_pais
+     FROM public."USUARIO" u
+     LEFT JOIN public."CIUDAD" c       ON c.id_ciudad = u.id_ciudad
+     LEFT JOIN public."DEPARTAMENTO" d ON d.id_departamento = c.id_departamento
+     LEFT JOIN public."PAIS" p         ON p.id_pais = d.id_pais
+     WHERE u.numero_id = $1`,
+    [numero_id]
+  );
+  const fila = result.rows[0] || {};
+  return {
+    telefono: fila.telefono || null,
+    id_ciudad: fila.id_ciudad || null,
+    ciudad: fila.nombre_ciudad || null,
+    departamento: fila.nombre_departamento || null,
+    pais: fila.nombre_pais || null,
+  };
+}
+
 const UsuarioModel = {
   // Busca un usuario por correo, junto con su rol (cliente/agente/administrador).
   // Si es agente, también trae los datos propios del agente (empresa, descripción y plan).
@@ -48,11 +74,14 @@ const UsuarioModel = {
     else if (fila.es_agente) rol = 'agente';
     else if (fila.es_administrador) rol = 'administrador';
 
+        const contacto = await obtenerContacto(pool, fila.numero_id);
+
     return {
       numero_id: fila.numero_id,
       correo: fila.correo,
       nombre: fila.nombre,
       direccion: fila.direccion,
+      ...contacto, // telefono, id_ciudad, ciudad
       contraseña: fila.contraseña, // hash — solo se usa dentro del backend
       rol,
       agente: rol === 'agente'
@@ -89,8 +118,10 @@ const UsuarioModel = {
         [numero_id, `CLI-${numero_id}`, visualizar_publicidad]
       );
 
+      const contacto = await obtenerContacto(client, numero_id);
+
       await client.query('COMMIT');
-      return { numero_id, correo, nombre, direccion: direccion || null, rol: 'cliente' };
+      return { numero_id, correo, nombre, direccion: direccion || null, ...contacto, rol: 'cliente' };
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;

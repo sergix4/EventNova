@@ -77,7 +77,8 @@ async function iniciar() {
   const usuario = await iniciarPanel({ rol: 'agente', activo: 'perfil' })
   estado.personal = {
     nombre: usuario?.nombre || '', correo: usuario?.correo || '', identificacion: usuario?.numero_id || '',
-    telefono: '', direccion: usuario?.direccion || '', pais: '', departamento: '', ciudad: '', // pendientes: TELEFONOS y CIUDAD
+    telefono: usuario?.telefono || '', direccion: usuario?.direccion || '',
+    pais: usuario?.pais || '', departamento: usuario?.departamento || '', ciudad: usuario?.ciudad || '',
   }
   estado.agente = {
     nombre: usuario?.nombre || '', empresa: usuario?.agente?.nombre_empresa || '',
