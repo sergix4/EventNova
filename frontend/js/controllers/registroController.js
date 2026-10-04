@@ -4,11 +4,14 @@
 // Modelo (POST /api/auth/register o /api/auth/register-agente).
 
 import { AuthModel } from '../models/authModel.js'
-import { UBICACION_REGISTRO, PLANES } from '../models/catalogoModel.js'
 import { AuthView } from '../views/authView.js'
 import { RegistroView } from '../views/registroView.js'
 import { mostrarToast } from '../views/componentes/toast.js'
 import { paginaInicioDe } from './comun/panelController.js'
+import { PLANES } from '../models/catalogoModel.js'
+import { PaisModel } from '../models/paisModel.js'
+import { DepartamentoModel } from '../models/departamentoModel.js'
+import { CiudadModel } from '../models/ciudadModel.js'
 
 const formulario = document.getElementById('form-registro')
 const boton = document.getElementById('boton-registro')
@@ -47,21 +50,53 @@ function pintarCampo(campo) {
   AuthView.estadoCampo(contenedor, tocados.has(campo) ? validar(campo) : '')
 }
 
-// ─── Ubicación en cascada ────────────────────────────────────────────────────
-function cargarDepartamentos() {
-  const deptos = UBICACION_REGISTRO.departamentos[selPais.value] || []
-  RegistroView.llenarSelect(selDepto, deptos, selPais.value ? 'Selecciona...' : 'Primero selecciona un país', !selPais.value)
-  RegistroView.llenarSelect(selCiudad, [], 'Primero selecciona departamento', true)
-}
-function cargarCiudades() {
-  const ciudades = UBICACION_REGISTRO.ciudades[selDepto.value] || []
-  RegistroView.llenarSelect(selCiudad, ciudades, selDepto.value ? 'Selecciona...' : 'Primero selecciona departamento', !selDepto.value)
+// ─── Ubicación en cascada (datos reales de la BD) ────────────────────────────
+const aOpciones = (filas, id, nombre) => filas.map(f => ({ valor: f[id], texto: f[nombre] }))
+
+async function cargarPaises() {
+  try {
+    const paises = await PaisModel.listar()
+    RegistroView.llenarSelect(selPais, aOpciones(paises, 'id_pais', 'nombre_pais'),
+      paises.length ? 'Selecciona un país' : 'No hay países registrados')
+    const colombia = paises.find(p => p.nombre_pais.toLowerCase() === 'colombia')
+    if (colombia) {
+      selPais.value = colombia.id_pais
+      RegistroView.colorSelect(selPais)
+    }
+    await cargarDepartamentos()
+  } catch (error) {
+    AuthView.errorServidor(error.message)
+  }
 }
 
-RegistroView.llenarSelect(selPais, UBICACION_REGISTRO.paises, 'Selecciona un país')
-selPais.value = 'Colombia'
-RegistroView.colorSelect(selPais)
-cargarDepartamentos()
+async function cargarDepartamentos() {
+  RegistroView.llenarSelect(selCiudad, [], 'Primero selecciona departamento', true)
+  if (!selPais.value) {
+    return RegistroView.llenarSelect(selDepto, [], 'Primero selecciona un país', true)
+  }
+  try {
+    const deptos = await DepartamentoModel.listar(selPais.value)
+    RegistroView.llenarSelect(selDepto, aOpciones(deptos, 'id_departamento', 'nombre_departamento'),
+      deptos.length ? 'Selecciona...' : 'Sin departamentos registrados', !deptos.length)
+  } catch (error) {
+    AuthView.errorServidor(error.message)
+  }
+}
+
+async function cargarCiudades() {
+  if (!selDepto.value) {
+    return RegistroView.llenarSelect(selCiudad, [], 'Primero selecciona departamento', true)
+  }
+  try {
+    const ciudades = await CiudadModel.listar(selDepto.value)
+    RegistroView.llenarSelect(selCiudad, aOpciones(ciudades, 'id_ciudad', 'nombre_ciudad'),
+      ciudades.length ? 'Selecciona...' : 'Sin ciudades registradas', !ciudades.length)
+  } catch (error) {
+    AuthView.errorServidor(error.message)
+  }
+}
+
+cargarPaises()
 
 selPais.addEventListener('change', () => { RegistroView.colorSelect(selPais); cargarDepartamentos() })
 selDepto.addEventListener('change', () => { RegistroView.colorSelect(selDepto); cargarCiudades() })
@@ -137,6 +172,9 @@ formulario.addEventListener('submit', async (e) => {
     correo: valor('correo'),
     password: valor('password'),
     direccion: valor('direccion'),
+    id_ciudad: Number(valor('ciudad')),
+    telefono: valor('telefono'),
+    publicidad: publicidad.getAttribute('aria-checked') === 'true',
   }
 
   try {

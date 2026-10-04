@@ -7,6 +7,19 @@
 
 const pool = require('../config/db');
 
+// Inserta el USUARIO y su teléfono. Se llama dentro de una transacción ya abierta.
+async function insertarUsuarioBase(client, { numero_id, correo, nombre, contraseñaHash, direccion, id_ciudad, telefono }) {
+  await client.query(
+    `INSERT INTO public."USUARIO" (numero_id, correo, nombre, contraseña, direccion, id_ciudad)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [numero_id, correo, nombre, contraseñaHash, direccion || null, id_ciudad]
+  );
+  await client.query(
+    `INSERT INTO public."TELEFONOS" (numero_id, telefono) VALUES ($1, $2)`,
+    [numero_id, telefono]
+  );
+}
+
 const UsuarioModel = {
   // Busca un usuario por correo, junto con su rol (cliente/agente/administrador).
   // Si es agente, también trae los datos propios del agente (empresa, descripción y plan).
@@ -62,25 +75,21 @@ const UsuarioModel = {
   },
 
   // Crea un usuario nuevo y lo registra como Cliente, de forma transaccional
-  async createCliente({ numero_id, correo, nombre, contraseñaHash, direccion }) {
+  // Crea un usuario nuevo y lo registra como Cliente, de forma transaccional
+  async createCliente({ numero_id, correo, nombre, contraseñaHash, direccion, id_ciudad, telefono, visualizar_publicidad }) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
+      await insertarUsuarioBase(client, { numero_id, correo, nombre, contraseñaHash, direccion, id_ciudad, telefono });
+
       await client.query(
-        `INSERT INTO public."USUARIO" (numero_id, correo, nombre, contraseña, direccion)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [numero_id, correo, nombre, contraseñaHash, direccion || null]
+        `INSERT INTO public."CLIENTE" (numero_id, codigo_cliente, visualizar_publicidad)
+         VALUES ($1, $2, $3)`,
+        [numero_id, `CLI-${numero_id}`, visualizar_publicidad]
       );
 
-      const codigoCliente = `CLI-${numero_id}`;
-      await client.query(
-        `INSERT INTO public."CLIENTE" (numero_id, codigo_cliente)
-         VALUES ($1, $2)`,
-        [numero_id, codigoCliente]
-      );
-
-  await client.query('COMMIT');
+      await client.query('COMMIT');
       return { numero_id, correo, nombre, direccion: direccion || null, rol: 'cliente' };
     } catch (error) {
       await client.query('ROLLBACK');
@@ -90,17 +99,13 @@ const UsuarioModel = {
     }
   },
 
-    // Crea un usuario nuevo y lo registra como Agente, de forma transaccional
-   async createAgente({ numero_id, correo, nombre, contraseñaHash, direccion, id_plan, nombre_plan, nombre_empresa, descripcion_agente }) {
+  // Crea un usuario nuevo y lo registra como Agente, de forma transaccional
+  async createAgente({ numero_id, correo, nombre, contraseñaHash, direccion, id_ciudad, telefono, id_plan, nombre_plan, nombre_empresa, descripcion_agente }) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
-      await client.query(
-        `INSERT INTO public."USUARIO" (numero_id, correo, nombre, contraseña, direccion)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [numero_id, correo, nombre, contraseñaHash, direccion || null]
-      );
+      await insertarUsuarioBase(client, { numero_id, correo, nombre, contraseñaHash, direccion, id_ciudad, telefono });
 
       await client.query(
         `INSERT INTO public."AGENTE" (numero_id, id_plan, nombre_empresa, descripcion_agente)
@@ -108,7 +113,7 @@ const UsuarioModel = {
         [numero_id, id_plan, nombre_empresa, descripcion_agente || null]
       );
 
-            await client.query('COMMIT');
+      await client.query('COMMIT');
       return {
         numero_id,
         correo,
