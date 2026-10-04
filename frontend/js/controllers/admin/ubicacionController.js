@@ -7,6 +7,7 @@ import { PaisModel } from '../../models/paisModel.js'
 import { UbicacionView } from '../../views/admin/ubicacionView.js'
 import { abrirModal, cerrarModal } from '../../views/componentes/modal.js'
 import { mostrarToast } from '../../views/componentes/toast.js'
+import { iniciarDepartamentos, cargarDepartamentos, cargarPaisesSelect } from './departamentoController.js'
 
 let paises = []
 let editandoId = null
@@ -76,7 +77,24 @@ function eliminar(id) {
   })
 }
 
+// ─── Pestañas: Países / Departamentos ───────────────────────────────────────
+function mostrarPestana(nombre) {
+  document.querySelectorAll('[data-pestana]').forEach(boton => {
+    const activa = boton.dataset.pestana === nombre
+    boton.setAttribute('aria-selected', String(activa))
+    document.getElementById(boton.getAttribute('aria-controls')).hidden = !activa
+  })
+  if (nombre === 'paises') cargarPaises()
+  if (nombre === 'departamentos') {
+    cargarPaisesSelect()   // el <select> siempre refleja los países actuales
+    cargarDepartamentos()
+  }
+}
+
 await iniciarAdmin('ubicacion')
+document.querySelectorAll('[data-pestana]').forEach(boton =>
+  boton.addEventListener('click', () => mostrarPestana(boton.dataset.pestana)))
+iniciarDepartamentos()
 document.getElementById('form-pais').addEventListener('submit', guardar)
 document.getElementById('boton-cancelar').addEventListener('click', cancelarEdicion)
 document.getElementById('tabla-paises').addEventListener('click', (e) => {

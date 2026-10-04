@@ -31,11 +31,11 @@
     <div class="panel__contenido" id="contenido">
       <section class="tarjeta tarjeta--recortada crud" aria-labelledby="titulo-crud">
         <div class="pestanas" role="tablist" aria-label="Niveles de ubicación">
-          <button type="button" class="pestana" role="tab" aria-selected="true">Países</button>
-          <button type="button" class="pestana" role="tab" aria-selected="false" disabled>Departamentos<span class="etiqueta-pronto">Pronto</span></button>
-          <button type="button" class="pestana" role="tab" aria-selected="false" disabled>Ciudades<span class="etiqueta-pronto">Pronto</span></button>
-        </div>
-        <div class="tarjeta__cuerpo">
+  <button type="button" class="pestana" role="tab" id="pestana-paises" data-pestana="paises" aria-controls="panel-paises" aria-selected="true">Países</button>
+  <button type="button" class="pestana" role="tab" id="pestana-departamentos" data-pestana="departamentos" aria-controls="panel-departamentos" aria-selected="false">Departamentos</button>
+  <button type="button" class="pestana" role="tab" aria-selected="false" disabled>Ciudades<span class="etiqueta-pronto">Pronto</span></button>
+</div>
+        <div class="tarjeta__cuerpo" id="panel-paises" role="tabpanel" aria-labelledby="pestana-paises">
           <h2 class="tarjeta__titulo crud__titulo" id="titulo-crud">Países</h2>
 
           <!-- Formulario: agregar / editar país -->
@@ -55,6 +55,32 @@
             </table>
           </div>
         </div>
+        <!-- ═════ Pestaña DEPARTAMENTOS ═════ -->
+<div class="tarjeta__cuerpo" id="panel-departamentos" role="tabpanel" aria-labelledby="pestana-departamentos" hidden>
+  <h2 class="tarjeta__titulo crud__titulo">Departamentos</h2>
+
+  <form class="crud__formulario" id="form-departamento" novalidate>
+    <label for="nombre-departamento" class="solo-lector">Nombre del departamento</label>
+    <input type="text" class="entrada" id="nombre-departamento" placeholder="Nombre del departamento" maxlength="100" autocomplete="off">
+    <label for="pais-departamento" class="solo-lector">País</label>
+    <div class="envoltura-select">
+      <select class="selector" id="pais-departamento">
+        <option value="">Selecciona un país</option>
+      </select>
+    </div>
+    <button type="submit" class="boton boton--primario boton--seminegrita" id="boton-guardar-dep">Agregar</button>
+    <button type="button" class="boton boton--neutro" id="boton-cancelar-dep" hidden>Cancelar</button>
+  </form>
+
+  <p class="crud__error" id="error-departamento" role="alert" hidden></p>
+
+  <div class="tabla-contenedor">
+    <table class="tabla tabla--crud">
+      <thead><tr><th>Departamento</th><th>País</th><th class="crud__acciones">Acciones</th></tr></thead>
+      <tbody id="tabla-departamentos"><tr><td colspan="3" class="tabla__vacia">Cargando departamentos…</td></tr></tbody>
+    </table>
+  </div>
+</div>
       </section>
     </div>
   </main>
