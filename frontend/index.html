@@ -237,23 +237,49 @@
     </section>
   </main>
 
-  <!-- ── Pie de página ──────────────────────────────────────────────────────── -->
+<!-- ── Pie de página ──────────────────────────────────────────────────────── -->
   <footer class="pie-sitio">
-    <div class="contenedor pie-sitio__fila">
-      <a href="/" class="logo logo--pequeno" aria-label="EventNova, volver al inicio">
-                <span class="logo__icono"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg></span>
-        <span class="logo__texto">Event<span>Nova</span></span>
-      </a>
-      <nav class="pie-sitio__enlaces" aria-label="Enlaces del pie de página">
-        <a href="#inicio">Inicio</a>
-        <a href="#eventos">Eventos</a>
-        <a href="/pages/login.html">Iniciar sesión</a>
-        <a href="/pages/registro.html">Registrarse</a>
-      </nav>
-      <p class="pie-sitio__copy">© 2025 EventNova. Todos los derechos reservados.</p>
+    <div class="contenedor">
+      
+      <!-- Parte superior: Columnas de información -->
+      <div class="pie-sitio__grid">
+        <div class="pie-sitio__marca">
+          <a href="/" class="logo logo--pequeno" aria-label="EventNova, volver al inicio">
+            <span class="logo__icono">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2M13 17v2M13 11v2"/></svg>
+            </span>
+            <span class="logo__texto">Event<span>Nova</span></span>
+          </a>
+          <p class="pie-sitio__descripcion">
+            La plataforma líder en Colombia para descubrir conciertos, teatro, festivales y reservar tus entradas en segundos.
+          </p>
+        </div>
+
+        <nav class="pie-sitio__columna" aria-label="Explorar">
+          <h3 class="pie-sitio__titulo">Explorar</h3>
+          <a href="#inicio">Inicio</a>
+          <a href="#eventos">Eventos</a>
+          <a href="#como-funciona">¿Cómo funciona?</a>
+        </nav>
+
+        <nav class="pie-sitio__columna" aria-label="Cuenta">
+          <h3 class="pie-sitio__titulo">Mi cuenta</h3>
+          <a href="/pages/login.html">Iniciar sesión</a>
+          <a href="/pages/registro.html">Registrarse</a>
+        </nav>
+
+        <nav class="pie-sitio__columna" aria-label="Legal">
+          <h3 class="pie-sitio__titulo">Legal y soporte</h3>
+          <a href="#">Términos y condiciones</a>
+          <a href="#">Política de privacidad</a>
+          <a href="#">Contacto</a>
+        </nav>
+      </div>
+
+      <!-- Parte inferior: Derechos de autor -->
+      <div class="pie-sitio__inferior">
+        <p class="pie-sitio__copy">© 2025 EventNova. Todos los derechos reservados.</p>
+      </div>
+
     </div>
   </footer>
-
-  <script type="module" src="/js/controllers/inicioController.js"></script>
-</body>
-</html>
