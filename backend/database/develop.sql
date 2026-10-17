@@ -146,11 +146,12 @@ CREATE TABLE public."RESERVA" (
     id_metodo INTEGER NOT NULL,
     numero_entrada INTEGER NOT NULL,
     valor_total NUMERIC(10, 2) NOT NULL,
-    estado_reserva VARCHAR(50) NOT NULL,
+    estado_reserva VARCHAR(50) NOT NULL DEFAULT 'Reservada',
     id_evento INTEGER NOT NULL,
     CONSTRAINT fk_reserva_cliente FOREIGN KEY (id_cliente) REFERENCES public."CLIENTE" (numero_id),
     CONSTRAINT fk_reserva_metodo FOREIGN KEY (id_metodo) REFERENCES public."METODO_PAGO" (id_metodo),
-    CONSTRAINT fk_reserva_evento FOREIGN KEY (id_evento) REFERENCES public."EVENTO" (id_evento)
+    CONSTRAINT fk_reserva_evento FOREIGN KEY (id_evento) REFERENCES public."EVENTO" (id_evento),
+    CONSTRAINT ck_reserva_estado CHECK (estado_reserva IN ('Reservada', 'Confirmada', 'Cancelada'))
 );
 
 DROP TABLE IF EXISTS public."RESEÑA" CASCADE;
