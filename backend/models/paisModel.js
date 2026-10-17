@@ -43,7 +43,8 @@ const PaisModel = {
   },
 
   async remove(id) {
-    await pool.query('DELETE FROM public."PAIS" WHERE id_pais = $1', [id]);
+    const result = await pool.query('DELETE FROM public."PAIS" WHERE id_pais = $1', [id]);
+    return result.rowCount > 0; // true si se borró, false si no existía
   },
 };
 

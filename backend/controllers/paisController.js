@@ -63,7 +63,8 @@ const paisController = {
 
   async eliminar(req, res) {
     try {
-      await PaisModel.remove(req.params.id);
+      const eliminado = await PaisModel.remove(req.params.id);
+      if (!eliminado) return res.status(404).json({ error: 'País no encontrado.' });
       res.json({ mensaje: 'País eliminado correctamente.' });
     } catch (error) {
       if (error.code === '23503') { // FK violation: tiene departamentos asociados
