@@ -18,7 +18,8 @@ EventNova/
 │   ├── models/               # MODELO: consultas SQL (usuario, plan, país, departamento, ciudad)
 │   ├── controllers/          # CONTROLADOR: reciben la petición y responden JSON
 │   ├── routes/               # Rutas /api/auth, /api/paises, /api/departamentos, /api/ciudades, /api/status
-│   ├── database/             # develop.sql, migracion_01.sql, seed_planes.sql, seed_admin.js
+│   ├── middlewares/          # authMiddleware.js: soloAdmin protege crear/editar/eliminar
+│   ├── database/             # develop.sql, migraciones, seed_planes.sql, seed_estados.sql, seed_admin.js
 │   └── .env.example          # Plantilla de variables de entorno
 │
 └── frontend/                 # Interfaz HTML5 + CSS + JavaScript
@@ -68,7 +69,9 @@ ubicacion.html ──► ubicacionController.js ──► PaisModel (js/models/p
 2. Ejecutar en pgAdmin (Query Tool) los scripts de `backend/database/`, en este orden:
    - `develop.sql` → crea todas las tablas. **Ojo:** borra las tablas existentes y sus datos.
    - `seed_planes.sql` → carga los 3 planes de agente.
+   - `seed_estados.sql` → carga los 5 estados del evento (Programado, En Boletería, En Vivo, Finalizado, Cancelado).
    - `migracion_01.sql` → solo si tu base se creó antes del PR #10 (agrega columnas sin borrar datos).
+   - `migracion_02.sql` → solo si tu base ya existía: limita los estados de la reserva a Reservada, Confirmada y Cancelada.
 
 ### 2. Servidor
 
@@ -127,6 +130,8 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Registro (cliente y agente, con ciudad y teléfono) e inicio de sesión contra PostgreSQL, redirigiendo según el rol.
 - ✅ CRUD de países, departamentos y ciudades (Ubicación geográfica) contra PostgreSQL.
 - ✅ Administrador inicial creado con `seed_admin.js`.
+- ✅ Crear, editar y eliminar ubicaciones solo lo puede hacer el administrador (middleware `soloAdmin`).
+- ✅ Estados del evento (tabla `ESTADO`) y de la reserva (restricción `CHECK`) definidos.
 - 🟡 Eventos, reservas y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
   Cuando exista cada endpoint solo se cambia el modelo correspondiente
   (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y
