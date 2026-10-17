@@ -81,6 +81,7 @@ CREATE TABLE public."TELEFONOS" (
     CONSTRAINT fk_telefonos_usuario FOREIGN KEY (numero_id) REFERENCES public."USUARIO" (numero_id)
 );
 
+DROP TABLE IF EXISTS public."AGENTE" CASCADE;
 CREATE TABLE public."AGENTE" (
     numero_id VARCHAR(20) PRIMARY KEY,
     id_plan INTEGER NOT NULL,
@@ -92,6 +93,7 @@ CREATE TABLE public."AGENTE" (
     CONSTRAINT fk_agente_plan FOREIGN KEY (id_plan) REFERENCES public."TIPO_PLAN" (id_plan)
 );
 
+DROP TABLE IF EXISTS public."ADMINISTRADOR" CASCADE;
 CREATE TABLE public."ADMINISTRADOR" (
     numero_id VARCHAR(20) PRIMARY KEY,
     codigo_admin VARCHAR(50) NOT NULL,
@@ -100,6 +102,7 @@ CREATE TABLE public."ADMINISTRADOR" (
     CONSTRAINT fk_admin_usuario FOREIGN KEY (numero_id) REFERENCES public."USUARIO" (numero_id)
 );
 
+DROP TABLE IF EXISTS public."CLIENTE" CASCADE;
 CREATE TABLE public."CLIENTE" (
     numero_id VARCHAR(20) PRIMARY KEY,
     codigo_cliente VARCHAR(50) NOT NULL,
