@@ -89,10 +89,16 @@
           <form class="crud__formulario" id="form-ciudad" novalidate>
             <label for="nombre-ciudad" class="solo-lector">Nombre de la ciudad</label>
             <input type="text" class="entrada" id="nombre-ciudad" placeholder="Nombre de la ciudad" maxlength="100" autocomplete="off">
+            <label for="pais-ciudad" class="solo-lector">País</label>
+            <div class="envoltura-select">
+              <select class="selector" id="pais-ciudad">
+                <option value="">Selecciona un país</option>
+              </select>
+            </div>
             <label for="departamento-ciudad" class="solo-lector">Departamento</label>
             <div class="envoltura-select">
-              <select class="selector" id="departamento-ciudad">
-                <option value="">Selecciona un departamento</option>
+              <select class="selector" id="departamento-ciudad" disabled>
+                <option value="">Primero selecciona un país</option>
               </select>
             </div>
             <button type="submit" class="boton boton--primario boton--seminegrita" id="boton-guardar-ciu">Agregar</button>
