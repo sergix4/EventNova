@@ -144,12 +144,15 @@ const UsuarioModel = {
         [numero_id, id_plan, nombre_empresa, descripcion_agente || null]
       );
 
+      const contacto = await obtenerContacto(client, numero_id);
+
       await client.query('COMMIT');
       return {
         numero_id,
         correo,
         nombre,
         direccion: direccion || null,
+        ...contacto, // telefono, id_ciudad, ciudad, departamento, pais
         rol: 'agente',
         agente: {
           nombre_empresa,
