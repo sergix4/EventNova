@@ -27,7 +27,7 @@ let cargando = false
 const tocados = new Set() // campos que el usuario ya escribió
 
 const CAMPOS_CLIENTE = ['identificacion', 'nombre', 'correo', 'password', 'confirmar', 'direccion', 'pais', 'departamento', 'ciudad', 'telefono']
-const CAMPOS_AGENTE = [...CAMPOS_CLIENTE, 'empresa', 'descripcionNegocio', 'ciudadOperacion', 'tipoEventos']
+const CAMPOS_AGENTE = [...CAMPOS_CLIENTE, 'empresa', 'descripcionNegocio', 'ciudadOperacion', 'tipoEventos', 'experiencia', 'comision']
 const valor = (id) => document.getElementById(id).value
 
 // ─── Reglas de validación (las mismas del prototipo) ─────────────────────────
@@ -39,7 +39,10 @@ function validar(campo) {
     case 'password': return v.length >= 8 ? 'valido' : 'invalido'
     case 'confirmar': return v === valor('password') ? 'valido' : 'invalido'
     case 'identificacion': return v.length >= 6 ? 'valido' : 'invalido'
-    case 'telefono': return /^\+?[\d\s-]{7,}$/.test(v) ? 'valido' : 'invalido'
+    case 'telefono':
+    case 'telefono2': return /^\+?[\d\s-]{7,}$/.test(v) ? 'valido' : 'invalido'
+    case 'experiencia': return Number.isInteger(Number(v)) && v >= 0 && v <= 60 ? 'valido' : 'invalido'
+    case 'comision': return v >= 0 && v <= 100 ? 'valido' : 'invalido'
     default: return v.length > 1 ? 'valido' : ''
   }
 }
@@ -160,7 +163,10 @@ formulario.addEventListener('submit', async (e) => {
   if (!terminos.checked) return
   const hayErrores = campos.some(c => validar(c) === 'invalido')
   const faltan = campos.some(c => !valor(c))
-  if (hayErrores || faltan) return
+  // El teléfono alternativo es opcional: solo se revisa si el usuario escribió algo
+  tocados.add('telefono2'); pintarCampo('telefono2')
+  const tel2Invalido = validar('telefono2') === 'invalido'
+  if (hayErrores || faltan || tel2Invalido) return
 
   AuthView.errorServidor('')
   cargando = true
@@ -174,6 +180,7 @@ formulario.addEventListener('submit', async (e) => {
     direccion: valor('direccion'),
     id_ciudad: Number(valor('ciudad')),
     telefono: valor('telefono'),
+    telefono2: valor('telefono2'),
     publicidad: publicidad.getAttribute('aria-checked') === 'true',
   }
 
@@ -187,6 +194,8 @@ formulario.addEventListener('submit', async (e) => {
         empresa: valor('empresa'),
         descripcionNegocio: valor('descripcionNegocio'),
         plan: planSeleccionado,
+        experiencia: Number(valor('experiencia')),
+        comision: Number(valor('comision')),
       })
       const plan = PLANES.find(p => p.clave === planSeleccionado)
       mostrarToast('Cuenta de Agente creada correctamente.', { detalle: `Plan ${plan.nombre} seleccionado correctamente.`, duracion: 0 })
