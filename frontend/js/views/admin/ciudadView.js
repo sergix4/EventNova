@@ -23,14 +23,28 @@ export const CiudadView = {
         </tr>`).join('')
   },
 
-  /** Llena el <select> de departamentos, mostrando "Departamento (País)" */
-  opcionesDepartamentos(departamentos) {
-    const select = document.getElementById('departamento-ciudad')
+  /** Llena el <select> de países del formulario de ciudades */
+  opcionesPaises(paises) {
+    const select = document.getElementById('pais-ciudad')
     const actual = select.value
-    select.innerHTML = '<option value="">Selecciona un departamento</option>' + departamentos
-      .map(d => `<option value="${d.id_departamento}">${esc(d.nombre_departamento)} (${esc(d.nombre_pais)})</option>`)
+    select.innerHTML = '<option value="">Selecciona un país</option>' + paises
+      .map(p => `<option value="${p.id_pais}">${esc(p.nombre_pais)}</option>`)
       .join('')
     select.value = actual
+  },
+
+  /** Llena el <select> de departamentos SOLO con los del país elegido */
+  opcionesDepartamentos(departamentos, hayPais = true) {
+    const select = document.getElementById('departamento-ciudad')
+    const actual = select.value
+    let textoInicial = 'Selecciona un departamento'
+    if (!hayPais) textoInicial = 'Primero selecciona un país'
+    else if (departamentos.length === 0) textoInicial = 'Este país no tiene departamentos'
+    select.innerHTML = `<option value="">${textoInicial}</option>` + departamentos
+      .map(d => `<option value="${d.id_departamento}">${esc(d.nombre_departamento)}</option>`)
+      .join('')
+    select.value = actual
+    select.disabled = departamentos.length === 0
   },
 
   /** Cambia el formulario entre "Agregar" y "Guardar" (edición) */

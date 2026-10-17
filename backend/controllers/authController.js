@@ -16,8 +16,8 @@ const PLANES = {
 
 const TELEFONO_VALIDO = /^\+?[\d\s-]{7,20}$/;
 
-// Valida ciudad (obligatoria y existente) y teléfono. Devuelve { error } o { idCiudad, tel }
-async function validarCiudadYTelefono({ id_ciudad, telefono }) {
+// Valida ciudad (obligatoria y existente) y teléfonos. Devuelve { error } o { idCiudad, tel, tel2 }
+async function validarCiudadYTelefono({ id_ciudad, telefono, telefono2 }) {
   const idCiudad = Number(id_ciudad);
   if (!Number.isInteger(idCiudad) || idCiudad <= 0) return { error: 'Debes seleccionar una ciudad.' };
   if (!(await CiudadModel.getById(idCiudad))) return { error: 'La ciudad seleccionada no existe.' };
@@ -25,7 +25,25 @@ async function validarCiudadYTelefono({ id_ciudad, telefono }) {
   const tel = (telefono || '').trim();
   if (!TELEFONO_VALIDO.test(tel)) return { error: 'Ingresa un teléfono válido.' };
 
-  return { idCiudad, tel };
+  // Teléfono alternativo: es opcional, pero si viene debe ser válido y distinto al principal
+  const tel2 = (telefono2 || '').trim();
+  if (tel2 && !TELEFONO_VALIDO.test(tel2)) return { error: 'El teléfono alternativo no es válido.' };
+  if (tel2 && tel2 === tel) return { error: 'El teléfono alternativo debe ser diferente al principal.' };
+
+  return { idCiudad, tel, tel2: tel2 || null };
+}
+
+// Valida los datos propios del agente. Devuelve { error } o { com, exp }
+function validarDatosAgente({ comision, experiencia }) {
+  const exp = Number(experiencia);
+  if (experiencia === undefined || experiencia === '' || !Number.isInteger(exp) || exp < 0 || exp > 60) {
+    return { error: 'Los años de experiencia deben ser un número entero entre 0 y 60.' };
+  }
+  const com = Number(comision);
+  if (comision === undefined || comision === '' || Number.isNaN(com) || com < 0 || com > 100) {
+    return { error: 'La comisión debe ser un porcentaje entre 0 y 100.' };
+  }
+  return { com, exp };
 }
 
 const authController = {
@@ -75,8 +93,9 @@ const authController = {
 
   async register(req, res) {
     // CAMBIO 1: ahora también leemos id_ciudad, telefono y publicidad del body
+
     const { identificacion, nombre, password, direccion,
-            id_ciudad, telefono, publicidad } = req.body;
+            id_ciudad, telefono, telefono2, publicidad } = req.body;
     const correo = (req.body.correo || '').trim().toLowerCase();
 
     if (!identificacion || !nombre || !correo || !password) {
@@ -88,8 +107,8 @@ const authController = {
 
     try {
       // CAMBIO 2: validar ciudad y teléfono ANTES de tocar la BD
-      const ub = await validarCiudadYTelefono({ id_ciudad, telefono });   // ← NUEVO
-      if (ub.error) return res.status(400).json({ error: ub.error });    // ← NUEVO
+      const ub = await validarCiudadYTelefono({ id_ciudad, telefono, telefono2 });
+      if (ub.error) return res.status(400).json({ error: ub.error });   
 
       const yaExiste = await UsuarioModel.existsByEmailOrId(correo, identificacion);
       if (yaExiste) {
@@ -105,9 +124,10 @@ const authController = {
         nombre,
         contraseñaHash,
         direccion,
-        id_ciudad: ub.idCiudad,                    // ← NUEVO
-        telefono: ub.tel,                          // ← NUEVO
-        visualizar_publicidad: publicidad !== false, // ← NUEVO
+        id_ciudad: ub.idCiudad,                  
+        telefono: ub.tel,  
+        telefono2: ub.tel2,                      
+        visualizar_publicidad: publicidad !== false, 
       });
 
       req.session.usuario = usuario; // registro con auto-login
@@ -121,8 +141,8 @@ const authController = {
   async registerAgente(req, res) {
     // CAMBIO 1: ahora también leemos id_ciudad y telefono (SIN publicidad)
     const { identificacion, nombre, password, direccion,
-            id_ciudad, telefono,
-            empresa, descripcionNegocio, plan } = req.body;
+            id_ciudad, telefono, telefono2,
+            empresa, descripcionNegocio, plan, comision, experiencia } = req.body;
     const correo = (req.body.correo || '').trim().toLowerCase();
 
     if (!identificacion || !nombre || !correo || !password || !empresa || !plan) {
@@ -134,10 +154,12 @@ const authController = {
     if (!PLANES[plan]) {
       return res.status(400).json({ error: 'El plan seleccionado no es válido.' });
     }
+        const datosAgente = validarDatosAgente({ comision, experiencia });
+    if (datosAgente.error) return res.status(400).json({ error: datosAgente.error });
 
     try {
       // CAMBIO 2: validar ciudad y teléfono ANTES de tocar la BD
-      const ub = await validarCiudadYTelefono({ id_ciudad, telefono });   // ← NUEVO
+      const ub = await validarCiudadYTelefono({ id_ciudad, telefono, telefono2 });
       if (ub.error) return res.status(400).json({ error: ub.error });    // ← NUEVO
 
       const yaExiste = await UsuarioModel.existsByEmailOrId(correo, identificacion);
@@ -159,12 +181,15 @@ const authController = {
         nombre,
         contraseñaHash,
         direccion,
-        id_ciudad: ub.idCiudad,                 // ← NUEVO
-        telefono: ub.tel,                       // ← NUEVO
+        id_ciudad: ub.idCiudad,               
+        telefono: ub.tel, 
+        telefono2: ub.tel2,                     
         id_plan: planDb.id_plan,
         nombre_plan: planDb.nombre_plan,
         nombre_empresa: empresa,
         descripcion_agente: descripcionNegocio,
+        comision: datosAgente.com,
+        experiencia: datosAgente.exp,
       });
 
       req.session.usuario = usuario; // registro con auto-login

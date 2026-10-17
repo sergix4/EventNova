@@ -1,12 +1,12 @@
-// routes/departamentoRoutes.js
 const express = require('express');
 const router = express.Router();
 const departamentoController = require('../controllers/departamentoController');
+const { soloAdmin } = require('../middlewares/authMiddleware');
 
 router.get('/', departamentoController.listar);
 router.get('/:id', departamentoController.obtener);
-router.post('/', departamentoController.crear);
-router.put('/:id', departamentoController.actualizar);
-router.delete('/:id', departamentoController.eliminar);
+router.post('/', soloAdmin, departamentoController.crear);
+router.put('/:id', soloAdmin, departamentoController.actualizar);
+router.delete('/:id', soloAdmin, departamentoController.eliminar);
 
 module.exports = router;

@@ -5,6 +5,7 @@
 
 import { CiudadModel } from '../../models/ciudadModel.js'
 import { DepartamentoModel } from '../../models/departamentoModel.js'
+import { PaisModel } from '../../models/paisModel.js'
 import { CiudadView } from '../../views/admin/ciudadView.js'
 import { abrirModal, cerrarModal } from '../../views/componentes/modal.js'
 import { mostrarToast } from '../../views/componentes/toast.js'
@@ -22,10 +23,21 @@ export async function cargarCiudades() {
   }
 }
 
-/** Vuelve a pedir los departamentos para el <select> (se llama cada vez que se abre la pestaña) */
+/** Llena los <select> encadenados País -> Departamento (se llama cada vez que se abre la pestaña) */
 export async function cargarDepartamentosSelect() {
   try {
-    CiudadView.opcionesDepartamentos(await DepartamentoModel.listar())
+    CiudadView.opcionesPaises(await PaisModel.listar())
+    await cargarDepartamentosDePais(document.getElementById('pais-ciudad').value)
+  } catch (error) {
+    CiudadView.error(error.message)
+  }
+}
+
+/** Trae solo los departamentos del país elegido (GET /api/departamentos?id_pais=...) */
+async function cargarDepartamentosDePais(idPais) {
+  if (!idPais) return CiudadView.opcionesDepartamentos([], false)
+  try {
+    CiudadView.opcionesDepartamentos(await DepartamentoModel.listar(idPais))
   } catch (error) {
     CiudadView.error(error.message)
   }
@@ -62,11 +74,15 @@ async function guardar(e) {
   }
 }
 
-function editar(id) {
+async function editar(id) {
   const ciudad = ciudades.find(c => c.id_ciudad === id)
   if (!ciudad) return
   CiudadView.error('')
   editandoId = id
+  // Primero se elige el país de la ciudad y se cargan sus departamentos,
+  // y después se marca el departamento de la ciudad
+  document.getElementById('pais-ciudad').value = ciudad.id_pais
+  await cargarDepartamentosDePais(ciudad.id_pais)
   CiudadView.modoFormulario(true, ciudad.nombre_ciudad, ciudad.id_departamento)
 }
 
@@ -90,6 +106,7 @@ function eliminar(id) {
 
 export function iniciarCiudades() {
   document.getElementById('form-ciudad').addEventListener('submit', guardar)
+  document.getElementById('pais-ciudad').addEventListener('change', (e) => cargarDepartamentosDePais(e.target.value))
   document.getElementById('boton-cancelar-ciu').addEventListener('click', cancelarEdicion)
   document.getElementById('tabla-ciudades').addEventListener('click', (e) => {
     const botonEditar = e.target.closest('[data-editar-ciu]')
