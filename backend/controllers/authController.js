@@ -30,7 +30,8 @@ async function validarCiudadYTelefono({ id_ciudad, telefono }) {
 
 const authController = {
   async login(req, res) {
-    const { correo, contraseña } = req.body;
+    const { contraseña } = req.body;
+    const correo = (req.body.correo || '').trim().toLowerCase();
 
     if (!correo || !contraseña) {
       return res.status(400).json({ error: 'Correo y contraseña son obligatorios.' });
@@ -74,8 +75,9 @@ const authController = {
 
   async register(req, res) {
     // CAMBIO 1: ahora también leemos id_ciudad, telefono y publicidad del body
-    const { identificacion, nombre, correo, password, direccion,
-            id_ciudad, telefono, publicidad } = req.body;            // ← NUEVO
+    const { identificacion, nombre, password, direccion,
+            id_ciudad, telefono, publicidad } = req.body;
+    const correo = (req.body.correo || '').trim().toLowerCase();
 
     if (!identificacion || !nombre || !correo || !password) {
       return res.status(400).json({ error: 'Identificación, nombre, correo y contraseña son obligatorios.' });
@@ -118,9 +120,10 @@ const authController = {
 
   async registerAgente(req, res) {
     // CAMBIO 1: ahora también leemos id_ciudad y telefono (SIN publicidad)
-    const { identificacion, nombre, correo, password, direccion,
-            id_ciudad, telefono,                                      // ← NUEVO
+    const { identificacion, nombre, password, direccion,
+            id_ciudad, telefono,
             empresa, descripcionNegocio, plan } = req.body;
+    const correo = (req.body.correo || '').trim().toLowerCase();
 
     if (!identificacion || !nombre || !correo || !password || !empresa || !plan) {
       return res.status(400).json({ error: 'Identificación, nombre, correo, contraseña, empresa y plan son obligatorios.' });
