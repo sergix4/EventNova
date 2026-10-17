@@ -15,10 +15,10 @@ EventNova/
 ├── backend/                  # Servidor Express (API REST + archivos estáticos)
 │   ├── app.js                # Punto de entrada: /api + sirve la carpeta frontend/
 │   ├── config/db.js          # Conexión a PostgreSQL (pg)
-│   ├── models/               # MODELO: consultas SQL (usuario, plan, país)
+│   ├── models/               # MODELO: consultas SQL (usuario, plan, país, departamento, ciudad)
 │   ├── controllers/          # CONTROLADOR: reciben la petición y responden JSON
-│   ├── routes/               # Rutas /api/auth, /api/paises, /api/status
-│   ├── database/             # Scripts SQL (develop.sql, seed_planes.sql)
+│   ├── routes/               # Rutas /api/auth, /api/paises, /api/departamentos, /api/ciudades, /api/status
+│   ├── database/             # develop.sql, migracion_01.sql, seed_planes.sql, seed_admin.js
 │   └── .env.example          # Plantilla de variables de entorno
 │
 └── frontend/                 # Interfaz HTML5 + CSS + JavaScript
@@ -65,8 +65,10 @@ ubicacion.html ──► ubicacionController.js ──► PaisModel (js/models/p
 ### 1. Base de datos (PostgreSQL)
 
 1. Crear la base de datos `eventnova_db` y el usuario `eventnova_user` con permisos sobre ella.
-2. Ejecutar en pgAdmin (Query Tool) los scripts de `backend/database/`:
-   `develop.sql` y luego `seed_planes.sql`.
+2. Ejecutar en pgAdmin (Query Tool) los scripts de `backend/database/`, en este orden:
+   - `develop.sql` → crea todas las tablas. **Ojo:** borra las tablas existentes y sus datos.
+   - `seed_planes.sql` → carga los 3 planes de agente.
+   - `migracion_01.sql` → solo si tu base se creó antes del PR #10 (agrega columnas sin borrar datos).
 
 ### 2. Servidor
 
@@ -84,6 +86,15 @@ En la terminal debe aparecer:
 Conexion a PostgreSQL establecida correctamente.
 EventNova corriendo en http://localhost:3000
 ```
+
+Para crear el usuario administrador inicial (una sola vez):
+
+```bash
+node database/seed_admin.js
+```
+
+Por defecto queda `admin@eventnova.com` / `Admin12345`. Se puede cambiar con
+`ADMIN_CORREO`, `ADMIN_PASSWORD` y `ADMIN_ID` en el `.env`.
 
 ### 3. Abrir la aplicación
 
@@ -106,11 +117,16 @@ el mismo servidor entrega las páginas HTML y responde la API.
 | POST | `/api/auth/logout` | Cerrar sesión |
 | GET/POST | `/api/paises` | Listar / crear países |
 | GET/PUT/DELETE | `/api/paises/:id` | Consultar / editar / eliminar un país |
+| GET/POST | `/api/departamentos` | Listar (opcional `?id_pais=`) / crear departamentos |
+| GET/PUT/DELETE | `/api/departamentos/:id` | Consultar / editar / eliminar un departamento |
+| GET/POST | `/api/ciudades` | Listar (opcional `?id_departamento=`) / crear ciudades |
+| GET/PUT/DELETE | `/api/ciudades/:id` | Consultar / editar / eliminar una ciudad |
 
 ## Estado actual
 
-- ✅ Registro e inicio de sesión de clientes y agentes contra PostgreSQL.
-- ✅ CRUD de países (Ubicación geográfica) contra PostgreSQL.
+- ✅ Registro (cliente y agente, con ciudad y teléfono) e inicio de sesión contra PostgreSQL, redirigiendo según el rol.
+- ✅ CRUD de países, departamentos y ciudades (Ubicación geográfica) contra PostgreSQL.
+- ✅ Administrador inicial creado con `seed_admin.js`.
 - 🟡 Eventos, reservas y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
   Cuando exista cada endpoint solo se cambia el modelo correspondiente
   (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y
