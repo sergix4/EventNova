@@ -15,6 +15,7 @@ const PLANES = {
 };
 
 const TELEFONO_VALIDO = /^\+?[\d\s-]{7,20}$/;
+const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Valida ciudad (obligatoria y existente) y teléfonos. Devuelve { error } o { idCiudad, tel, tel2 }
 async function validarCiudadYTelefono({ id_ciudad, telefono, telefono2 }) {
@@ -101,6 +102,9 @@ const authController = {
     if (!identificacion || !nombre || !correo || !password) {
       return res.status(400).json({ error: 'Identificación, nombre, correo y contraseña son obligatorios.' });
     }
+        if (!CORREO_VALIDO.test(correo)) {
+      return res.status(400).json({ error: 'El correo no tiene un formato válido.' });
+    }
     if (password.length < 8) {
       return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres.' });
     }
@@ -147,6 +151,9 @@ const authController = {
 
     if (!identificacion || !nombre || !correo || !password || !empresa || !plan) {
       return res.status(400).json({ error: 'Identificación, nombre, correo, contraseña, empresa y plan son obligatorios.' });
+    }
+        if (!CORREO_VALIDO.test(correo)) {
+      return res.status(400).json({ error: 'El correo no tiene un formato válido.' });
     }
     if (password.length < 8) {
       return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres.' });

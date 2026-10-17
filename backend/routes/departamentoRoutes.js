@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express.Router();
+const validarId = require('../middlewares/validarId');
+router.param('id', validarId);
 const departamentoController = require('../controllers/departamentoController');
 const { soloAdmin } = require('../middlewares/authMiddleware');
 

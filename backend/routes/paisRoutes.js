@@ -1,6 +1,8 @@
 // routes/paisRoutes.js
 const express = require('express');
 const router = express.Router();
+const validarId = require('../middlewares/validarId');
+router.param('id', validarId);
 const paisController = require('../controllers/paisController');
 const { soloAdmin } = require('../middlewares/authMiddleware');
 
