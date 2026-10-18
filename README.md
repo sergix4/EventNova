@@ -70,6 +70,9 @@ ubicacion.html ──► ubicacionController.js ──► PaisModel (js/models/p
    - `develop.sql` → crea todas las tablas. **Ojo:** borra las tablas existentes y sus datos.
    - `seed_planes.sql` → carga los 3 planes de agente.
    - `seed_estados.sql` → carga los 5 estados del evento (Programado, En Boletería, En Vivo, Finalizado, Cancelado).
+   - `npm run db:ubicaciones` → carga los países, departamentos y ciudades del mundo
+     (datos de [countries-states-cities-database](https://github.com/dr5hn/countries-states-cities-database),
+     licencia ODbL, mediante el paquete npm `country-state-city`).
    - `migracion_01.sql` → solo si tu base se creó antes del PR #10 (agrega columnas sin borrar datos).
    - `migracion_02.sql` → solo si tu base ya existía: limita los estados de la reserva a Reservada, Confirmada y Cancelada.
 
@@ -122,7 +125,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 | GET/PUT/DELETE | `/api/paises/:id` | Consultar / editar / eliminar un país |
 | GET/POST | `/api/departamentos` | Listar (opcional `?id_pais=`) / crear departamentos |
 | GET/PUT/DELETE | `/api/departamentos/:id` | Consultar / editar / eliminar un departamento |
-| GET/POST | `/api/ciudades` | Listar (opcional `?id_departamento=`) / crear ciudades |
+| GET/POST | `/api/ciudades` | Listar (obligatorio `?id_departamento=`) / crear ciudades |
 | GET/PUT/DELETE | `/api/ciudades/:id` | Consultar / editar / eliminar una ciudad |
 
 ## Estado actual
