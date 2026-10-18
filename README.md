@@ -63,18 +63,22 @@ ubicacion.html ──► ubicacionController.js ──► PaisModel (js/models/p
 
 ## Instalación y ejecución
 
-### 1. Base de datos (PostgreSQL)
+### 1. Base de datos
 
-1. Crear la base de datos `eventnova_db` y el usuario `eventnova_user` con permisos sobre ella.
-2. Ejecutar en pgAdmin (Query Tool) los scripts de `backend/database/`, en este orden:
-   - `develop.sql` → crea todas las tablas. **Ojo:** borra las tablas existentes y sus datos.
-   - `seed_planes.sql` → carga los 3 planes de agente.
-   - `seed_estados.sql` → carga los 5 estados del evento (Programado, En Boletería, En Vivo, Finalizado, Cancelado).
-   - `npm run db:ubicaciones` → carga los países, departamentos y ciudades del mundo
-     (datos de [countries-states-cities-database](https://github.com/dr5hn/countries-states-cities-database),
-     licencia ODbL, mediante el paquete npm `country-state-city`).
-   - `migracion_01.sql` → solo si tu base se creó antes del PR #10 (agrega columnas sin borrar datos).
-   - `migracion_02.sql` → solo si tu base ya existía: limita los estados de la reserva a Reservada, Confirmada y Cancelada.
+El equipo usa una base compartida en **Neon Postgres** (nube).
+
+**Si ya existe la base en Neon (caso normal):**
+1. Pedir la `DATABASE_URL` por privado y pegarla en `backend/.env`.
+2. `npm run dev`. **No** ejecutar `npm run db:init`.
+
+**Para crear una base nueva desde cero (Neon o PostgreSQL local):**
+1. Neon: crear el proyecto y pegar la `DATABASE_URL` en `.env`.
+   Local: crear `eventnova_db` y llenar `DB_HOST`, `DB_PORT`, etc. (sin `DATABASE_URL`).
+2. `npm run db:init` → tablas (`develop.sql`) + planes + estados.
+   Tiene un candado: si la base ya tiene tablas no hace nada
+   (para recrearla a propósito: `npm run db:init -- --forzar`, **borra todo**).
+3. `npm run db:ubicaciones` → países, departamentos y ciudades del mundo.
+4. `npm run db:admin` → administrador inicial.
 
 ### 2. Servidor
 
@@ -96,7 +100,7 @@ EventNova corriendo en http://localhost:3000
 Para crear el usuario administrador inicial (una sola vez):
 
 ```bash
-node database/seed_admin.js
+npm run db:admin
 ```
 
 Por defecto queda `admin@eventnova.com` / `Admin12345`. Se puede cambiar con
