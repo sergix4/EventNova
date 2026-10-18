@@ -17,10 +17,13 @@ function validar(body) {
 const ciudadController = {
   async listar(req, res) {
     try {
-      const { id_departamento } = req.query; // opcional: /api/ciudades?id_departamento=1
-      const ciudades = id_departamento
-        ? await CiudadModel.getByDepartamento(Number(id_departamento))
-        : await CiudadModel.getAll();
+      // Con ~148.000 ciudades en la BD ya no se devuelven todas: el departamento es obligatorio
+      // Ejemplo: /api/ciudades?id_departamento=1
+      const idDepartamento = Number(req.query.id_departamento);
+      if (!Number.isInteger(idDepartamento) || idDepartamento <= 0) {
+        return res.status(400).json({ error: 'Debes indicar un departamento válido (?id_departamento=...).' });
+      }
+      const ciudades = await CiudadModel.getByDepartamento(idDepartamento);
       res.json(ciudades);
     } catch (error) {
       console.error('Error al listar ciudades:', error);

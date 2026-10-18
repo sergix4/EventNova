@@ -87,12 +87,12 @@ function mostrarPestana(nombre) {
   })
   if (nombre === 'paises') cargarPaises()
   if (nombre === 'departamentos') {
-    cargarPaisesSelect()   // el <select> siempre refleja los países actuales
-    cargarDepartamentos()
+    // primero se llena el <select> de países y después la tabla del país elegido
+    cargarPaisesSelect().then(cargarDepartamentos)
   }
   if (nombre === 'ciudades') {
-    cargarDepartamentosSelect()   // el <select> siempre refleja los departamentos actuales
-    cargarCiudades()
+    // primero se llenan los <select> país -> departamento y después la tabla
+    cargarDepartamentosSelect().then(cargarCiudades)
   }
 }
 

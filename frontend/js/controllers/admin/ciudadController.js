@@ -14,8 +14,14 @@ let ciudades = []
 let editandoId = null
 
 export async function cargarCiudades() {
+  // Solo se muestran las ciudades del departamento elegido en el selector
+  const idDepartamento = document.getElementById('departamento-ciudad').value
+  if (!idDepartamento) {
+    ciudades = []
+    return CiudadView.ciudades([], 'Selecciona un país y un departamento para ver sus ciudades.')
+  }
   try {
-    ciudades = await CiudadModel.listar()
+    ciudades = await CiudadModel.listar(idDepartamento)
     CiudadView.ciudades(ciudades)
   } catch (error) {
     CiudadView.ciudades([])
@@ -106,7 +112,11 @@ function eliminar(id) {
 
 export function iniciarCiudades() {
   document.getElementById('form-ciudad').addEventListener('submit', guardar)
-  document.getElementById('pais-ciudad').addEventListener('change', (e) => cargarDepartamentosDePais(e.target.value))
+  document.getElementById('pais-ciudad').addEventListener('change', async (e) => {
+    await cargarDepartamentosDePais(e.target.value)
+    cargarCiudades()
+  })
+  document.getElementById('departamento-ciudad').addEventListener('change', cargarCiudades)
   document.getElementById('boton-cancelar-ciu').addEventListener('click', cancelarEdicion)
   document.getElementById('tabla-ciudades').addEventListener('click', (e) => {
     const botonEditar = e.target.closest('[data-editar-ciu]')
