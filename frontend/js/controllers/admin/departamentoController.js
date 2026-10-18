@@ -13,8 +13,14 @@ let departamentos = []
 let editandoId = null
 
 export async function cargarDepartamentos() {
+  // Solo se muestran los departamentos del país elegido en el selector
+  const idPais = document.getElementById('pais-departamento').value
+  if (!idPais) {
+    departamentos = []
+    return DepartamentoView.departamentos([], 'Selecciona un país para ver sus departamentos.')
+  }
   try {
-    departamentos = await DepartamentoModel.listar()
+    departamentos = await DepartamentoModel.listar(idPais)
     DepartamentoView.departamentos(departamentos)
   } catch (error) {
     DepartamentoView.departamentos([])
@@ -91,6 +97,7 @@ function eliminar(id) {
 export function iniciarDepartamentos() {
   document.getElementById('form-departamento').addEventListener('submit', guardar)
   document.getElementById('boton-cancelar-dep').addEventListener('click', cancelarEdicion)
+  document.getElementById('pais-departamento').addEventListener('change', cargarDepartamentos)
   document.getElementById('tabla-departamentos').addEventListener('click', (e) => {
     const botonEditar = e.target.closest('[data-editar-dep]')
     if (botonEditar) return editar(Number(botonEditar.dataset.editarDep))

@@ -8,9 +8,9 @@ import { esc } from '../../utils/formato.js'
 
 export const CiudadView = {
   /** Dibuja las filas de la tabla de ciudades */
-  ciudades(lista) {
+  ciudades(lista, mensajeVacio = 'Este departamento no tiene ciudades registradas.') {
     document.getElementById('tabla-ciudades').innerHTML = lista.length === 0
-      ? '<tr><td colspan="4" class="tabla__vacia">Sin ciudades registradas.</td></tr>'
+      ? `<tr><td colspan="4" class="tabla__vacia">${mensajeVacio}</td></tr>`
       : lista.map(c => `
         <tr>
           <td>${esc(c.nombre_ciudad)}</td>
@@ -50,7 +50,7 @@ export const CiudadView = {
   /** Cambia el formulario entre "Agregar" y "Guardar" (edición) */
   modoFormulario(editando, nombre = '', idDepartamento = '') {
     document.getElementById('nombre-ciudad').value = nombre
-    document.getElementById('departamento-ciudad').value = idDepartamento
+    if (editando) document.getElementById('departamento-ciudad').value = idDepartamento // al cancelar se conserva el filtro
     document.getElementById('boton-guardar-ciu').textContent = editando ? 'Guardar' : 'Agregar'
     document.getElementById('boton-cancelar-ciu').hidden = !editando
     if (editando) document.getElementById('nombre-ciudad').focus()

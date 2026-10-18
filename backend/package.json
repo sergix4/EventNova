@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "EventNova - Servidor Express: API REST con PostgreSQL (MVC) que además sirve la interfaz HTML5/CSS/JS",
   "main": "app.js",
-  "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
-  },
+"scripts": {
+  "start": "node app.js",
+  "dev": "nodemon app.js",
+  "db:ubicaciones": "node database/importar_ubicaciones.js"
+},
   "keywords": [
     "eventos",
     "reservas",
@@ -18,6 +19,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "chart.js": "^4.5.1",
+    "country-state-city": "^3.2.1",
     "dotenv": "^16.6.1",
     "express": "^4.19.2",
     "express-session": "^1.18.0",

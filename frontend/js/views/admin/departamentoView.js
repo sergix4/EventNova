@@ -6,9 +6,9 @@ import { esc } from '../../utils/formato.js'
 
 export const DepartamentoView = {
   /** Dibuja las filas de la tabla de departamentos */
-  departamentos(lista) {
+  departamentos(lista, mensajeVacio = 'Este país no tiene departamentos registrados.') {
     document.getElementById('tabla-departamentos').innerHTML = lista.length === 0
-      ? '<tr><td colspan="3" class="tabla__vacia">Sin departamentos registrados.</td></tr>'
+      ? `<tr><td colspan="3" class="tabla__vacia">${mensajeVacio}</td></tr>`
       : lista.map(d => `
         <tr>
           <td>${esc(d.nombre_departamento)}</td>
@@ -33,7 +33,7 @@ export const DepartamentoView = {
   /** Cambia el formulario entre "Agregar" y "Guardar" (edición) */
   modoFormulario(editando, nombre = '', idPais = '') {
     document.getElementById('nombre-departamento').value = nombre
-    document.getElementById('pais-departamento').value = idPais
+    if (editando) document.getElementById('pais-departamento').value = idPais // al cancelar se conserva el país del filtro
     document.getElementById('boton-guardar-dep').textContent = editando ? 'Guardar' : 'Agregar'
     document.getElementById('boton-cancelar-dep').hidden = !editando
     if (editando) document.getElementById('nombre-departamento').focus()
