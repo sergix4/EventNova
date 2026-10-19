@@ -15,7 +15,7 @@ EventNova/
 ├── backend/                  # Servidor Express (API REST + archivos estáticos)
 │   ├── app.js                # Punto de entrada: /api + sirve la carpeta frontend/
 │   ├── config/db.js          # Conexión a PostgreSQL (pg)
-│   ├── models/               # MODELO: consultas SQL (usuario, plan, país, departamento, ciudad)
+│   ├── models/               # MODELO: consultas SQL (usuario, plan, país, departamento, ciudad, evento)
 │   ├── controllers/          # CONTROLADOR: reciben la petición y responden JSON
 │   ├── routes/               # Rutas /api/auth, /api/paises, /api/departamentos, /api/ciudades, /api/status
 │   ├── middlewares/          # authMiddleware.js: soloAdmin protege crear/editar/eliminar
@@ -42,10 +42,10 @@ EventNova/
 
 El patrón se aplica en las dos partes del sistema:
 
-| Capa | Backend (servidor) | Frontend (navegador) |
-| --- | --- | --- |
-| **Modelo** | `backend/models/*.js` — consultas SQL a PostgreSQL | `frontend/js/models/*.js` — piden los datos a la API con `fetch` |
-| **Vista** | Respuestas JSON de la API | `frontend/pages/*.html` + `frontend/js/views/*.js` + `frontend/css/` |
+| Capa            | Backend (servidor)                                          | Frontend (navegador)                                                                   |
+| --------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Modelo**      | `backend/models/*.js` — consultas SQL a PostgreSQL          | `frontend/js/models/*.js` — piden los datos a la API con `fetch`                       |
+| **Vista**       | Respuestas JSON de la API                                   | `frontend/pages/*.html` + `frontend/js/views/*.js` + `frontend/css/`                   |
 | **Controlador** | `backend/controllers/*.js` — validan y deciden la respuesta | `frontend/js/controllers/*.js` — escuchan clics/formularios y coordinan modelo y vista |
 
 Ejemplo — CRUD de países (`Panel administrador → Ubicación geográfica`):
@@ -68,10 +68,12 @@ ubicacion.html ──► ubicacionController.js ──► PaisModel (js/models/p
 El equipo usa una base compartida en **Neon Postgres** (nube).
 
 **Si ya existe la base en Neon (caso normal):**
+
 1. Pedir la `DATABASE_URL` por privado y pegarla en `backend/.env`.
 2. `npm run dev`. **No** ejecutar `npm run db:init`.
 
 **Para crear una base nueva desde cero (Neon o PostgreSQL local):**
+
 1. Neon: crear el proyecto y pegar la `DATABASE_URL` en `.env`.
    Local: crear `eventnova_db` y llenar `DB_HOST`, `DB_PORT`, etc. (sin `DATABASE_URL`).
 2. `npm run db:init` → tablas (`develop.sql`) + planes + estados.
@@ -79,6 +81,9 @@ El equipo usa una base compartida en **Neon Postgres** (nube).
    (para recrearla a propósito: `npm run db:init -- --forzar`, **borra todo**).
 3. `npm run db:ubicaciones` → países, departamentos y ciudades del mundo.
 4. `npm run db:admin` → administrador inicial.
+
+**Para aplicar una migración nueva a una base que ya existe** (no borra datos):
+`npm run db:migrar -- migracion_03.sql`
 
 ### 2. Servidor
 
@@ -111,26 +116,26 @@ Por defecto queda `admin@eventnova.com` / `Admin12345`. Se puede cambiar con
 Abrir **http://localhost:3000** en el navegador. Un solo comando levanta todo:
 el mismo servidor entrega las páginas HTML y responde la API.
 
-> ⚠️ No abrir los `.html` con doble clic ni con *Live Server*: las páginas usan
+> ⚠️ No abrir los `.html` con doble clic ni con _Live Server_: las páginas usan
 > módulos de JavaScript y la sesión del servidor, así que deben abrirse desde
 > `http://localhost:3000`.
 
 ## API disponible
 
-| Método | Ruta | Descripción |
-| --- | --- | --- |
-| GET | `/api/status` | Estado del servidor |
-| POST | `/api/auth/login` | Iniciar sesión |
-| POST | `/api/auth/register` | Registrar cliente |
-| POST | `/api/auth/register-agente` | Registrar agente (con plan) |
-| GET | `/api/auth/sesion` | Usuario con sesión activa (o `null`) |
-| POST | `/api/auth/logout` | Cerrar sesión |
-| GET/POST | `/api/paises` | Listar / crear países |
-| GET/PUT/DELETE | `/api/paises/:id` | Consultar / editar / eliminar un país |
-| GET/POST | `/api/departamentos` | Listar (opcional `?id_pais=`) / crear departamentos |
-| GET/PUT/DELETE | `/api/departamentos/:id` | Consultar / editar / eliminar un departamento |
-| GET/POST | `/api/ciudades` | Listar (obligatorio `?id_departamento=`) / crear ciudades |
-| GET/PUT/DELETE | `/api/ciudades/:id` | Consultar / editar / eliminar una ciudad |
+| Método         | Ruta                        | Descripción                                               |
+| -------------- | --------------------------- | --------------------------------------------------------- |
+| GET            | `/api/status`               | Estado del servidor                                       |
+| POST           | `/api/auth/login`           | Iniciar sesión                                            |
+| POST           | `/api/auth/register`        | Registrar cliente                                         |
+| POST           | `/api/auth/register-agente` | Registrar agente (con plan)                               |
+| GET            | `/api/auth/sesion`          | Usuario con sesión activa (o `null`)                      |
+| POST           | `/api/auth/logout`          | Cerrar sesión                                             |
+| GET/POST       | `/api/paises`               | Listar / crear países                                     |
+| GET/PUT/DELETE | `/api/paises/:id`           | Consultar / editar / eliminar un país                     |
+| GET/POST       | `/api/departamentos`        | Listar (opcional `?id_pais=`) / crear departamentos       |
+| GET/PUT/DELETE | `/api/departamentos/:id`    | Consultar / editar / eliminar un departamento             |
+| GET/POST       | `/api/ciudades`             | Listar (obligatorio `?id_departamento=`) / crear ciudades |
+| GET/PUT/DELETE | `/api/ciudades/:id`         | Consultar / editar / eliminar una ciudad                  |
 
 ## Estado actual
 
@@ -139,6 +144,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Administrador inicial creado con `seed_admin.js`.
 - ✅ Crear, editar y eliminar ubicaciones solo lo puede hacer el administrador (middleware `soloAdmin`).
 - ✅ Estados del evento (tabla `ESTADO`) y de la reserva (restricción `CHECK`) definidos.
+- ✅ Tabla `EVENTO` con los campos del enunciado (`migracion_03.sql`) y modelo `backend/models/eventoModel.js`.
 - 🟡 Eventos, reservas y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
   Cuando exista cada endpoint solo se cambia el modelo correspondiente
   (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y

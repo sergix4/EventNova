@@ -113,22 +113,42 @@ CREATE TABLE public."CLIENTE" (
 
 
 DROP TABLE IF EXISTS public."EVENTO" CASCADE;
+
 CREATE TABLE public."EVENTO" (
-    id_evento SERIAL PRIMARY KEY,
-    id_agente VARCHAR(20) NOT NULL,
-    id_estado INTEGER NOT NULL,
-    id_tipo INTEGER NOT NULL,
-    ubicacion_evento VARCHAR(255),
-    capacidad INTEGER,
-    precio NUMERIC(10, 2),
-    hora TIME,
-    imagen_evento VARCHAR(255),
-    fecha_evento DATE,
+    id_evento          SERIAL PRIMARY KEY,
+    -- Código único que se genera solo a partir del id: 1 -> EVT-00001
+    codigo_evento      VARCHAR(20) GENERATED ALWAYS AS ('EVT-' || LPAD(id_evento::text, 5, '0')) STORED,
+    nombre_evento      VARCHAR(150) NOT NULL,
     descripcion_evento TEXT,
-    CONSTRAINT fk_evento_agente FOREIGN KEY (id_agente) REFERENCES public."AGENTE" (numero_id),
-    CONSTRAINT fk_evento_estado FOREIGN KEY (id_estado) REFERENCES public."ESTADO" (id_estado),
-    CONSTRAINT fk_evento_tipo FOREIGN KEY (id_tipo) REFERENCES public."TIPO" (id_tipo)
+    teatro             VARCHAR(150) NOT NULL,          -- recinto donde se realiza
+    direccion_evento   VARCHAR(255),                   -- dirección del teatro (opcional)
+    id_ciudad          INTEGER NOT NULL,               -- ciudad de realización
+    fecha_inicio       TIMESTAMP NOT NULL,             -- fecha y hora de inicio
+    fecha_fin          TIMESTAMP NOT NULL,             -- fecha y hora estimada de finalización
+    capacidad          INTEGER NOT NULL,               -- capacidad total de espectadores
+    precio_base        NUMERIC(10, 2) NOT NULL,        -- precio base de la entrada
+    observaciones      TEXT,
+    imagen_evento      VARCHAR(255),
+    id_estado          INTEGER NOT NULL,               -- Programado, En Boletería, En Vivo, Finalizado, Cancelado
+    causa_cancelacion  TEXT,                           -- se llena cuando el evento se cancela (Sprint 3)
+    id_agente          VARCHAR(20) NOT NULL,           -- agente que registró el evento
+    id_tipo            INTEGER,                        -- opcional por ahora (tabla TIPO aún sin datos)
+    fecha_registro     TIMESTAMP NOT NULL DEFAULT NOW(),
+
+    CONSTRAINT ux_evento_codigo   UNIQUE (codigo_evento),
+    CONSTRAINT fk_evento_ciudad   FOREIGN KEY (id_ciudad) REFERENCES public."CIUDAD" (id_ciudad),
+    CONSTRAINT fk_evento_agente   FOREIGN KEY (id_agente) REFERENCES public."AGENTE" (numero_id),
+    CONSTRAINT fk_evento_estado   FOREIGN KEY (id_estado) REFERENCES public."ESTADO" (id_estado),
+    CONSTRAINT fk_evento_tipo     FOREIGN KEY (id_tipo)   REFERENCES public."TIPO" (id_tipo),
+    CONSTRAINT ck_evento_capacidad CHECK (capacidad > 0),
+    CONSTRAINT ck_evento_precio    CHECK (precio_base >= 0),
+    CONSTRAINT ck_evento_fechas    CHECK (fecha_fin > fecha_inicio)
 );
+
+-- 4. Índices para los filtros del CRUD (por estado, por ciudad y por agente)
+CREATE INDEX IF NOT EXISTS ix_evento_estado ON public."EVENTO" (id_estado);
+CREATE INDEX IF NOT EXISTS ix_evento_ciudad ON public."EVENTO" (id_ciudad);
+CREATE INDEX IF NOT EXISTS ix_evento_agente ON public."EVENTO" (id_agente);
 
 DROP TABLE IF EXISTS public."AGRUPA" CASCADE;
 CREATE TABLE public."AGRUPA" (
@@ -175,3 +195,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS ux_departamento_nombre_pais
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_ciudad_nombre_departamento
   ON public."CIUDAD" (id_departamento, LOWER(nombre_ciudad));
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_estado_nombre
+  ON public."ESTADO" (nombre_estado);
