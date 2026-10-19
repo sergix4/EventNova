@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "description": "EventNova - Servidor Express: API REST con PostgreSQL (MVC) que además sirve la interfaz HTML5/CSS/JS",
   "main": "app.js",
-"scripts": {
-  "start": "node app.js",
-  "dev": "nodemon app.js",
-  "db:init": "node conectarsql.js",
-  "db:admin": "node database/seed_admin.js",
-  "db:ubicaciones": "node database/importar_ubicaciones.js"
-},
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "db:init": "node conectarsql.js",
+    "db:admin": "node database/seed_admin.js",
+    "db:ubicaciones": "node database/importar_ubicaciones.js",
+    "db:migrar": "node database/migrar.js"
+  },
   "keywords": [
     "eventos",
     "reservas",
