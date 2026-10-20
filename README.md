@@ -79,7 +79,9 @@ El equipo usa una base compartida en **Neon Postgres** (nube).
 2. `npm run db:init` → tablas (`develop.sql`) + planes + estados.
    Tiene un candado: si la base ya tiene tablas no hace nada
    (para recrearla a propósito: `npm run db:init -- --forzar`, **borra todo**).
-3. `npm run db:ubicaciones` → países, departamentos y ciudades del mundo.
+3. `npm run db:ubicaciones` → países, departamentos y ciudades del mundo
+   (datos de [countries-states-cities-database](https://github.com/dr5hn/countries-states-cities-database),
+   licencia ODbL, mediante el paquete npm [`country-state-city`](https://github.com/harpreetkhalsagtbit/country-state-city)).
 4. `npm run db:admin` → administrador inicial.
 
 **Para aplicar una migración nueva a una base que ya existe** (no borra datos):
