@@ -1,6 +1,6 @@
 // js/controllers/agente/misEventosController.js
-// CONTROLADOR de "Mis eventos": filtros, paginación, ver detalle,
-// editar (dentro de la misma página) y eliminar.
+// CONTROLADOR de "Mis eventos": filtros por estado y ciudad, paginación,
+// ver detalle, editar (PUT + PATCH de estado) y eliminar (DELETE) contra PostgreSQL.
 
 import { iniciarPanel } from '../comun/panelController.js'
 import { montarFormulario } from './formularioEventoController.js'
@@ -9,31 +9,38 @@ import { MisEventosView } from '../../views/agente/misEventosView.js'
 import { abrirModal, cerrarModal } from '../../views/componentes/modal.js'
 import { paginar } from '../../views/componentes/paginacion.js'
 import { mostrarToast } from '../../views/componentes/toast.js'
+import { esc } from '../../utils/formato.js'
 
 const POR_PAGINA = 6
-const MESES = { ene: '01', feb: '02', mar: '03', abr: '04', may: '05', jun: '06', jul: '07', ago: '08', sep: '09', oct: '10', nov: '11', dic: '12' }
 
 const contenido = document.getElementById('contenido')
 let htmlLista = ''
 let eventos = []
 let pagina = 1
 
-/** "15 sep 2026" → "2026-09-15" (para el campo de fecha) */
-function fechaParaInput(texto) {
-  const [d, m, a] = texto.toLowerCase().split(/\s+/)
-  return a ? `${a}-${MESES[m] || '01'}-${d.padStart(2, '0')}` : ''
+// Llena el filtro de ciudades con las ciudades reales presentes en los eventos del agente
+function poblarFiltrosDinamicos() {
+  const selectCiudad = document.getElementById('filtro-ciudad')
+  if (selectCiudad) {
+    const actual = selectCiudad.value
+    const ciudadesUnicas = [...new Set(eventos.map(e => e.ciudad).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'))
+    selectCiudad.innerHTML = `<option value="Todas las ciudades">Todas las ciudades</option>` +
+      ciudadesUnicas.map(c => `<option value="${esc(c)}"${c === actual ? ' selected' : ''}>${esc(c)}</option>`).join('')
+  }
 }
 
 function filtrar() {
-  const q = document.getElementById('buscar').value.toLowerCase()
+  const q = document.getElementById('buscar').value.toLowerCase().trim()
   const estado = document.getElementById('filtro-estado').value
   const ciudad = document.getElementById('filtro-ciudad').value
-  const fecha = document.getElementById('filtro-fecha').value
+  const fecha = document.getElementById('filtro-fecha').value.toLowerCase().trim()
+
   return eventos.filter(e =>
-    (e.nombre.toLowerCase().includes(q) || e.ciudad.toLowerCase().includes(q)) &&
+    (e.nombre.toLowerCase().includes(q) || e.ciudad.toLowerCase().includes(q) || (e.codigo || '').toLowerCase().includes(q)) &&
     (ciudad === 'Todas las ciudades' || e.ciudad === ciudad) &&
-    (estado === 'Todos' || e.estado === estado) &&
-    (!fecha || e.fecha.includes(fecha)))
+    (estado === 'Todos' || e.estado.toLowerCase() === estado.toLowerCase()) &&
+    (!fecha || e.fecha.toLowerCase().includes(fecha) || (e.fecha_inicio_input || '').includes(fecha))
+  )
 }
 
 function dibujar() {
@@ -43,51 +50,63 @@ function dibujar() {
 }
 
 function conectarLista() {
+  poblarFiltrosDinamicos()
   ;['buscar', 'filtro-fecha'].forEach(id => document.getElementById(id).addEventListener('input', () => { pagina = 1; dibujar() }))
   ;['filtro-estado', 'filtro-ciudad'].forEach(id => document.getElementById(id).addEventListener('change', () => { pagina = 1; dibujar() }))
 }
 
 async function verDetalle(evento) {
-  const calificaciones = await EventoModel.obtenerCalificaciones(evento.idEjemplo)
+  if (!evento) return
+  const calificaciones = await EventoModel.obtenerCalificaciones(evento.id)
   abrirModal(MisEventosView.modalDetalle(evento, calificaciones), { clase: 'modal--lg' })
 }
 
 function eliminar(evento) {
+  if (!evento) return
   const caja = abrirModal(MisEventosView.modalEliminar(evento.nombre), { cerrarAlHacerClicFuera: false })
-  caja.querySelector('[data-accion="confirmar"]').addEventListener('click', () => {
-    eventos = eventos.filter(e => e.id !== evento.id) // pendiente: DELETE /api/eventos/:id
-    cerrarModal()
-    dibujar()
+  caja.querySelector('[data-accion="confirmar"]').addEventListener('click', async () => {
+    try {
+      await EventoModel.eliminar(evento.id)
+      eventos = eventos.filter(e => e.id !== evento.id)
+      cerrarModal()
+      poblarFiltrosDinamicos()
+      dibujar()
+      mostrarToast('Evento eliminado correctamente.', { duracion: 2200 })
+    } catch (err) {
+      cerrarModal()
+      mostrarToast(err.message || 'No se pudo eliminar el evento.', { tipo: 'error', duracion: 3500 })
+    }
   })
 }
 
-// ─── Edición dentro de la misma página (como en el prototipo) ───────────────
+// ─── Edición dentro de la misma página ──────────────────────────────────────
 function editar(evento) {
+  if (!evento) return
   MisEventosView.cabecera(true)
   contenido.classList.remove('panel__contenido')
   document.getElementById('principal').scrollTop = 0
+
   montarFormulario(contenido, {
     modo: 'editar',
-    datos: {
-      nombre: evento.nombre, descripcion: evento.descripcion, categoria: evento.categoria,
-      pais: evento.pais, departamento: evento.departamento, ciudad: evento.ciudad, direccion: evento.direccion,
-      fecha: fechaParaInput(evento.fechaOriginal), hora: '', capacidad: evento.capacidad, precio: evento.precio, estado: evento.estado,
-    },
+    datos: evento,
     alCancelar: volverALista,
-    alGuardar: (datos) => {
-      mostrarToast('Evento actualizado correctamente.', { duracion: 1600 })
-      setTimeout(() => {
-        Object.assign(evento, {
-          nombre: datos.nombre,
-          ciudad: datos.ciudad,
-          capacidad: Number(datos.capacidad) || evento.capacidad,
-          precio: datos.precio,
-          estado: datos.estado,
-          fecha: datos.fecha ? new Date(datos.fecha + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) : evento.fecha,
-        })
-        volverALista()
-        mostrarToast('Evento actualizado correctamente.', { duracion: 3000 })
-      }, 1600)
+    alGuardar: async (payload) => {
+      let actualizado = await EventoModel.actualizar(evento.id, payload)
+
+      // Si el usuario también cambió el estado del evento, aplicamos PATCH /api/eventos/:id/estado
+      if (payload.id_estado && payload.estado !== evento.estado) {
+        actualizado = await EventoModel.cambiarEstado(
+          evento.id,
+          payload.id_estado,
+          payload.causa_cancelacion,
+        )
+      }
+
+      const idx = eventos.findIndex(x => x.id === evento.id)
+      if (idx !== -1) eventos[idx] = actualizado
+
+      volverALista()
+      mostrarToast('Evento actualizado correctamente.', { duracion: 2500 })
     },
   })
 }
@@ -103,7 +122,12 @@ function volverALista() {
 async function iniciar() {
   await iniciarPanel({ rol: 'agente', activo: 'mis-eventos' })
   htmlLista = contenido.innerHTML
-  eventos = await EventoModel.obtenerDelAgente()
+  try {
+    eventos = await EventoModel.obtenerDelAgente()
+  } catch (err) {
+    mostrarToast(err.message || 'Error al cargar tus eventos.', { tipo: 'error' })
+    eventos = []
+  }
   conectarLista()
   dibujar()
 

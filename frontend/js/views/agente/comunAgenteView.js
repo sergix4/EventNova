@@ -5,7 +5,9 @@ import { icono } from '../componentes/iconos.js'
 import { esc } from '../../utils/formato.js'
 
 const CLASE_EVENTO = {
-  'Programado': 'ev-programado', 'En boletería': 'ev-boleteria', 'En vivo': 'ev-vivo',
+  'Programado': 'ev-programado',
+  'En boletería': 'ev-boleteria', 'En Boletería': 'ev-boleteria',
+  'En vivo': 'ev-vivo', 'En Vivo': 'ev-vivo',
   'Finalizado': 'ev-finalizado', 'Cancelado': 'ev-cancelado',
 }
 const CLASE_RESERVA = { 'Pendiente': 'res-pendiente', 'Confirmada': 'res-confirmada', 'Cancelada': 'res-cancelada' }

@@ -13,7 +13,21 @@ function soloAdmin(req, res, next) {
     return res.status(403).json({ error: 'Solo el administrador puede realizar esta acción.' });
   }
 
-  next(); // todo bien: sigue hacia el controlador
+next(); // todo bien: sigue hacia el controlador
 }
 
-module.exports = { soloAdmin };
+// Solo deja pasar al usuario con sesión iniciada y rol "agente" o "administrador"
+function soloAgenteOAdmin(req, res, next) {
+  const usuario = req.session.usuario;
+
+  if (!usuario) {
+    return res.status(401).json({ error: 'Debes iniciar sesión.' });
+  }
+  if (usuario.rol !== 'agente' && usuario.rol !== 'administrador') {
+    return res.status(403).json({ error: 'Solo agentes o administradores pueden realizar esta acción.' });
+  }
+
+  next();
+}
+
+module.exports = { soloAdmin, soloAgenteOAdmin };

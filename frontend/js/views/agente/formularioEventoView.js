@@ -2,15 +2,15 @@
 // VISTA del formulario de evento. Se usa en dos lugares:
 //   - "Registrar evento"            (modo 'registrar')
 //   - "Editar evento" en Mis eventos (modo 'editar')
-// El HTML se dibuja una sola vez; luego el controlador solo actualiza las
-// partes que cambian (opciones de los selects, errores, estado, imagen).
 
 import { icono } from '../componentes/iconos.js'
 import { esc } from '../../utils/formato.js'
 
 export const COLORES_ESTADO = {
   'Programado':   ['#eef2ff', '#4f46e5'],
+  'En Boletería': ['#fffbeb', '#d97706'],
   'En boletería': ['#fffbeb', '#d97706'],
+  'En Vivo':      ['#ecfdf5', '#059669'],
   'En vivo':      ['#ecfdf5', '#059669'],
   'Finalizado':   ['#f3f4f6', '#374151'],
   'Cancelado':    ['#fef2f2', '#dc2626'],
@@ -32,7 +32,7 @@ function campoTexto({ id, texto, requerido, tipo = 'text', placeholder = '', val
   return `
     <div class="campo" data-campo="${id}">
       ${etiqueta(id, texto, requerido)}
-      <input type="${tipo}" id="${id}" name="${id}" class="entrada" placeholder="${esc(placeholder)}" value="${esc(valor)}" ${extra}>
+      <input type="${tipo}" id="${id}" name="${id}" class="entrada" placeholder="${esc(placeholder)}" value="${esc(valor ?? '')}" ${extra}>
       <span class="campo__error" data-error="${id}"></span>
       ${ayuda ? `<p class="campo__ayuda">${ayuda}</p>` : ''}
     </div>`
@@ -42,9 +42,20 @@ function campoArea({ id, texto, requerido, filas, placeholder, valor = '' }) {
   return `
     <div class="campo" data-campo="${id}">
       ${etiqueta(id, texto, requerido)}
-      <textarea id="${id}" name="${id}" class="area-texto" rows="${filas}" placeholder="${esc(placeholder)}">${esc(valor)}</textarea>
+      <textarea id="${id}" name="${id}" class="area-texto" rows="${filas}" placeholder="${esc(placeholder)}">${esc(valor ?? '')}</textarea>
       <span class="campo__error" data-error="${id}"></span>
     </div>`
+}
+
+// Soporta opciones como strings ("Colombia") o como objetos ({ valor: 1, texto: "Colombia" })
+function opcionesSelect(vacio, opciones = [], valorSeleccionado = '') {
+  return `<option value="">${esc(vacio)}</option>` +
+    opciones.map(o => {
+      const val = typeof o === 'object' ? o.valor : o
+      const txt = typeof o === 'object' ? o.texto : o
+      const sel = String(val) === String(valorSeleccionado) && String(valorSeleccionado) !== '' ? ' selected' : ''
+      return `<option value="${esc(val)}"${sel}>${esc(txt)}</option>`
+    }).join('')
 }
 
 function campoSelect({ id, texto, requerido, vacio, opciones = [], valor = '' }) {
@@ -58,62 +69,62 @@ function campoSelect({ id, texto, requerido, vacio, opciones = [], valor = '' })
     </div>`
 }
 
-function opcionesSelect(vacio, opciones, valor) {
-  return `<option value="">${esc(vacio)}</option>` +
-    opciones.map(o => `<option${o === valor ? ' selected' : ''}>${esc(o)}</option>`).join('')
-}
-
 function chipsEstado(estados, actual) {
   return estados.map(s => {
-    const [fondo, color] = COLORES_ESTADO[s]
-    return `<button type="button" class="chip-estado" data-estado="${s}" aria-pressed="${s === actual}" style="--chip-fondo:${fondo};--chip-color:${color}"><span class="chip-estado__punto"></span>${s}</button>`
+    const nombre = typeof s === 'object' ? s.nombre_estado : s
+    const [fondo, color] = COLORES_ESTADO[nombre] || COLORES_ESTADO['Programado']
+    return `<button type="button" class="chip-estado" data-estado="${esc(nombre)}" aria-pressed="${nombre === actual}" style="--chip-fondo:${fondo};--chip-color:${color}"><span class="chip-estado__punto"></span>${esc(nombre)}</button>`
   }).join('')
 }
 
 export const FormularioEventoView = {
   /**
    * Devuelve el HTML completo del formulario.
-   * @param {object} c { modo, datos, paises, categorias, estados }
+   * @param {object} c { modo, datos, paises, estados }
    */
-  html({ modo, datos = {}, paises, categorias, estados }) {
+  html({ modo, datos = {}, paises = [], estados = [] }) {
     const editar = modo === 'editar'
 
-    const informacion = editar
-      ? campoTexto({ id: 'nombre', texto: 'Nombre del evento', requerido: true, valor: datos.nombre }) +
-        campoArea({ id: 'descripcion', texto: 'Descripción', filas: 4, placeholder: 'Describe el evento…', valor: datos.descripcion }) +
-        campoSelect({ id: 'categoria', texto: 'Categoría', vacio: 'Seleccionar categoría', opciones: categorias, valor: datos.categoria }) +
-        campoArea({ id: 'informacion', texto: 'Información adicional', filas: 2, placeholder: 'Indicaciones especiales, requisitos, restricciones…' })
-      : campoTexto({ id: 'nombre', texto: 'Nombre del evento', requerido: true, placeholder: 'Ej. Festival de Música Urbana 2026' }) +
-        campoArea({ id: 'descripcion', texto: 'Descripción', requerido: true, filas: 4, placeholder: 'Describe el evento: artistas, actividades, público objetivo, experiencia…' }) +
-        `<div class="campo">
-          <span class="campo__etiqueta">Imagen del evento</span>
-          <div class="zona-imagen" id="zona-imagen" tabindex="0" role="button" aria-label="Seleccionar imagen del evento"></div>
-          <input type="file" id="imagen" accept="image/*" hidden>
-          <p class="nota-imagen" id="nota-imagen">${icono('imagen', 20)}Opcional. Si no cargas una imagen se usará una imagen por defecto.</p>
-        </div>`
+    const informacion =
+      campoTexto({ id: 'nombre', texto: 'Nombre del evento', requerido: true, placeholder: 'Ej. Festival de Música Urbana 2026', valor: datos.nombre }) +
+      campoArea({ id: 'descripcion', texto: 'Descripción', requerido: true, filas: 4, placeholder: 'Describe el evento: artistas, actividades, público objetivo, experiencia…', valor: datos.descripcion }) +
+      campoArea({ id: 'informacion', texto: 'Observaciones / Información adicional', requerido: false, filas: 2, placeholder: 'Indicaciones especiales, edad mínima, restricciones…', valor: datos.observaciones }) +
+      `<div class="campo">
+        <span class="campo__etiqueta">Imagen del evento</span>
+        <div class="zona-imagen" id="zona-imagen" tabindex="0" role="button" aria-label="Seleccionar imagen del evento"></div>
+        <input type="file" id="imagen" accept="image/*" hidden>
+        <p class="nota-imagen" id="nota-imagen">${icono('imagen', 20)}Opcional. Si no cargas una imagen se usará una imagen por defecto.</p>
+      </div>`
 
     const ubicacion =
-      campoSelect({ id: 'pais', texto: 'País', requerido: true, vacio: 'Seleccionar país', opciones: paises, valor: datos.pais }) +
+      campoSelect({ id: 'pais', texto: 'País', requerido: true, vacio: 'Seleccionar país', opciones: paises, valor: datos.id_pais }) +
       campoSelect({ id: 'departamento', texto: 'Departamento / Estado', requerido: true, vacio: 'Seleccionar departamento' }) +
       campoSelect({ id: 'ciudad', texto: 'Ciudad', requerido: true, vacio: 'Seleccionar ciudad' }) +
-      (editar
-        ? campoTexto({ id: 'direccion', texto: 'Lugar / Dirección', placeholder: 'Ej. Parque Norte, Cl. 73 #52-36', valor: datos.direccion })
-        : campoTexto({ id: 'direccion', texto: 'Dirección', requerido: true, placeholder: 'Ej. Cra 7 # 32-16, Parque de la 93' }))
+      campoTexto({ id: 'teatro', texto: 'Teatro o recinto', requerido: true, placeholder: 'Ej. Teatro Jorge Isaacs / Coliseo de Ferias', valor: datos.teatro }) +
+      campoTexto({ id: 'direccion', texto: 'Dirección exacta', requerido: true, placeholder: 'Ej. Cra 3 # 12-28', valor: datos.direccion })
 
     const hoy = new Date().toISOString().split('T')[0]
     const fecha =
-      campoTexto({ id: 'fecha', texto: 'Fecha del evento', requerido: true, tipo: 'date', valor: datos.fecha, extra: editar ? '' : `min="${hoy}"` }) +
-      campoTexto({ id: 'hora', texto: 'Hora del evento', requerido: !editar, tipo: 'time', valor: datos.hora })
+      campoTexto({ id: 'fecha', texto: 'Fecha de inicio', requerido: true, tipo: 'date', valor: datos.fecha_inicio_input, extra: editar ? '' : `min="${hoy}"` }) +
+      campoTexto({ id: 'hora', texto: 'Hora de inicio', requerido: true, tipo: 'time', valor: datos.hora_inicio_input || '19:00' }) +
+      campoTexto({ id: 'fecha_fin', texto: 'Fecha de finalización', requerido: true, tipo: 'date', valor: datos.fecha_fin_input || datos.fecha_inicio_input, extra: editar ? '' : `min="${hoy}"` }) +
+      campoTexto({ id: 'hora_fin', texto: 'Hora de finalización', requerido: true, tipo: 'time', valor: datos.hora_fin_input || '22:00' })
 
     const capacidad =
-      campoTexto({ id: 'capacidad', texto: 'Capacidad', requerido: true, tipo: 'number', placeholder: editar ? '' : 'Ej. 500', valor: datos.capacidad, ayuda: 'Número máximo de asistentes.', extra: 'min="1"' }) +
-      campoTexto({ id: 'precio', texto: 'Precio por entrada', requerido: true, placeholder: editar ? '' : 'Ej. $ 85.000', valor: datos.precio, ayuda: 'En pesos colombianos (COP).' })
+      campoTexto({ id: 'capacidad', texto: 'Capacidad', requerido: true, tipo: 'number', placeholder: 'Ej. 500', valor: datos.capacidad, ayuda: 'Número máximo de asistentes (> 0).', extra: 'min="1"' }) +
+      campoTexto({ id: 'precio', texto: 'Precio por entrada', requerido: true, placeholder: 'Ej. $ 85.000', valor: datos.precio, ayuda: 'En pesos colombianos (COP). Usa 0 si es gratis.' })
 
+    const estadoActual = datos.estado || 'Programado'
+    const mostrarCausa = editar && estadoActual === 'Cancelado'
     const estado = `
       <div>
         <span class="campo__etiqueta">Estado</span>
-        <div class="estados-evento" id="estados" role="group" aria-label="Estado del evento">${chipsEstado(estados, datos.estado || 'Programado')}</div>
-        ${editar ? '' : '<p class="nota-estado">El estado inicial recomendado para un evento nuevo es <strong>Programado</strong>.</p>'}
+        <div class="estados-evento" id="estados" role="group" aria-label="Estado del evento">${chipsEstado(estados, estadoActual)}</div>
+        ${editar
+          ? `<div id="bloque-causa" style="margin-top:12px" ${mostrarCausa ? '' : 'hidden'}>
+               ${campoArea({ id: 'causa_cancelacion', texto: 'Causa de cancelación', requerido: true, filas: 2, placeholder: 'Explica el motivo por el cual se cancela el evento…', valor: datos.causa_cancelacion })}
+             </div>`
+          : '<p class="nota-estado">Todo evento nuevo se registra inicialmente en estado <strong>Programado</strong>.</p>'}
       </div>`
 
     return `
@@ -130,15 +141,18 @@ export const FormularioEventoView = {
       </form>`
   },
 
-  /** Cambia las opciones de un select (departamento o ciudad) */
+  /** Cambia las opciones de un select (país, departamento o ciudad) */
   opciones(id, vacio, lista, valor = '') {
     const select = document.getElementById(id)
+    if (!select) return
     select.innerHTML = opcionesSelect(vacio, lista, valor)
     select.disabled = lista.length === 0
   },
 
   marcarEstado(estado) {
     document.querySelectorAll('#estados [data-estado]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.estado === estado)))
+    const bloqueCausa = document.getElementById('bloque-causa')
+    if (bloqueCausa) bloqueCausa.hidden = estado !== 'Cancelado'
   },
 
   /** Muestra (o limpia) los errores de validación */
@@ -167,6 +181,7 @@ export const FormularioEventoView = {
            <div><p class="zona-imagen__titulo">Arrastra una imagen o haz clic para seleccionar</p><p class="zona-imagen__ayuda">PNG, JPG, WEBP · Máx. 5 MB</p></div>
            <span class="zona-imagen__boton">Seleccionar archivo</span>
          </div>`
-    document.getElementById('nota-imagen').hidden = !!vistaPrevia
+    const nota = document.getElementById('nota-imagen')
+    if (nota) nota.hidden = !!vistaPrevia
   },
 }

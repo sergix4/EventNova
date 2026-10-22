@@ -61,12 +61,26 @@ const EventoModel = {
   },
 
   // Los 5 estados posibles (para llenar selects y filtros)
+  // Los 5 estados posibles (para llenar selects y filtros)
   async getEstados() {
     const result = await pool.query(
       'SELECT id_estado, nombre_estado FROM public."ESTADO" ORDER BY id_estado ASC',
     );
     return result.rows;
   },
+
+  // Lista de agentes registrados (para que el admin pueda asignar un evento y para filtros)
+  async getAgentes() {
+    const result = await pool.query(
+      `SELECT a.numero_id AS id_agente, u.nombre AS nombre_agente, a.nombre_empresa
+       FROM public."AGENTE" a
+       JOIN public."USUARIO" u ON u.numero_id = a.numero_id
+       ORDER BY u.nombre ASC`,
+    );
+    return result.rows;
+  },
+
+  // Crea el evento. Siempre nace en estado "Programado".
 
   // Crea el evento. Siempre nace en estado "Programado".
   async create(datos, id_agente) {
