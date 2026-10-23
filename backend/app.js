@@ -22,7 +22,7 @@ const CARPETA_FRONTEND = path.join(__dirname, '..', 'frontend');
 
 // ─── Middlewares ────────────────────────────────────────────────────────────
 app.use(express.urlencoded({ extended: true })); // leer datos de formularios
-app.use(express.json());                          // leer JSON en el body
+app.use(express.json({ limit: '5mb' }));          // leer JSON en el body (5mb para la imagen del evento)
 
 app.use(session({
   secret: process.env.SESSION_SECRET || 'secreto_temporal',
