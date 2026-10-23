@@ -10,6 +10,10 @@ router.param('id', validarId);
 
 // Rutas públicas / de consulta (para el catálogo, filtros y detalle)
 router.get('/', eventoController.listar);
+// Catálogo del cliente (Tarea 4). Van ANTES de '/:id' para que Express
+// no confunda la palabra "catalogo" con un id.
+router.get('/catalogo', eventoController.catalogo);
+router.get('/catalogo/ciudades', eventoController.ciudadesCatalogo);
 router.get('/estados', eventoController.listarEstados);
 router.get('/agentes', soloAgenteOAdmin, eventoController.listarAgentes);
 router.get('/:id', eventoController.obtener);

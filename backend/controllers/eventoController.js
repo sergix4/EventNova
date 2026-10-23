@@ -100,6 +100,57 @@ const eventoController = {
     }
   },
 
+    // GET /api/eventos/catalogo?id_pais=&id_departamento=&id_ciudad=&fecha_desde=AAAA-MM-DD&fecha_hasta=AAAA-MM-DD
+  // Público: lo usa el cliente para ver los eventos disponibles.
+  async catalogo(req, res) {
+    const filtros = {};
+
+    // Filtros de ubicación: deben ser enteros positivos
+    for (const campo of ['id_pais', 'id_departamento', 'id_ciudad']) {
+      if (req.query[campo]) {
+        const valor = Number(req.query[campo]);
+        if (!Number.isInteger(valor) || valor <= 0) {
+          return res.status(400).json({ error: `El filtro ${campo} no es válido.` });
+        }
+        filtros[campo] = valor;
+      }
+    }
+
+    // Filtros de fecha: formato AAAA-MM-DD (el que entrega <input type="date">)
+    const FORMATO_FECHA = /^\d{4}-\d{2}-\d{2}$/;
+    for (const campo of ['fecha_desde', 'fecha_hasta']) {
+      const valor = (req.query[campo] || '').trim();
+      if (!valor) continue;
+      if (!FORMATO_FECHA.test(valor) || Number.isNaN(Date.parse(valor))) {
+        return res.status(400).json({ error: 'El formato de la fecha debe ser AAAA-MM-DD.' });
+      }
+      filtros[campo] = valor;
+    }
+
+    if (filtros.fecha_desde && filtros.fecha_hasta && filtros.fecha_desde > filtros.fecha_hasta) {
+      return res.status(400).json({ error: 'La fecha "desde" no puede ser posterior a la fecha "hasta".' });
+    }
+
+    try {
+      const eventos = await EventoModel.getCatalogo(filtros);
+      res.json(eventos);
+    } catch (error) {
+      console.error('Error al consultar el catálogo de eventos:', error);
+      res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+  },
+
+  // GET /api/eventos/catalogo/ciudades (ciudades con eventos disponibles, para los filtros)
+  async ciudadesCatalogo(req, res) {
+    try {
+      const ciudades = await EventoModel.getCiudadesCatalogo();
+      res.json(ciudades);
+    } catch (error) {
+      console.error('Error al listar las ciudades del catálogo:', error);
+      res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+  },
+
   // GET /api/eventos/estados
   async listarEstados(req, res) {
     try {
