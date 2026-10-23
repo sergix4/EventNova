@@ -3,7 +3,7 @@
 // las filas de PostgreSQL al formato que esperan las Vistas.
 
 import { peticion } from './api.js'
-import { EVENTOS, CALIFICACIONES } from './datosEjemplo.js'
+import { CALIFICACIONES } from './datosEjemplo.js'
 import { capitalizarMes } from '../utils/formato.js'
 
 const img = (id, w = 600, h = 380) => `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format`
@@ -142,37 +142,32 @@ export const EventoModel = {
 
   // ─── Métodos usados por Inicio, Catálogo y Detalle ────────────────────────
 
-  /** 4 eventos destacados de la página principal */
+  /** 4 eventos destacados de la página principal (Home pública).
+   *  Solo eventos REALES y disponibles: primero los que más entradas han vendido
+   *  (los más "famosos") y, si empatan, los más próximos a realizarse. */
   async obtenerDestacados() {
-    try {
-      const reales = await this.listar()
-      if (reales.length > 0) {
-        return reales.slice(0, 4).map((e) => {
-          const est = ESTADO_EN_INICIO[e.estado] ?? ESTADO_EN_INICIO['Programado']
-          return {
-            id: e.id,
-            nombre: e.nombre,
-            ciudad: e.ciudad,
-            fecha: e.fecha,
-            hora: e.hora_inicio_input,
-            precio: e.precio,
-            estadoTexto: est.texto,
-            estadoColor: est.color,
-            categoria: e.teatro || 'Evento',
-            imagen: e.imagen,
-          }
-        })
-      }
-    } catch {
-      // Si falla la red, usa datos de respaldo
-    }
-    return EVENTOS.slice(0, 4).map((e, i) => {
-      const estado = ESTADO_EN_INICIO[e.estado] ?? ESTADO_EN_INICIO['Programado']
-      return {
-        id: i + 1, nombre: e.nombre, ciudad: e.ciudad, fecha: capitalizarMes(e.fecha), hora: e.hora,
-        precio: e.precioStr, estadoTexto: estado.texto, estadoColor: estado.color, categoria: e.categoria, imagen: e.image,
-      }
-    })
+    const reales = await this.listarCatalogo() // ya vienen ordenados por fecha de inicio
+    return [...reales]
+      .sort((a, b) => b.reservas - a.reservas) // sort estable: los empates conservan el orden por fecha
+      .slice(0, 4)
+      .map((e) => {
+        const disponibles = e.capacidad - e.reservas
+        let est = ESTADO_EN_INICIO[e.estado] ?? ESTADO_EN_INICIO['Programado']
+        if (disponibles <= 0) est = { texto: 'Agotado', color: 'rojo' }
+        else if (disponibles < e.capacidad * 0.2) est = { texto: 'Últimas entradas', color: 'ambar' }
+        return {
+          id: e.id,
+          nombre: e.nombre,
+          ciudad: e.ciudad,
+          fecha: e.fecha,
+          hora: e.hora_inicio_input,
+          precio: e.precio,
+          estadoTexto: est.texto,
+          estadoColor: est.color,
+          categoria: e.teatro || 'Evento',
+          imagen: e.imagen,
+        }
+      })
   },
 
   /** Detalle de un evento (subtarea 3.1: lee ?id=... de la URL si existe) */
@@ -209,15 +204,34 @@ export const EventoModel = {
     return null
   },
 
-    /** Eventos disponibles para el cliente (Inicio y Explorar). No muestra Cancelados ni Finalizados. */
-  async obtenerCatalogo() {
-    const eventos = await this.listar()
+  // ─── Catálogo del cliente (Sprint 2 - Tarea 4) ────────────────────────────
+
+  /** Eventos disponibles desde GET /api/eventos/catalogo.
+   *  Filtros opcionales: { id_pais, id_departamento, id_ciudad, fecha_desde, fecha_hasta } */
+  async listarCatalogo(filtros = {}) {
+    const params = new URLSearchParams()
+    for (const campo of ['id_pais', 'id_departamento', 'id_ciudad', 'fecha_desde', 'fecha_hasta']) {
+      if (filtros[campo]) params.set(campo, filtros[campo])
+    }
+    const qs = params.toString()
+    const filas = await peticion(`/eventos/catalogo${qs ? `?${qs}` : ''}`)
+    return filas.map(adaptarEventoBD)
+  },
+
+  /** Ciudades (con departamento y país) que tienen eventos disponibles, para los filtros */
+  async obtenerCiudadesCatalogo() {
+    return peticion('/eventos/catalogo/ciudades')
+  },
+
+  /** Eventos disponibles para el cliente (Inicio y Explorar). El backend ya excluye Cancelados y Finalizados. */
+  async obtenerCatalogo(filtros = {}) {
+    const eventos = await this.listarCatalogo(filtros)
     return eventos
-      .filter(e => e.estado !== 'Cancelado' && e.estado !== 'Finalizado')
       .map(e => ({
         id: e.id,
         nombre: e.nombre,
         descripcion: e.descripcion,
+        teatro: e.teatro,
         pais: e.pais,
         departamento: e.departamento,
         ciudad: e.ciudad,
