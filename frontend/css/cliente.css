@@ -420,3 +420,11 @@
 .negrita { font-weight: 700; }
 .texto-suave { font-weight: 500; color: var(--gris-500) !important; }
 .campo__opcional--claro { color: var(--gris-300); }
+
+
+/* ─── Catálogo del cliente (Sprint 2 - Tarea 4) ─────────────────────────────── */
+.filtro__etiqueta { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--gris-400); }
+.filtro select:disabled { color: var(--gris-300); cursor: not-allowed; }
+.filtro-error { font-size: 13px; line-height: 18px; font-weight: 500; color: var(--rojo); }
+.catalogo-mensaje { padding: 32px 16px; text-align: center; font-size: 14px; line-height: 20px; color: var(--gris-500); }
+.catalogo-mensaje--error { color: var(--rojo); }

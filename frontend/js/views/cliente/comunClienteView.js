@@ -44,11 +44,13 @@ export function tarjetaEstadistica({ etiqueta, valor, sub, icono: nombreIcono, c
 
 /** Tarjeta de evento (inicio y explorar). En "explorar" incluye descripción y cupos. */
 export function tarjetaEvento(e, { explorar = false } = {}) {
-  const reservable = e.estado === 'Programado' || e.estado === 'En Boletería'
+  // El catálogo solo trae eventos disponibles (Programado, En Boletería, En Vivo),
+  // así que todos llevan al detalle, que es donde se inicia la reserva.
+  const disponible = e.estado !== 'Finalizado' && e.estado !== 'Cancelado'
   const ubicacion = explorar ? `${e.ciudad}, ${e.departamento}, ${e.pais}` : `${e.ciudad}, ${e.departamento}`
   const tam = explorar ? 13 : 14
-  const boton = reservable
-    ? `<a href="/pages/cliente/detalle-evento.html?id=${e.id}" class="boton-detalles">Ver detalles ${icono('flechaDerecha', explorar ? 14 : 15)}</a>`
+  const boton = disponible
+    ? `<a href="/pages/cliente/detalle-evento.html?id=${encodeURIComponent(e.id)}" class="boton-detalles" aria-label="Ver detalles de ${esc(e.nombre)}">Ver detalles ${icono('flechaDerecha', explorar ? 14 : 15)}</a>`
     : `<span class="boton-detalles boton-detalles--deshabilitado" aria-disabled="true">Ver detalles</span>`
 
   return `
