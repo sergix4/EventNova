@@ -145,6 +145,10 @@ export async function montarFormulario(contenedor, { modo, datos = {}, alGuardar
   if (zona && input) {
     const leer = (archivo) => {
       if (!archivo) return
+      if (archivo.size > 2 * 1024 * 1024) {
+        mostrarToast('La imagen no puede pesar más de 2 MB.', { tipo: 'error' })
+        return
+      }
       const lector = new FileReader()
       lector.onload = (ev) => {
         imagenDataUrl = ev.target.result

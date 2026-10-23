@@ -209,6 +209,35 @@ export const EventoModel = {
     return null
   },
 
+    /** Eventos disponibles para el cliente (Inicio y Explorar). No muestra Cancelados ni Finalizados. */
+  async obtenerCatalogo() {
+    const eventos = await this.listar()
+    return eventos
+      .filter(e => e.estado !== 'Cancelado' && e.estado !== 'Finalizado')
+      .map(e => ({
+        id: e.id,
+        nombre: e.nombre,
+        descripcion: e.descripcion,
+        pais: e.pais,
+        departamento: e.departamento,
+        ciudad: e.ciudad,
+        fecha: e.fecha,
+        hora: e.hora_inicio_input,
+        precio: e.precio,
+        cuposTotal: e.capacidad,
+        cuposVendidos: e.reservas,
+        estado: e.estado,
+        categoria: e.teatro || 'Evento',
+        imagen: e.imagen,
+        calificacion: 0,
+      }))
+  },
+
+  /** Primeros 6 eventos para la página de inicio del cliente */
+  async obtenerParaInicioCliente() {
+    return (await this.obtenerCatalogo()).slice(0, 6)
+  },
+
   /** Calificaciones de un evento (para el modal de detalle del agente) */
   async obtenerCalificaciones(idEjemplo) {
     return CALIFICACIONES.filter(c => c.eventoId === idEjemplo)
