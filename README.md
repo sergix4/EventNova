@@ -15,7 +15,7 @@ EventNova/
 ├── backend/                  # Servidor Express (API REST + archivos estáticos)
 │   ├── app.js                # Punto de entrada: /api + sirve la carpeta frontend/
 │   ├── config/db.js          # Conexión a PostgreSQL (pg)
-│   ├── models/               # MODELO: consultas SQL (usuario, plan, país, departamento, ciudad, evento)
+│   ├── models/               # MODELO: consultas SQL (usuario, plan, país, departamento, ciudad, evento, reserva)
 │   ├── controllers/          # CONTROLADOR: reciben la petición y responden JSON
 │   ├── routes/               # Rutas /api/auth, /api/paises, /api/departamentos, /api/ciudades, /api/status
 │   ├── middlewares/          # authMiddleware.js: soloAdmin protege crear/editar/eliminar
@@ -79,13 +79,13 @@ El equipo usa una base compartida en **Neon Postgres** (nube).
 2. `npm run db:init` → tablas (`develop.sql`) + planes + estados.
    Tiene un candado: si la base ya tiene tablas no hace nada
    (para recrearla a propósito: `npm run db:init -- --forzar`, **borra todo**).
-3. `npm run db:ubicaciones` → países, departamentos y ciudades del mundo
+3. `npm run db:ubicaciones` → países, departamentos y ciudades del mundo  
    (datos de [countries-states-cities-database](https://github.com/dr5hn/countries-states-cities-database),
    licencia ODbL, mediante el paquete npm [`country-state-city`](https://github.com/harpreetkhalsagtbit/country-state-city)).
 4. `npm run db:admin` → administrador inicial.
 
 **Para aplicar una migración nueva a una base que ya existe** (no borra datos):
-`npm run db:migrar -- migracion_03.sql`
+`npm run db:migrar -- migracion_05.sql` (cambiar por el nombre de la migración)
 
 ### 2. Servidor
 
@@ -145,8 +145,9 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ CRUD de países, departamentos y ciudades (Ubicación geográfica) contra PostgreSQL.
 - ✅ Administrador inicial creado con `seed_admin.js`.
 - ✅ Crear, editar y eliminar ubicaciones solo lo puede hacer el administrador (middleware `soloAdmin`).
-- ✅ Estados del evento (tabla `ESTADO`) y de la reserva (restricción `CHECK`) definidos.
+- ✅ Estados del evento (tabla `ESTADO`) y de la reserva (tabla `ESTADO_RESERVA`) definidos.
 - ✅ Tabla `EVENTO` con los campos del enunciado (`migracion_03.sql`) y modelo `backend/models/eventoModel.js`.
+- ✅ Tabla `RESERVA` con los campos del enunciado (`migracion_05.sql`) y modelo `backend/models/reservaModel.js` (valor total automático y validación de cupos).
 - 🟡 Eventos, reservas y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
   Cuando exista cada endpoint solo se cambia el modelo correspondiente
   (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y
