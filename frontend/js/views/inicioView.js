@@ -7,6 +7,11 @@ import { esc } from '../utils/formato.js'
 export const InicioView = {
   /** Dibuja las tarjetas de eventos destacados */
   mostrarEventos(contenedor, eventos) {
+    if (eventos.length === 0) {
+      contenedor.innerHTML = `<p class="mensaje-vacio">${icono('calendario', 18)} Muy pronto publicaremos nuevos eventos. ¡Vuelve pronto!</p>`
+      contenedor.setAttribute('aria-busy', 'false')
+      return
+    }
     contenedor.innerHTML = eventos.map(e => `
       <article class="tarjeta-evento" aria-labelledby="evento-${e.id}">
         <div class="tarjeta-evento__imagen">

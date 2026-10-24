@@ -15,7 +15,13 @@ const SELECT_BASE = `
          d.id_departamento, d.nombre_departamento,
          p.id_pais, p.nombre_pais,
          e.id_estado, es.nombre_estado,
-         e.id_agente, u.nombre AS nombre_agente, a.nombre_empresa
+         e.id_agente, u.nombre AS nombre_agente, a.nombre_empresa,
+         -- Entradas ya reservadas (sin contar las reservas canceladas)
+         COALESCE((SELECT SUM(r.numero_entradas)
+                   FROM public."RESERVA" r
+                   JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+                   WHERE r.id_evento = e.id_evento
+                     AND er.nombre_estado <> 'Cancelada'), 0)::int AS reservas
   FROM public."EVENTO" e
   JOIN public."CIUDAD" c        ON c.id_ciudad = e.id_ciudad
   JOIN public."DEPARTAMENTO" d  ON d.id_departamento = c.id_departamento
@@ -53,6 +59,64 @@ const EventoModel = {
     return result.rows;
   },
 
+
+    // ─── Catálogo del cliente (Sprint 2 - Tarea 4) ─────────────────────────────
+  // Solo eventos DISPONIBLES: estado distinto de Finalizado y Cancelado.
+  // Filtros opcionales: { id_pais, id_departamento, id_ciudad, fecha_desde, fecha_hasta }
+  // Las fechas llegan como 'AAAA-MM-DD'. Se muestran los eventos que ocurren
+  // dentro del rango (un festival de varios días aparece si se cruza con él).
+  async getCatalogo(filtros = {}) {
+    const condiciones = [`es.nombre_estado NOT IN ('Finalizado', 'Cancelado')`];
+    const params = [];
+
+    if (filtros.id_pais) {
+      params.push(filtros.id_pais);
+      condiciones.push(`p.id_pais = $${params.length}`);
+    }
+    if (filtros.id_departamento) {
+      params.push(filtros.id_departamento);
+      condiciones.push(`d.id_departamento = $${params.length}`);
+    }
+    if (filtros.id_ciudad) {
+      params.push(filtros.id_ciudad);
+      condiciones.push(`e.id_ciudad = $${params.length}`);
+    }
+    if (filtros.fecha_desde) {
+      // el evento todavía no ha terminado al empezar el rango
+      params.push(filtros.fecha_desde);
+      condiciones.push(`e.fecha_fin >= $${params.length}::date`);
+    }
+    if (filtros.fecha_hasta) {
+      // el evento empieza antes de que termine el último día del rango
+      params.push(filtros.fecha_hasta);
+      condiciones.push(`e.fecha_inicio < ($${params.length}::date + INTERVAL '1 day')`);
+    }
+
+    const result = await pool.query(
+      `${SELECT_BASE} WHERE ${condiciones.join(" AND ")} ORDER BY e.fecha_inicio ASC`,
+      params,
+    );
+    return result.rows;
+  },
+
+  // Ciudades (con su departamento y país) que tienen al menos un evento disponible.
+  // Sirve para llenar los filtros del catálogo sin cargar TODAS las ciudades del mundo.
+  async getCiudadesCatalogo() {
+    const result = await pool.query(
+      `SELECT DISTINCT c.id_ciudad, c.nombre_ciudad,
+              d.id_departamento, d.nombre_departamento,
+              p.id_pais, p.nombre_pais
+       FROM public."EVENTO" e
+       JOIN public."ESTADO" es       ON es.id_estado = e.id_estado
+       JOIN public."CIUDAD" c        ON c.id_ciudad = e.id_ciudad
+       JOIN public."DEPARTAMENTO" d  ON d.id_departamento = c.id_departamento
+       JOIN public."PAIS" p          ON p.id_pais = d.id_pais
+       WHERE es.nombre_estado NOT IN ('Finalizado', 'Cancelado')
+       ORDER BY p.nombre_pais, d.nombre_departamento, c.nombre_ciudad`,
+    );
+    return result.rows;
+  },
+  
   async getById(id) {
     const result = await pool.query(`${SELECT_BASE} WHERE e.id_evento = $1`, [
       id,

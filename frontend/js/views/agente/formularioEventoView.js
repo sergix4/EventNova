@@ -103,7 +103,9 @@ export const FormularioEventoView = {
       campoTexto({ id: 'teatro', texto: 'Teatro o recinto', requerido: true, placeholder: 'Ej. Teatro Jorge Isaacs / Coliseo de Ferias', valor: datos.teatro }) +
       campoTexto({ id: 'direccion', texto: 'Dirección exacta', requerido: true, placeholder: 'Ej. Cra 3 # 12-28', valor: datos.direccion })
 
-    const hoy = new Date().toISOString().split('T')[0]
+    const ahora = new Date()
+    const hoy = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`
+
     const fecha =
       campoTexto({ id: 'fecha', texto: 'Fecha de inicio', requerido: true, tipo: 'date', valor: datos.fecha_inicio_input, extra: editar ? '' : `min="${hoy}"` }) +
       campoTexto({ id: 'hora', texto: 'Hora de inicio', requerido: true, tipo: 'time', valor: datos.hora_inicio_input || '19:00' }) +
