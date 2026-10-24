@@ -31,7 +31,7 @@ function filaInfo(nombreIcono, etiqueta, valor) {
 
 export const DetalleEventoView = {
   /** Dibuja toda la página (se llama de nuevo cuando cambia el estado) */
-  mostrar(evento, { cantidad, estadoReserva, meGusta }) {
+  mostrar(evento, { cantidad, estadoReserva, meGusta, reserva }) {
     const disponibles = evento.capacidad - evento.vendidas
     const porcentaje = Math.round((evento.vendidas / evento.capacidad) * 100)
     const total = evento.precio * cantidad
@@ -97,8 +97,7 @@ export const DetalleEventoView = {
               ${insigniaEvento(evento.estado, { borde: false, grande: true })}
             </div>
             <div class="linea"></div>
-            ${estadoReserva !== 'ninguna' ? this.reservaHecha(estadoReserva, cantidad, total) : this.formularioReserva(evento, cantidad, total)}
-          </section>
+            ${estadoReserva !== 'ninguna' ? this.reservaHecha(estadoReserva, reserva) : this.formularioReserva(evento, cantidad, total, disponibles)}          </section>
           <div class="ayuda">
             <p>¿Necesitas ayuda?</p>
             <p>Contacta al agente responsable del evento si tienes preguntas sobre disponibilidad, ubicaciones o precios especiales.</p>
@@ -121,15 +120,18 @@ export const DetalleEventoView = {
       </div>`
   },
 
-  formularioReserva(evento, cantidad, total) {
+  formularioReserva(evento, cantidad, total, disponibles) {
+    if (disponibles <= 0) {
+      return `<button type="button" class="boton boton--neutro boton--bloque" disabled>Sin cupos disponibles</button>`
+    }
+    const tope = Math.min(10, disponibles)
     return `
       <div class="campo campo--holgado">
         <span class="campo__etiqueta">Número de entradas</span>
         <div class="cantidad">
           <button type="button" data-accion="menos" ${cantidad <= 1 ? 'disabled' : ''} aria-label="Quitar una entrada">−</button>
           <div class="cantidad__valor"><strong>${cantidad}</strong><span>${cantidad === 1 ? 'entrada' : 'entradas'}</span></div>
-          <button type="button" data-accion="mas" ${cantidad >= 10 ? 'disabled' : ''} aria-label="Agregar una entrada">+</button>
-        </div>
+          <button type="button" data-accion="mas" ${cantidad >= tope ? 'disabled' : ''} aria-label="Agregar una entrada">+</button>        </div>
       </div>
       <div class="campo">
         <label class="campo__etiqueta" for="observaciones">Observaciones <span class="campo__opcional">(opcional)</span></label>
@@ -144,13 +146,14 @@ export const DetalleEventoView = {
       <p class="tarjeta-reserva__seguridad">Pago 100% seguro · Múltiples métodos disponibles</p>`
   },
 
-  reservaHecha(estado, cantidad, total) {
+  reservaHecha(estado, reserva) {
     const pildora = AVISOS[estado].pildora
     return `
       <div class="pila-16">
         <div class="estado-reserva estado-reserva--${estado}">
-          <div class="estado-reserva__fila"><span>Entradas reservadas</span><strong>${cantidad}</strong></div>
-          <div class="estado-reserva__fila"><span>Valor total</span><strong>${pesos(total)}</strong></div>
+          <div class="estado-reserva__fila"><span>Código de reserva</span><strong>${esc(reserva.codigo)}</strong></div>
+          <div class="estado-reserva__fila"><span>Entradas reservadas</span><strong>${reserva.entradas}</strong></div>
+          <div class="estado-reserva__fila"><span>Valor total</span><strong>${pesos(reserva.valorTotal)}</strong></div>
           <div class="linea linea--gris"></div>
           <div class="estado-reserva__fila"><span>Estado</span><span class="insignia" style="background:${pildora[0]};color:${pildora[1]};font-weight:700">${pildora[2]}</span></div>
         </div>
@@ -162,8 +165,7 @@ export const DetalleEventoView = {
   pagoResumen(evento, cantidad, metodo) {
     const total = evento.precio * cantidad
     const filas = [
-      ['Evento', evento.nombre], ['Fecha', '12 de septiembre, 2025'], ['Ciudad', `${evento.ciudad}, ${evento.departamento}`],
-      ['Entradas', `${cantidad} entrada${cantidad > 1 ? 's' : ''}`], ['Precio c/u', pesos(evento.precio)],
+      ['Evento', evento.nombre], ['Fecha', evento.fechaLarga], ['Ciudad', `${evento.ciudad}, ${evento.departamento}`],      ['Entradas', `${cantidad} entrada${cantidad > 1 ? 's' : ''}`], ['Precio c/u', pesos(evento.precio)],
     ]
     const conTarjeta = metodo === 'Tarjeta débito' || metodo === 'Tarjeta crédito'
     return `
@@ -208,24 +210,38 @@ export const DetalleEventoView = {
       </div>`
   },
 
-  pagoExitoso(evento, cantidad, metodo, codigo) {
-    const hoy = new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
+    /** Reserva guardada en PostgreSQL: muestra el código y el valor que calculó el backend */
+  pagoExitoso(evento, reserva, metodo) {
     const filas = [
-      ['Evento', evento.nombre], ['N.° de entradas', `${cantidad} entrada${cantidad > 1 ? 's' : ''}`],
-      ['Total pagado', pesos(evento.precio * cantidad)], ['Método de pago', metodo], ['Fecha del pago', hoy], ['Código de transacción', codigo],
+      ['Código de reserva', reserva.codigo], ['Evento', evento.nombre],
+      ['N.° de entradas', `${reserva.entradas} entrada${reserva.entradas > 1 ? 's' : ''}`],
+      ['Valor total', pesos(reserva.valorTotal)], ['Método de pago', metodo], ['Fecha de la reserva', reserva.fechaReserva],
     ]
     return `
       <div class="pago__exito">
         <div class="pago__exito-icono">${icono('check', 28, { grosor: 2.5 })}</div>
-        <strong>¡Pago realizado correctamente!</strong>
-        <p>Tu reserva ha sido confirmada</p>
+        <strong>¡Reserva registrada!</strong>
+        <p>Queda pendiente de confirmación por parte del agente</p>
       </div>
       <div class="pago__seccion" style="border-bottom:0;padding-top:20px">
         ${filas.map(([e, v]) => `<div class="pago__fila" style="padding:10px 0"><span>${e}</span><strong>${esc(v)}</strong></div>`).join('')}
-        <div class="pago__fila" style="padding:10px 0"><span>Estado</span><span class="insignia pago--pagado" style="font-weight:700"><span class="insignia__punto"></span>Pagado</span></div>
+        <div class="pago__fila" style="padding:10px 0"><span>Estado</span><span class="insignia" style="background:#fef3c7;color:#92400e;font-weight:700">${esc(reserva.estado)}</span></div>
       </div>
       <div class="pago__acciones" style="padding-top:0">
         <button type="button" class="boton boton--primario boton--bloque boton--grande" data-accion="ver-reserva">Ver mi reserva</button>
+      </div>`
+  },
+
+  /** El backend rechazó la operación (sin cupos, evento cancelado, sin sesión...) */
+  pagoError(mensaje) {
+    return `
+      <div class="pago__exito" style="background:#fef2f2">
+        <div class="pago__exito-icono" style="background:#fee2e2;color:#dc2626">${icono('advertencia', 28, { grosor: 2.5 })}</div>
+        <strong>No se pudo completar la operación</strong>
+        <p>${esc(mensaje)}</p>
+      </div>
+      <div class="pago__acciones">
+        <button type="button" class="boton boton--neutro boton--bloque" data-cerrar-modal>Volver</button>
       </div>`
   },
 }

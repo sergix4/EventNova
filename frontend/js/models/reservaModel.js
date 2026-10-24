@@ -1,10 +1,55 @@
 // js/models/reservaModel.js
-// MODELO de reservas y pagos.
-// Datos de ejemplo hasta que exista el CRUD de RESERVA en el backend
-// (pendiente Sprint 2: /api/reservas).
+// MODELO de reservas en el frontend.
+//   - Parte 1: CRUD real contra /api/reservas (Sprint 2 · Tarea 6).
+//   - Parte 2: datos de ejemplo que todavía usan "Mis reservas" (tarea 7)
+//     y "Reservas" del agente (tarea 8). Se quitan cuando se hagan esas tareas.
 
+import { peticion } from './api.js'
 import { RESERVAS_AGENTE_DEMO, PAGOS_AGENTE_DEMO, EVENTOS } from './datosEjemplo.js'
 import { capitalizarMes } from '../utils/formato.js'
+
+// Fecha legible: "24 oct 2026 · 3:15 p. m."
+function fechaHoraLegible(iso) {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return String(iso)
+  const fecha = d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' }).replace('.', '')
+  const hora = d.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+  return `${capitalizarMes(fecha)} · ${hora}`
+}
+
+// Adapta una fila de PostgreSQL (SELECT_BASE de backend/models/reservaModel.js)
+// al objeto que usan las Vistas
+function adaptarReservaBD(fila) {
+  const valor = Number(fila.valor_total) || 0
+  return {
+    id: fila.id_reserva,
+    id_reserva: fila.id_reserva,
+    codigo: fila.codigo_reserva,
+    fechaReserva: fechaHoraLegible(fila.fecha_hora_reserva),
+    entradas: Number(fila.numero_entradas) || 0,
+    valorTotal: valor,
+    valorTexto: '$ ' + valor.toLocaleString('es-CO'),
+    observaciones: fila.observaciones || '',
+    id_estado_reserva: fila.id_estado_reserva,
+    estado: fila.estado_reserva,                 // Reservada | Confirmada | Cancelada
+    causaCancelacion: fila.causa_cancelacion || '',
+    id_evento: fila.id_evento,
+    codigoEvento: fila.codigo_evento,
+    evento: fila.nombre_evento,
+    teatro: fila.teatro || '',
+    ciudad: fila.nombre_ciudad,
+    fechaEvento: fechaHoraLegible(fila.fecha_inicio),
+    estadoEvento: fila.estado_evento,
+    imagen: fila.imagen_evento || '',
+    id_cliente: fila.id_cliente,
+    cliente: fila.nombre_cliente,
+    correo: fila.correo_cliente,
+  }
+}
+
+// Los estados casi no cambian: se piden una sola vez
+let estadosCache = null
 
 const img = (id) => `https://images.unsplash.com/photo-${id}?w=120&h=80&fit=crop&auto=format`
 
@@ -19,12 +64,70 @@ const RESERVAS_CLIENTE = [
 ]
 
 export const ReservaModel = {
-  /** Resumen que se muestra en la página de inicio del cliente */
-  async resumenInicioCliente() {
-    return { activas: 3, confirmadas: 7, proximoEvento: { fecha: '12 Sep', detalle: 'Festival de Música Urbana · 6:00 PM' } }
+  // ─── Parte 1: CRUD real contra /api/reservas (Sprint 2 · Tarea 6) ─────────
+
+  /** Lista reservas. El backend ya filtra según el rol de la sesión
+   *  (cliente: las suyas · agente: las de sus eventos · admin: todas).
+   *  Filtros opcionales: { id_evento, id_estado_reserva } */
+  async listar(filtros = {}) {
+    const params = new URLSearchParams()
+    if (filtros.id_evento) params.set('id_evento', filtros.id_evento)
+    if (filtros.id_estado_reserva) params.set('id_estado_reserva', filtros.id_estado_reserva)
+    const qs = params.toString()
+    const filas = await peticion(`/reservas${qs ? `?${qs}` : ''}`)
+    return filas.map(adaptarReservaBD)
   },
 
-  /** Reservas del cliente con sesión iniciada */
+  /** Una reserva por su id (GET /api/reservas/:id) */
+  async obtenerPorId(id) {
+    return adaptarReservaBD(await peticion(`/reservas/${id}`))
+  },
+
+  /** Los 3 estados de la tabla ESTADO_RESERVA */
+  async listarEstados() {
+    if (!estadosCache) estadosCache = await peticion('/reservas/estados')
+    return estadosCache
+  },
+
+  /** Entradas que le quedan a un evento (GET /api/reservas/cupos/:idEvento) */
+  async cuposDisponibles(idEvento) {
+    const { disponibles } = await peticion(`/reservas/cupos/${idEvento}`)
+    return disponibles
+  },
+
+  /** El cliente crea una reserva (POST /api/reservas).
+   *  datos = { id_evento, numero_entradas, observaciones } */
+  async crear(datos) {
+    return adaptarReservaBD(await peticion('/reservas', { metodo: 'POST', datos }))
+  },
+
+  /** Cambia número de entradas y observaciones (PUT /api/reservas/:id) */
+  async actualizar(id, datos) {
+    return adaptarReservaBD(await peticion(`/reservas/${id}`, { metodo: 'PUT', datos }))
+  },
+
+  /** Cambia el estado (PATCH /api/reservas/:id/estado) */
+  async cambiarEstado(id, id_estado_reserva, causa_cancelacion = null) {
+    const fila = await peticion(`/reservas/${id}/estado`, {
+      metodo: 'PATCH',
+      datos: { id_estado_reserva, causa_cancelacion },
+    })
+    return adaptarReservaBD(fila)
+  },
+
+  /** Atajo: cambia la reserva al estado "Cancelada" */
+  async cancelar(id, causa = null) {
+    const estados = await this.listarEstados()
+    const cancelada = estados.find(e => e.nombre_estado === 'Cancelada')
+    return this.cambiarEstado(id, cancelada.id_estado_reserva, causa)
+  },
+
+  /** Elimina una reserva (DELETE /api/reservas/:id, solo administrador) */
+  async eliminar(id) {
+    return peticion(`/reservas/${id}`, { metodo: 'DELETE' })
+  },
+
+  // ─── Parte 2: datos de ejemplo (se reemplazan en las tareas 7 y 8) ────────
   async delCliente() {
     return RESERVAS_CLIENTE
   },
