@@ -17,10 +17,11 @@ const SELECT_BASE = `
          e.id_estado, es.nombre_estado,
          e.id_agente, u.nombre AS nombre_agente, a.nombre_empresa,
          -- Entradas ya reservadas (sin contar las reservas canceladas)
-         COALESCE((SELECT SUM(r.numero_entrada)
+         COALESCE((SELECT SUM(r.numero_entradas)
                    FROM public."RESERVA" r
+                   JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
                    WHERE r.id_evento = e.id_evento
-                     AND r.estado_reserva <> 'Cancelada'), 0)::int AS reservas
+                     AND er.nombre_estado <> 'Cancelada'), 0)::int AS reservas
   FROM public."EVENTO" e
   JOIN public."CIUDAD" c        ON c.id_ciudad = e.id_ciudad
   JOIN public."DEPARTAMENTO" d  ON d.id_departamento = c.id_departamento

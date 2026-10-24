@@ -28,6 +28,13 @@ CREATE TABLE public."ESTADO" (
     nombre_estado VARCHAR(50) NOT NULL
 );
 
+DROP TABLE IF EXISTS public."ESTADO_RESERVA" CASCADE;
+CREATE TABLE public."ESTADO_RESERVA" (
+    id_estado_reserva SERIAL PRIMARY KEY,
+    nombre_estado     VARCHAR(50) NOT NULL,
+    CONSTRAINT ux_estado_reserva_nombre UNIQUE (nombre_estado)
+);
+
 DROP TABLE IF EXISTS public."TIPO" CASCADE;
 CREATE TABLE public."TIPO" (
     id_tipo SERIAL PRIMARY KEY,
@@ -161,18 +168,30 @@ CREATE TABLE public."AGRUPA" (
 
 DROP TABLE IF EXISTS public."RESERVA" CASCADE;
 CREATE TABLE public."RESERVA" (
-    id_reserva SERIAL PRIMARY KEY,
-    id_cliente VARCHAR(20) NOT NULL,
-    id_metodo INTEGER NOT NULL,
-    numero_entrada INTEGER NOT NULL,
-    valor_total NUMERIC(10, 2) NOT NULL,
-    estado_reserva VARCHAR(50) NOT NULL DEFAULT 'Reservada',
-    id_evento INTEGER NOT NULL,
-    CONSTRAINT fk_reserva_cliente FOREIGN KEY (id_cliente) REFERENCES public."CLIENTE" (numero_id),
-    CONSTRAINT fk_reserva_metodo FOREIGN KEY (id_metodo) REFERENCES public."METODO_PAGO" (id_metodo),
-    CONSTRAINT fk_reserva_evento FOREIGN KEY (id_evento) REFERENCES public."EVENTO" (id_evento),
-    CONSTRAINT ck_reserva_estado CHECK (estado_reserva IN ('Reservada', 'Confirmada', 'Cancelada'))
+    id_reserva         SERIAL PRIMARY KEY,
+    -- Código visible que se genera solo a partir del id: 1 -> RES-00001
+    codigo_reserva     VARCHAR(20) GENERATED ALWAYS AS ('RES-' || LPAD(id_reserva::text, 5, '0')) STORED,
+    -- Fecha y hora en que el cliente hizo la reserva (hora de Colombia)
+    fecha_hora_reserva TIMESTAMP NOT NULL DEFAULT (NOW() AT TIME ZONE 'America/Bogota'),
+    numero_entradas    INTEGER NOT NULL,               -- cuántas entradas reservó
+    valor_total        NUMERIC(12, 2) NOT NULL,        -- numero_entradas x precio_base del evento
+    observaciones      TEXT,
+    id_estado_reserva  INTEGER NOT NULL,               -- Reservada, Confirmada, Cancelada
+    causa_cancelacion  TEXT,                           -- se llena cuando la reserva se cancela
+    id_cliente         VARCHAR(20) NOT NULL,           -- cliente que hizo la reserva
+    id_evento          INTEGER NOT NULL,               -- evento reservado
+
+    CONSTRAINT ux_reserva_codigo   UNIQUE (codigo_reserva),
+    CONSTRAINT fk_reserva_cliente  FOREIGN KEY (id_cliente)        REFERENCES public."CLIENTE" (numero_id),
+    CONSTRAINT fk_reserva_evento   FOREIGN KEY (id_evento)         REFERENCES public."EVENTO" (id_evento),
+    CONSTRAINT fk_reserva_estado   FOREIGN KEY (id_estado_reserva) REFERENCES public."ESTADO_RESERVA" (id_estado_reserva),
+    CONSTRAINT ck_reserva_entradas CHECK (numero_entradas > 0),
+    CONSTRAINT ck_reserva_valor    CHECK (valor_total >= 0)
 );
+
+CREATE INDEX IF NOT EXISTS ix_reserva_cliente ON public."RESERVA" (id_cliente);
+CREATE INDEX IF NOT EXISTS ix_reserva_evento  ON public."RESERVA" (id_evento);
+CREATE INDEX IF NOT EXISTS ix_reserva_estado  ON public."RESERVA" (id_estado_reserva);
 
 DROP TABLE IF EXISTS public."RESEÑA" CASCADE;
 CREATE TABLE public."RESEÑA" (
