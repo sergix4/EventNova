@@ -11,6 +11,7 @@ const paisRoutes = require('./paisRoutes');
 const departamentoRoutes = require('./departamentoRoutes');  
 const ciudadRoutes = require('./ciudadRoutes');   
 const eventoRoutes = require('./eventoRoutes');
+const reservaRoutes = require('./reservaRoutes');
 
 router.get('/status', homeController.estado); 
 router.use('/auth', authRoutes);
@@ -18,5 +19,6 @@ router.use('/paises', paisRoutes);
 router.use('/departamentos', departamentoRoutes); 
 router.use('/ciudades', ciudadRoutes);    
 router.use('/eventos', eventoRoutes);
+router.use('/reservas', reservaRoutes);
 
 module.exports = router;
