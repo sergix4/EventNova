@@ -75,6 +75,7 @@ function adaptarReservaBD(fila) {
     fechaEvento: fechaLegible(fila.fecha_inicio),   // "24 Oct 2026"
     horaEvento: horaLegible(fila.fecha_inicio),     // "7:00 p. m."
     fechaEventoISO: fechaISO(fila.fecha_inicio),    // "2026-10-24" (filtro por fecha)
+    fechaInicio: fila.fecha_inicio,                 // fecha original (para ordenar)
     estadoEvento: fila.estado_evento,
     eventoFinalizado: fila.estado_evento === 'Finalizado',
     precioBase: Number(fila.precio_base) || 0,
@@ -160,13 +161,40 @@ export const ReservaModel = {
   async delCliente() {
     return this.listar()
   },
+  
+  /** Tarjetas del inicio del cliente, calculadas con sus reservas REALES */
+  async resumenInicioCliente() {
+    const reservas = await this.delCliente()
+    const ahora = new Date()
+
+    // Activas: no canceladas y cuyo evento no ha terminado
+    const vigentes = reservas.filter(r =>
+      r.estado !== 'Cancelada' && !['Finalizado', 'Cancelado'].includes(r.estadoEvento))
+
+    // Próximo evento: el más cercano de hoy en adelante
+    const proxima = vigentes
+      .filter(r => r.fechaInicio && new Date(r.fechaInicio) >= ahora)
+      .sort((a, b) => new Date(a.fechaInicio) - new Date(b.fechaInicio))[0]
+
+    let proximoEvento = null
+    if (proxima) {
+      const d = new Date(proxima.fechaInicio)
+      const mes = d.toLocaleDateString('es-CO', { month: 'short' }).replace('.', '')
+      proximoEvento = {
+        fecha: `${d.getDate()} ${mes.charAt(0).toUpperCase() + mes.slice(1)}`,   // "31 Oct"
+        detalle: `${proxima.evento} · ${proxima.horaEvento}`,
+      }
+    }
+
+    return {
+      activas: vigentes.length,
+      confirmadas: reservas.filter(r => r.estado === 'Confirmada').length,
+      proximoEvento,
+    }
+  },
 
   // ─── Parte 2: datos de ejemplo (se reemplazan en la tarea 8) ──────────────
 
-  /** Resumen que se muestra en la página de inicio del cliente */
-  async resumenInicioCliente() {
-    return { activas: 3, confirmadas: 7, proximoEvento: { fecha: '12 Sep', detalle: 'Festival de Música Urbana · 6:00 PM' } }
-  },
 
 
   /** Reservas que recibió el agente en sus eventos */
