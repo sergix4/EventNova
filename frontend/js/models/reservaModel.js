@@ -1,11 +1,10 @@
 // js/models/reservaModel.js
-// MODELO de reservas en el frontend.
-//   - Parte 1: CRUD real contra /api/reservas (Tarea 6) y "Mis reservas" (Tarea 7).
-//   - Parte 2: datos de ejemplo que todavía usa "Reservas" del agente (tarea 8)
-//     y el resumen del inicio del cliente. Se quitan cuando se hagan esas tareas.
+// MODELO de reservas en el frontend. Todo es REAL contra /api/reservas:
+//   - CRUD de reservas (Tarea 6)
+//   - "Mis reservas" del cliente (Tarea 7)
+//   - "Reservas" del agente: listar y confirmar / cancelar (Tarea 8)
 
 import { peticion } from './api.js'
-import { RESERVAS_AGENTE_DEMO, PAGOS_AGENTE_DEMO, EVENTOS } from './datosEjemplo.js'
 import { capitalizarMes } from '../utils/formato.js'
 
 // Imagen que se muestra cuando el evento no tiene imagen guardada
@@ -51,7 +50,18 @@ function fechaISO(iso) {
   return `${d.getFullYear()}-${mes}-${dia}`
 }
 
-// Adapta una fila de PostgreSQL (SELECT_BASE de backend/models/reservaModel.js)
+// Estados a los que se puede pasar una reserva desde el perfil agente (Tarea 8):
+//   Reservada  -> Confirmada / Cancelada
+//   Confirmada -> Cancelada
+//   Cancelada  -> (ninguno)
+// Si el evento ya está Finalizado o Cancelado, solo queda la opción de cancelar.
+function siguientesEstados(fila) {
+  if (fila.estado_reserva === 'Cancelada') return []
+  const eventoCerrado = ['Finalizado', 'Cancelado'].includes(fila.estado_evento)
+  if (fila.estado_reserva === 'Reservada' && !eventoCerrado) return ['Confirmada', 'Cancelada']
+  return ['Cancelada']
+}
+
 // al objeto que usan las Vistas
 function adaptarReservaBD(fila) {
   const valor = Number(fila.valor_total) || 0
@@ -83,9 +93,11 @@ function adaptarReservaBD(fila) {
     // El cliente puede cancelar mientras la reserva no esté cancelada
     // y el evento todavía no haya empezado
     cancelable: fila.estado_reserva !== 'Cancelada' && !EVENTO_NO_CANCELABLE.includes(fila.estado_evento),
+    // Estados a los que el agente puede cambiarla (Tarea 8)
+    siguientesEstados: siguientesEstados(fila),
     id_cliente: fila.id_cliente,
-    cliente: fila.nombre_cliente,
-    correo: fila.correo_cliente,
+    cliente: fila.nombre_cliente || '',
+    correo: fila.correo_cliente || '',
   }
 }
 
@@ -197,34 +209,18 @@ export const ReservaModel = {
 
 
 
-  /** Reservas que recibió el agente en sus eventos */
+  /** "Reservas" del agente (Tarea 8): reservas de los eventos del agente en sesión.
+   *  GET /api/reservas -> el backend ya devuelve SOLO las de sus eventos */
   async delAgente() {
-    return RESERVAS_AGENTE_DEMO.map((r, i) => {
-      const evento = EVENTOS.find(e => e.id === r.eventoId)
-      return {
-        id: i + 1,
-        cliente: r.clienteNombre,
-        correo: r.clienteCorreo,
-        evento: r.eventoNombre,
-        fechaEvento: capitalizarMes(evento.fecha),
-        horaEvento: evento.hora,
-        entradas: r.entradas,
-        valorTexto: r.valorTotalStr,
-        valor: r.valorTotal,
-        fechaReserva: r.fechaReserva,
-        estado: r.estado,
-        causaCancelacion: r.causaCancelacion,
-      }
-    })
+    return this.listar()
   },
 
-  /** Pagos recibidos por el agente */
-  async pagosDelAgente() {
-    return PAGOS_AGENTE_DEMO
-  },
-
-  /** Simula un cambio de estado (pendiente: PUT /api/reservas/:id) */
-  async actualizarEstado(id, estado, causa) {
-    return { id, estado, causaCancelacion: causa }
+  /** Cambia el estado usando su NOMBRE ('Confirmada' | 'Cancelada').
+   *  Busca el id en ESTADO_RESERVA y llama a PATCH /api/reservas/:id/estado */
+  async cambiarEstadoPorNombre(id, nombreEstado, causa = null) {
+    const estados = await this.listarEstados()
+    const estado = estados.find(e => e.nombre_estado === nombreEstado)
+    if (!estado) throw new Error(`El estado "${nombreEstado}" no existe.`)
+    return this.cambiarEstado(id, estado.id_estado_reserva, causa)
   },
 }
