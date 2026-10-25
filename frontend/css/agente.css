@@ -64,6 +64,9 @@
 .boton-accion { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: var(--radio-sm); border: 1px solid var(--gris-200); font-size: 12px; line-height: 16px; font-weight: 500; color: var(--gris-600); white-space: nowrap; transition: all var(--transicion); }
 .boton-accion:hover { background: var(--primario-suave); color: var(--primario); border-color: var(--primario-200); }
 .boton-accion--ambar:hover { background: var(--ambar-suave); color: var(--ambar); border-color: #fde68a; }
+/* Tarea 8: botón deshabilitado (reserva cancelada, ya no se puede cambiar) */
+.boton-accion:disabled,
+.boton-accion:disabled:hover { opacity: .45; cursor: not-allowed; background: transparent; color: var(--gris-600); border-color: var(--gris-200); }
 
 /* ─── Formularios de evento (registrar y editar) ────────────────────────────── */
 .form-evento { padding: 28px 32px; display: flex; flex-direction: column; gap: 24px; max-width: 768px; }
