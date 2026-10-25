@@ -16,6 +16,10 @@ const ReservaModel = require('../models/reservaModel');
 // Máximo de entradas por reserva (el mismo tope que tiene el botón "+" de la vista)
 const MAX_ENTRADAS = 10;
 const MAX_OBSERVACIONES = 500;
+// Largo máximo de la causa de cancelación (el mismo maxlength de las ventanas)
+const MAX_CAUSA = 300;
+// Estados del EVENTO en los que ya no se puede confirmar una reserva (Tarea 8)
+const EVENTO_CERRADO = ['Finalizado', 'Cancelado'];
 
 // Valida y limpia numero_entradas y observaciones.
 // Devuelve { error } o { datos }.
@@ -232,12 +236,19 @@ const reservaController = {
       if (usuario.rol === 'cliente' && destino.nombre_estado !== 'Cancelada') {
         return res.status(403).json({ error: 'Como cliente solo puedes cancelar tus reservas.' });
       }
+      // Tarea 8: no se confirma una reserva de un evento que ya terminó o se canceló
+      if (destino.nombre_estado === 'Confirmada' && EVENTO_CERRADO.includes(actual.estado_evento)) {
+        return res.status(409).json({ error: `No se puede confirmar: el evento está ${actual.estado_evento}.` });
+      }
 
       if (destino.nombre_estado === 'Cancelada') {
         if (usuario.rol === 'cliente') {
           causa = causa || 'Cancelada por el cliente.';
         } else if (!causa) {
           return res.status(400).json({ error: 'Debes indicar la causa de la cancelación.' });
+        }
+        if (causa.length > MAX_CAUSA) {
+          return res.status(400).json({ error: `La causa no puede superar ${MAX_CAUSA} caracteres.` });
         }
       }
 
