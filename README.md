@@ -124,20 +124,25 @@ el mismo servidor entrega las páginas HTML y responde la API.
 
 ## API disponible
 
-| Método         | Ruta                        | Descripción                                               |
-| -------------- | --------------------------- | --------------------------------------------------------- |
-| GET            | `/api/status`               | Estado del servidor                                       |
-| POST           | `/api/auth/login`           | Iniciar sesión                                            |
-| POST           | `/api/auth/register`        | Registrar cliente                                         |
-| POST           | `/api/auth/register-agente` | Registrar agente (con plan)                               |
-| GET            | `/api/auth/sesion`          | Usuario con sesión activa (o `null`)                      |
-| POST           | `/api/auth/logout`          | Cerrar sesión                                             |
-| GET/POST       | `/api/paises`               | Listar / crear países                                     |
-| GET/PUT/DELETE | `/api/paises/:id`           | Consultar / editar / eliminar un país                     |
-| GET/POST       | `/api/departamentos`        | Listar (opcional `?id_pais=`) / crear departamentos       |
-| GET/PUT/DELETE | `/api/departamentos/:id`    | Consultar / editar / eliminar un departamento             |
-| GET/POST       | `/api/ciudades`             | Listar (obligatorio `?id_departamento=`) / crear ciudades |
-| GET/PUT/DELETE | `/api/ciudades/:id`         | Consultar / editar / eliminar una ciudad                  |
+| Método         | Ruta                              | Descripción                                                           |
+| -------------- | --------------------------------- | --------------------------------------------------------------------- |
+| GET            | `/api/status`                     | Estado del servidor                                                   |
+| POST           | `/api/auth/login`                 | Iniciar sesión                                                        |
+| POST           | `/api/auth/register`              | Registrar cliente                                                     |
+| POST           | `/api/auth/register-agente`       | Registrar agente (con plan)                                           |
+| GET            | `/api/auth/sesion`                | Usuario con sesión activa (o `null`)                                  |
+| POST           | `/api/auth/logout`                | Cerrar sesión                                                         |
+| GET/POST       | `/api/paises`                     | Listar / crear países                                                 |
+| GET/PUT/DELETE | `/api/paises/:id`                 | Consultar / editar / eliminar un país                                 |
+| GET/POST       | `/api/departamentos`              | Listar (opcional `?id_pais=`) / crear departamentos                   |
+| GET/PUT/DELETE | `/api/departamentos/:id`          | Consultar / editar / eliminar un departamento                         |
+| GET/POST       | `/api/ciudades`                   | Listar (obligatorio `?id_departamento=`) / crear ciudades             |
+| GET/PUT/DELETE | `/api/ciudades/:id`               | Consultar / editar / eliminar una ciudad                              |
+| GET/POST       | `/api/reservas`                   | Listar (según el rol de la sesión) / crear reserva (cliente)          |
+| GET            | `/api/reservas/estados`           | Estados de la reserva                                                 |
+| GET            | `/api/reservas/cupos/:idEvento`   | Entradas disponibles de un evento                                     |
+| GET/PUT/DELETE | `/api/reservas/:id`               | Consultar / modificar entradas (si está Reservada) / eliminar (admin) |
+| PATCH          | `/api/reservas/:id/estado`        | Confirmar o cancelar una reserva                                      |
 
 ## Estado actual
 
@@ -148,7 +153,8 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Estados del evento (tabla `ESTADO`) y de la reserva (tabla `ESTADO_RESERVA`) definidos.
 - ✅ Tabla `EVENTO` con los campos del enunciado (`migracion_03.sql`) y modelo `backend/models/eventoModel.js`.
 - ✅ Tabla `RESERVA` con los campos del enunciado (`migracion_05.sql`) y modelo `backend/models/reservaModel.js` (valor total automático y validación de cupos).
-- 🟡 Eventos, reservas y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
+- ✅ CRUD de reservas (`/api/reservas`): el cliente reserva desde el detalle del evento; valor total automático, validación de cupos y permisos por rol.
+- 🟡 Eventos y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
   Cuando exista cada endpoint solo se cambia el modelo correspondiente
   (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y
   controladores no cambian.
