@@ -128,6 +128,13 @@ export const ReservaModel = {
   },
 
   // ─── Parte 2: datos de ejemplo (se reemplazan en las tareas 7 y 8) ────────
+
+  /** Resumen que se muestra en la página de inicio del cliente */
+  async resumenInicioCliente() {
+    return { activas: 3, confirmadas: 7, proximoEvento: { fecha: '12 Sep', detalle: 'Festival de Música Urbana · 6:00 PM' } }
+  },
+
+  /** Reservas del cliente con sesión iniciada */
   async delCliente() {
     return RESERVAS_CLIENTE
   },

@@ -97,7 +97,8 @@ export const DetalleEventoView = {
               ${insigniaEvento(evento.estado, { borde: false, grande: true })}
             </div>
             <div class="linea"></div>
-            ${estadoReserva !== 'ninguna' ? this.reservaHecha(estadoReserva, reserva) : this.formularioReserva(evento, cantidad, total, disponibles)}          </section>
+            ${estadoReserva !== 'ninguna' ? this.reservaHecha(estadoReserva, reserva) : this.formularioReserva(evento, cantidad, total, disponibles)}
+          </section>
           <div class="ayuda">
             <p>¿Necesitas ayuda?</p>
             <p>Contacta al agente responsable del evento si tienes preguntas sobre disponibilidad, ubicaciones o precios especiales.</p>
@@ -131,7 +132,8 @@ export const DetalleEventoView = {
         <div class="cantidad">
           <button type="button" data-accion="menos" ${cantidad <= 1 ? 'disabled' : ''} aria-label="Quitar una entrada">−</button>
           <div class="cantidad__valor"><strong>${cantidad}</strong><span>${cantidad === 1 ? 'entrada' : 'entradas'}</span></div>
-          <button type="button" data-accion="mas" ${cantidad >= tope ? 'disabled' : ''} aria-label="Agregar una entrada">+</button>        </div>
+          <button type="button" data-accion="mas" ${cantidad >= tope ? 'disabled' : ''} aria-label="Agregar una entrada">+</button>   
+        </div>
       </div>
       <div class="campo">
         <label class="campo__etiqueta" for="observaciones">Observaciones <span class="campo__opcional">(opcional)</span></label>
@@ -165,7 +167,8 @@ export const DetalleEventoView = {
   pagoResumen(evento, cantidad, metodo) {
     const total = evento.precio * cantidad
     const filas = [
-      ['Evento', evento.nombre], ['Fecha', evento.fechaLarga], ['Ciudad', `${evento.ciudad}, ${evento.departamento}`],      ['Entradas', `${cantidad} entrada${cantidad > 1 ? 's' : ''}`], ['Precio c/u', pesos(evento.precio)],
+      ['Evento', evento.nombre], ['Fecha', evento.fechaLarga], ['Ciudad', `${evento.ciudad}, ${evento.departamento}`],   
+      ['Entradas', `${cantidad} entrada${cantidad > 1 ? 's' : ''}`], ['Precio c/u', pesos(evento.precio)],
     ]
     const conTarjeta = metodo === 'Tarjeta débito' || metodo === 'Tarjeta crédito'
     return `
@@ -210,7 +213,7 @@ export const DetalleEventoView = {
       </div>`
   },
 
-    /** Reserva guardada en PostgreSQL: muestra el código y el valor que calculó el backend */
+  /** Reserva guardada en PostgreSQL: muestra el código y el valor que calculó el backend */
   pagoExitoso(evento, reserva, metodo) {
     const filas = [
       ['Código de reserva', reserva.codigo], ['Evento', evento.nombre],
