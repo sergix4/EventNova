@@ -45,7 +45,12 @@ async function iniciar() {
   iniciarNotificaciones()
   InicioClienteView.mostrarSaludo(usuario)
 
-  const [resumen, lista] = await Promise.all([ReservaModel.resumenInicioCliente(), EventoModel.obtenerParaInicioCliente()])
+  // Si las reservas fallan, las tarjetas quedan en 0 pero los eventos se siguen mostrando
+  const resumenVacio = { activas: 0, confirmadas: 0, proximoEvento: null }
+  const [resumen, lista] = await Promise.all([
+    ReservaModel.resumenInicioCliente().catch(() => resumenVacio),
+    EventoModel.obtenerParaInicioCliente(),
+  ])
   eventos = lista
   InicioClienteView.mostrarEstadisticas(resumen)
   aplicarFiltros()

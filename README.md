@@ -154,6 +154,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Tabla `EVENTO` con los campos del enunciado (`migracion_03.sql`) y modelo `backend/models/eventoModel.js`.
 - ✅ Tabla `RESERVA` con los campos del enunciado (`migracion_05.sql`) y modelo `backend/models/reservaModel.js` (valor total automático y validación de cupos).
 - ✅ CRUD de reservas (`/api/reservas`): el cliente reserva desde el detalle del evento; valor total automático, validación de cupos y permisos por rol.
+- ✅ Vista "Mis reservas" del cliente: listado real de sus reservas con filtros (texto, estado, fecha), detalle del evento asociado y cancelación de reservas propias.
 - 🟡 Eventos y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
   Cuando exista cada endpoint solo se cambia el modelo correspondiente
   (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y
