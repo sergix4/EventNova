@@ -233,14 +233,6 @@ export const TOTAL_RESERVAS  = RESERVAS.length
 
 export const EVENTOS_AGENTE_DEMO = EVENTOS.filter(e => e.agente === 'Carlos Martínez')
 
-// ─── Reservas del agente de demostración ────────────────────────────────
-
-export const RESERVAS_AGENTE_DEMO = RESERVAS.filter(r => r.agente === 'Carlos Martínez')
-
-// ─── Pagos del agente de demostración ────────────────────────────────────
-
-export const PAGOS_AGENTE_DEMO = PAGOS.filter(p => p.agente === 'Carlos Martínez')
-
 // ─── Últimos registros (reportes generales del administrador) ────────────────────
 
 export const ULTIMOS_REGISTROS = [

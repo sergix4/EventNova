@@ -10,13 +10,14 @@ const CLASE_EVENTO = {
   'En vivo': 'ev-vivo', 'En Vivo': 'ev-vivo',
   'Finalizado': 'ev-finalizado', 'Cancelado': 'ev-cancelado',
 }
-const CLASE_RESERVA = { 'Pendiente': 'res-pendiente', 'Confirmada': 'res-confirmada', 'Cancelada': 'res-cancelada' }
+// 'Reservada' es el nombre real en la tabla ESTADO_RESERVA; 'Pendiente' queda por los datos de ejemplo
+const CLASE_RESERVA = { 'Reservada': 'res-pendiente', 'Pendiente': 'res-pendiente', 'Confirmada': 'res-confirmada', 'Cancelada': 'res-cancelada' }
 
 export function insigniaEvento(estado) {
   return `<span class="insignia ${CLASE_EVENTO[estado] || 'ev-programado'}"><span class="insignia__punto"></span>${esc(estado)}</span>`
 }
 export function insigniaReserva(estado) {
-  return `<span class="insignia ${CLASE_RESERVA[estado]}"><span class="insignia__punto"></span>${esc(estado)}</span>`
+  return `<span class="insignia ${CLASE_RESERVA[estado] || 'res-pendiente'}"><span class="insignia__punto"></span>${esc(estado)}</span>`
 }
 export function insigniaPago(estado) {
   return `<span class="insignia pago--${estado.toLowerCase()}"><span class="insignia__punto"></span>${esc(estado)}</span>`
