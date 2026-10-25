@@ -1,6 +1,7 @@
 // js/views/cliente/misReservasView.js
-// VISTA de "Mis reservas": tarjetas de resumen, tabla (escritorio),
-// tarjetas (celular), panel lateral de detalle y ventana para calificar.
+// VISTA de "Mis reservas" (Sprint 2 · Tarea 7): tarjetas de resumen, tabla
+// (escritorio), tarjetas (celular), panel lateral con el detalle de la reserva
+// y de su evento, ventana para cancelar y ventana para calificar.
 
 import { icono, estrellas } from '../componentes/iconos.js'
 import { paginacion } from '../componentes/paginacion.js'
@@ -10,6 +11,10 @@ import { esc } from '../../utils/formato.js'
 const valor = (total) => total === 0 ? 'Gratis' : '$ ' + total.toLocaleString('es-CO')
 const ESTRELLA_LLENA = (t) => `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
 const TEXTO_ESTRELLAS = ['Selecciona una calificación', 'Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente']
+const MAX_CAUSA = 300
+
+// Enlace al detalle del evento de la reserva (página de la tarea 3.1)
+const urlEvento = (r) => `/pages/cliente/detalle-evento.html?id=${encodeURIComponent(r.id_evento)}`
 
 function accionCalificar(r, calificacion, movil = false) {
   if (!r.eventoFinalizado || r.estado === 'Cancelada') return ''
@@ -38,6 +43,19 @@ export const MisReservasView = {
     document.getElementById('limpiar-busqueda').hidden = !hayBusqueda
   },
 
+  /** No se pudieron cargar las reservas (servidor apagado, sin conexión...) */
+  mostrarError(mensaje) {
+    document.getElementById('resultados').innerHTML = `
+      <div class="tarjeta">
+        <div class="vacio">
+          <div class="vacio__icono vacio__icono--gris">${icono('alerta', 16)}</div>
+          <p class="vacio__titulo">No pudimos cargar tus reservas</p>
+          <p class="vacio__texto">${esc(mensaje)}</p>
+          <button type="button" class="boton boton--primario" data-accion="reintentar">Reintentar</button>
+        </div>
+      </div>`
+  },
+
   mostrarLista(reservas, total, pagina, porPagina, calificaciones, hayFiltros) {
     const contenedor = document.getElementById('resultados')
     if (total === 0) {
@@ -62,14 +80,14 @@ export const MisReservasView = {
         <td>
           <div class="evento-mini">
             <div class="evento-mini__imagen"><img src="${esc(r.imagen)}" alt="${esc(r.evento)}"></div>
-            <div class="sin-desborde"><p class="evento-mini__nombre">${esc(r.evento)}</p><span class="etiqueta-gris">${esc(r.categoria)}</span></div>
+            <div class="sin-desborde"><p class="evento-mini__nombre">${esc(r.evento)}</p><span class="etiqueta-gris nowrap">${esc(r.codigo)}</span></div>
           </div>
         </td>
         <td class="nowrap celda-fecha"><strong>${esc(r.fechaEvento)}</strong><span>${esc(r.horaEvento)}</span></td>
         <td><span class="celda-ciudad">${icono('ubicacion', 13)}${esc(r.ciudad)}</span></td>
         <td class="celda-centro ocultar-lg"><span class="cuadro-numero">${r.entradas}</span></td>
-        <td class="ocultar-xl">${esc(r.reservadoEl)}</td>
-        <td class="nowrap"><p class="celda-fuerte">${valor(r.total)}</p>${r.estado === 'Cancelada' && r.total > 0 ? `<p class="tachado">${valor(r.total)}</p>` : ''}</td>
+        <td class="ocultar-xl">${esc(r.fechaReserva)}</td>
+        <td class="nowrap"><p class="celda-fuerte">${valor(r.valorTotal)}</p>${r.estado === 'Cancelada' && r.valorTotal > 0 ? `<p class="tachado">${valor(r.valorTotal)}</p>` : ''}</td>
         <td>
           <div class="pila">
             ${insigniaReserva(r.estado)}
@@ -98,8 +116,8 @@ export const MisReservasView = {
         ${r.estado === 'Cancelada' && r.causaCancelacion ? `<div class="alerta alerta--roja">${icono('alerta', 14)}<p>${esc(r.causaCancelacion)}</p></div>` : ''}
         <div class="reserva-movil__pie">
           <div class="pila pila--4">
-            <small class="texto-tenue">${r.entradas} entrada${r.entradas > 1 ? 's' : ''} · ${esc(r.reservadoEl)}</small>
-            <p class="celda-fuerte">${valor(r.total)}</p>
+            <small class="texto-tenue">${r.entradas} entrada${r.entradas > 1 ? 's' : ''} · ${esc(r.codigo)}</small>
+            <p class="celda-fuerte">${valor(r.valorTotal)}</p>
             ${r.estadoPago ? insigniaPago(r.estadoPago) : ''}
           </div>
           <button type="button" class="boton-tabla" data-ver="${r.id}">${icono('ojo', 15)}Ver detalle</button>
@@ -123,13 +141,26 @@ export const MisReservasView = {
       <div class="tarjetas-movil">${tarjetas}${paginacion(pagina, total, porPagina)}</div>`
   },
 
-  // ─── Panel lateral con el detalle de una reserva ───────────────────────────
+  // ─── Panel lateral con el detalle de la reserva y de su evento ─────────────
   cajonDetalle(r, calificacion) {
-    const filas = [
-      ['Evento', r.evento], ['Fecha del evento', `${r.fechaEvento} · ${r.horaEvento}`], ['Ciudad', r.ciudad],
-      ['N.° de entradas', `${r.entradas} entrada${r.entradas > 1 ? 's' : ''}`], ['Fecha de reserva', r.reservadoEl],
-      ['Valor total', r.total === 0 ? 'Gratis' : `${valor(r.total)} COP`], ['Código', r.codigo],
+    const datosReserva = [
+      ['Código', r.codigo],
+      ['Fecha de reserva', r.fechaReserva],
+      ['N.° de entradas', `${r.entradas} entrada${r.entradas > 1 ? 's' : ''}`],
+      ['Precio por entrada', valor(r.precioBase)],
+      ['Valor total', r.valorTotal === 0 ? 'Gratis' : `${valor(r.valorTotal)} COP`],
     ]
+    if (r.observaciones) datosReserva.push(['Observaciones', r.observaciones])
+
+    const datosEvento = [
+      ['Evento', r.evento],
+      ['Código del evento', r.codigoEvento],
+      ['Fecha y hora', `${r.fechaEvento} · ${r.horaEvento}`],
+      ['Teatro / lugar', r.teatro || '—'],
+      ['Ciudad', r.ciudad],
+      ['Estado del evento', r.estadoEvento],
+    ]
+
     let aviso = ''
     if (r.estado === 'Cancelada' && r.causaCancelacion) aviso = `<div class="alerta alerta--roja">${icono('alerta', 14)}<div><p class="alerta__titulo alerta__titulo--rojo">Causa de cancelación</p><p>${esc(r.causaCancelacion)}</p></div></div>`
     if (r.estado === 'Confirmada') aviso = `<div class="alerta alerta--verde">${icono('check', 14, { grosor: 2.5 })}<p>Tu reserva fue confirmada. Tus entradas digitales están disponibles en el correo registrado.</p></div>`
@@ -146,6 +177,8 @@ export const MisReservasView = {
         </div>`
     }
 
+    const lista = (filas) => filas.map(([e, v]) => `<div><dt>${e}</dt><dd>${esc(v)}</dd></div>`).join('')
+
     return `
       <aside class="cajon" role="dialog" aria-modal="true" aria-label="Detalle de reserva">
         <div class="cajon__cabecera">
@@ -154,32 +187,57 @@ export const MisReservasView = {
         </div>
         <div class="cajon__imagen">
           <img src="${esc(r.imagen.replace('w=120&h=80', 'w=600&h=300'))}" alt="${esc(r.evento)}">
-          <div><small>${esc(r.categoria)}</small><strong>${esc(r.evento)}</strong></div>
+          <div><small>${esc(r.teatro || r.ciudad)}</small><strong>${esc(r.evento)}</strong></div>
         </div>
         <div class="cajon__estado">
           <div class="cajon__estado-fila"><span>Estado de la reserva</span>${insigniaReserva(r.estado)}</div>
           ${aviso}
         </div>
-        <dl class="cajon__datos lista-datos">
-          ${filas.map(([e, v]) => `<div><dt>${e}</dt><dd>${esc(v)}</dd></div>`).join('')}
-        </dl>
-        ${r.estadoPago ? `
-          <div class="cajon__bloque">
-            <p class="cajon__rotulo">Información del pago</p>
-            <div class="tabla-pago">
-              <div><span>Estado del pago</span>${insigniaPago(r.estadoPago)}</div>
-              <div><span>Método de pago</span><strong>${esc(r.metodoPago)}</strong></div>
-              <div><span>Total pagado</span><strong class="negrita">${r.total === 0 ? 'Gratis' : `${valor(r.total)} COP`}</strong></div>
-              <div><span>Fecha de pago</span><strong class="texto-suave">${esc(r.fechaPago || '—')}</strong></div>
-              <div><span>Código TXN</span><strong class="mono">${esc(r.codigoPago || '—')}</strong></div>
-            </div>
-          </div>` : ''}
+        <div class="cajon__bloque">
+          <p class="cajon__rotulo">Datos de la reserva</p>
+          <dl class="lista-datos">${lista(datosReserva)}</dl>
+        </div>
+        <div class="cajon__bloque">
+          <p class="cajon__rotulo">Evento asociado</p>
+          <dl class="lista-datos">${lista(datosEvento)}</dl>
+        </div>
         ${bloqueCalificacion}
         <div class="cajon__acciones">
-          <a href="/pages/cliente/detalle-evento.html" class="boton boton--coral boton--bloque">${icono('ticket', 16)}Ver evento</a>
-          ${r.estado === 'Reservada' ? '<button type="button" class="boton-cancelar-reserva">Cancelar reserva</button>' : ''}
+          <a href="${urlEvento(r)}" class="boton boton--coral boton--bloque">${icono('ticket', 16)}Ver evento</a>
+          ${r.cancelable ? `<button type="button" class="boton-cancelar-reserva" data-cancelar="${r.id}">Cancelar reserva</button>` : ''}
         </div>
       </aside>`
+  },
+
+  // ─── Ventana para confirmar la cancelación ─────────────────────────────────
+  modalCancelar(r) {
+    const avisoConfirmada = r.estado === 'Confirmada'
+      ? `<div class="alerta alerta--ambar">${icono('alerta', 14)}<p>Esta reserva ya fue confirmada por el agente. Si la cancelas, liberarás tus ${r.entradas} entrada${r.entradas > 1 ? 's' : ''}.</p></div>`
+      : ''
+    return `
+      <div class="modal__cabecera">
+        <div><h3 class="modal__titulo">Cancelar reserva</h3><p class="modal__subtitulo">${esc(r.codigo)} · ${esc(r.evento)}</p></div>
+        <button type="button" class="boton-icono boton-icono--sin-borde" data-cerrar-modal aria-label="Cerrar">${icono('cerrar', 18)}</button>
+      </div>
+      <div class="modal__cuerpo">
+        <p>¿Seguro que quieres cancelar esta reserva de <strong>${r.entradas} entrada${r.entradas > 1 ? 's' : ''}</strong> por <strong>${valor(r.valorTotal)}</strong>? Esta acción no se puede deshacer.</p>
+        ${avisoConfirmada}
+        <div class="campo">
+          <label class="campo__etiqueta" for="causa-cancelacion">Motivo <span class="campo__opcional">(opcional)</span></label>
+          <textarea id="causa-cancelacion" class="area-texto" rows="3" maxlength="${MAX_CAUSA}" placeholder="Cuéntanos por qué cancelas…"></textarea>
+          <span class="campo__error" id="error-cancelacion"></span>
+        </div>
+      </div>
+      <div class="modal__pie">
+        <button type="button" class="boton boton--neutro" data-cerrar-modal>Volver</button>
+        <button type="button" class="boton boton--peligro" id="confirmar-cancelacion">Sí, cancelar reserva</button>
+      </div>`
+  },
+
+  /** Muestra el error que devolvió el backend dentro de la ventana de cancelación */
+  mostrarErrorCancelacion(mensaje) {
+    const caja = document.getElementById('error-cancelacion')
+    if (caja) caja.innerHTML = `${icono('alerta', 14)}${esc(mensaje)}`
   },
 
   // ─── Ventana para calificar un evento ──────────────────────────────────────
