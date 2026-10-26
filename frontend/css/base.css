@@ -445,3 +445,16 @@ main:focus { outline: none; }
 .espacio-final { height: 32px; }
 .boton--seminegrita { font-weight: 600; }
 .centrar { margin: 0 auto; }
+
+/* ─── Selector de entradas a cancelar (Mis reservas, detalle del evento y Reservas del agente) ─── */
+.selector-entradas { display: flex; flex-direction: column; gap: 8px; }
+.selector-entradas__control { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.selector-entradas__boton { width: 36px; height: 36px; border-radius: var(--radio-sm); border: 1px solid var(--gris-200); background: #fff; font-size: 18px; line-height: 1; color: var(--gris-600); transition: all var(--transicion); }
+.selector-entradas__boton:hover:not(:disabled) { border-color: var(--gris-300); background: var(--gris-50); }
+.selector-entradas__boton:disabled { opacity: .4; cursor: not-allowed; }
+.selector-entradas__valor { min-width: 64px; text-align: center; font-size: 20px; line-height: 24px; font-weight: 800; color: var(--gris-900); }
+.selector-entradas__valor small { display: block; font-size: 11px; line-height: 14px; font-weight: 500; color: var(--gris-400); }
+.selector-entradas__todas { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--primario); }
+.selector-entradas__todas:hover { text-decoration: underline; }
+.selector-entradas__resumen { font-size: 13px; line-height: 18px; color: var(--gris-500); }
+.selector-entradas__resumen strong { color: var(--gris-700); }

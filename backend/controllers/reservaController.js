@@ -58,6 +58,9 @@ function responderErrorModelo(res, err, accion) {
   if (err.codigo === 'SIN_CUPOS') {
     return res.status(409).json({ error: err.message, disponibles: err.disponibles });
   }
+    if (err.codigo === 'MAXIMO_ENTRADAS') {
+    return res.status(409).json({ error: err.message });
+  }
   if (err.code === '23503') {
     // FK: el usuario en sesión no está en la tabla CLIENTE, o el evento no existe
     return res.status(400).json({ error: 'El cliente o el evento no existen en la base de datos.' });
@@ -155,11 +158,14 @@ const reservaController = {
 
     try {
       // La reserva queda a nombre del cliente en sesión (nunca se toma del body)
+      // Si ya tenía una reserva activa de este evento, el Modelo le suma las
+      // entradas (responde 200 con entradas_agregadas); si no, crea una (201).
       const reserva = await ReservaModel.create(
         { id_evento, ...datos },
         req.session.usuario.numero_id,
+        MAX_ENTRADAS,
       );
-      res.status(201).json(reserva);
+      res.status(reserva.entradas_agregadas ? 200 : 201).json(reserva);
     } catch (err) {
       responderErrorModelo(res, err, 'crear');
     }
@@ -197,7 +203,7 @@ const reservaController = {
   },
 
   // PATCH /api/reservas/:id/estado
-  // body: { id_estado_reserva, causa_cancelacion }
+    // body: { id_estado_reserva, causa_cancelacion, entradas_cancelar (opcional) }
   // Cambios permitidos: Reservada -> Confirmada / Cancelada · Confirmada -> Cancelada
   //   cliente: solo puede CANCELAR sus propias reservas
   //   agente:  confirma o cancela reservas de sus eventos (causa obligatoria al cancelar)
@@ -249,6 +255,23 @@ const reservaController = {
         }
         if (causa.length > MAX_CAUSA) {
           return res.status(400).json({ error: `La causa no puede superar ${MAX_CAUSA} caracteres.` });
+        }
+
+        // Cancelación PARCIAL: body.entradas_cancelar = cuántas entradas cancelar.
+        // Si son menos que las de la reserva, solo se quitan esas entradas y la
+        // reserva sigue activa. Si son todas (o no se envía), se cancela completa.
+        if (req.body.entradas_cancelar !== undefined && req.body.entradas_cancelar !== null) {
+          const cantidad = Number(req.body.entradas_cancelar);
+          if (!Number.isInteger(cantidad) || cantidad <= 0 || cantidad > actual.numero_entradas) {
+            return res.status(400).json({ error: `Debes cancelar entre 1 y ${actual.numero_entradas} entradas.` });
+          }
+          if (cantidad < actual.numero_entradas) {
+            const quien = { cliente: 'El cliente', agente: 'El agente' }[usuario.rol] || 'El administrador';
+            const fecha = new Date().toLocaleDateString('es-CO', { timeZone: 'America/Bogota' });
+            const nota = `[${fecha}] ${quien} canceló ${cantidad} de ${actual.numero_entradas} entradas. Causa: ${causa}`;
+            const parcial = await ReservaModel.cancelarEntradas(id, cantidad, nota);
+            return res.json(parcial);
+          }
         }
       }
 

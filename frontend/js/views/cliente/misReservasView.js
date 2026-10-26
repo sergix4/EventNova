@@ -7,6 +7,7 @@ import { icono, estrellas } from '../componentes/iconos.js'
 import { paginacion } from '../componentes/paginacion.js'
 import { tarjetaEstadistica, insigniaReserva, insigniaPago } from './comunClienteView.js'
 import { esc } from '../../utils/formato.js'
+import { selectorEntradas } from '../componentes/selectorEntradas.js'
 
 const valor = (total) => total === 0 ? 'Gratis' : '$ ' + total.toLocaleString('es-CO')
 const ESTRELLA_LLENA = (t) => `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`
@@ -212,7 +213,7 @@ export const MisReservasView = {
   // ─── Ventana para confirmar la cancelación ─────────────────────────────────
   modalCancelar(r) {
     const avisoConfirmada = r.estado === 'Confirmada'
-      ? `<div class="alerta alerta--ambar">${icono('alerta', 14)}<p>Esta reserva ya fue confirmada por el agente. Si la cancelas, liberarás tus ${r.entradas} entrada${r.entradas > 1 ? 's' : ''}.</p></div>`
+        ? `<div class="alerta alerta--ambar">${icono('alerta', 14)}<p>Esta reserva ya fue confirmada por el agente. Las entradas que canceles quedarán libres para otros clientes.</p></div>`
       : ''
     return `
       <div class="modal__cabecera">
@@ -220,8 +221,9 @@ export const MisReservasView = {
         <button type="button" class="boton-icono boton-icono--sin-borde" data-cerrar-modal aria-label="Cerrar">${icono('cerrar', 18)}</button>
       </div>
       <div class="modal__cuerpo">
-        <p>¿Seguro que quieres cancelar esta reserva de <strong>${r.entradas} entrada${r.entradas > 1 ? 's' : ''}</strong> por <strong>${valor(r.valorTotal)}</strong>? Esta acción no se puede deshacer.</p>
-        ${avisoConfirmada}
+          <p>Tu reserva tiene <strong>${r.entradas} entrada${r.entradas > 1 ? 's' : ''}</strong> por <strong>${valor(r.valorTotal)}</strong>. ${r.entradas > 1 ? 'Puedes cancelarlas todas o solo algunas.' : '¿Seguro que quieres cancelarla?'} Esta acción no se puede deshacer.</p>
+          ${selectorEntradas(r.entradas)}
+          ${avisoConfirmada}
         <div class="campo">
           <label class="campo__etiqueta" for="causa-cancelacion">Motivo <span class="campo__opcional">(opcional)</span></label>
           <textarea id="causa-cancelacion" class="area-texto" rows="3" maxlength="${MAX_CAUSA}" placeholder="Cuéntanos por qué cancelas…"></textarea>
@@ -230,7 +232,7 @@ export const MisReservasView = {
       </div>
       <div class="modal__pie">
         <button type="button" class="boton boton--neutro" data-cerrar-modal>Volver</button>
-        <button type="button" class="boton boton--peligro" id="confirmar-cancelacion">Sí, cancelar reserva</button>
+        <button type="button" class="boton boton--peligro" id="confirmar-cancelacion">Confirmar cancelación</button>
       </div>`
   },
 

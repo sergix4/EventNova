@@ -8,15 +8,31 @@ import { insigniaEvento, kpiTendencia, filaVacia } from './comunAgenteView.js'
 import { esc, num } from '../../utils/formato.js'
 
 export const MisEventosView = {
-  mostrarIndicadores(eventos) {
-    const activos = eventos.filter(e => ['Programado', 'En boletería', 'En vivo'].includes(e.estado)).length
-    const reservas = eventos.reduce((s, e) => s + e.reservas, 0)
-    const pendientes = eventos.filter(e => e.estado === 'Programado').reduce((s, e) => s + e.reservas, 0)
+  /** Tarjetas con datos REALES:
+   *  eventos  = eventos del agente (GET /api/eventos?mis_eventos=1)
+   *  reservas = reservas de sus eventos (GET /api/reservas, ya filtrado por el backend) */
+  mostrarIndicadores(eventos, reservas = []) {
+    const hoy = new Date()
+    const estado = (e) => (e.estado || '').toLowerCase()
+    // Activos: los que todavía no terminan ni se cancelaron
+    const activos = eventos.filter(e => ['programado', 'en boletería', 'en vivo'].includes(estado(e))).length
+    const enVivo = eventos.filter(e => estado(e) === 'en vivo').length
+    // Registrados este mes (columna fecha_registro de EVENTO)
+    const esteMes = eventos.filter(e => {
+      const d = e.fechaRegistro ? new Date(e.fechaRegistro) : null
+      return d && d.getMonth() === hoy.getMonth() && d.getFullYear() === hoy.getFullYear()
+    }).length
+    // Reservas: cada reserva cuenta UNA vez, sin importar cuántas entradas tenga
+    const recibidas = reservas.filter(r => r.estado !== 'Cancelada')
+    const entradas = recibidas.reduce((s, r) => s + r.entradas, 0)
+    const pendientes = reservas.filter(r => r.estado === 'Reservada').length
+    const entradasPendientes = reservas.filter(r => r.estado === 'Reservada').reduce((s, r) => s + r.entradas, 0)
+
     document.getElementById('estadisticas').innerHTML = [
-      kpiTendencia({ etiqueta: 'Eventos registrados', valor: eventos.length, icono: 'calendarioDias', color: '#4f46e5', fondo: '#eef2ff', tendencia: '+2 este mes', sube: true }),
-      kpiTendencia({ etiqueta: 'Eventos activos', valor: activos, icono: 'checkCirculo', color: '#059669', fondo: '#ecfdf5', tendencia: 'En progreso', sube: true }),
-      kpiTendencia({ etiqueta: 'Reservas recibidas', valor: num(reservas), icono: 'usuarios', color: '#f4845f', fondo: '#fff7f5', tendencia: '+18% vs. mes anterior', sube: true }),
-      kpiTendencia({ etiqueta: 'Reservas pendientes', valor: num(pendientes), icono: 'reloj', color: '#d97706', fondo: '#fffbeb', tendencia: 'Por confirmar', sube: false }),
+      kpiTendencia({ etiqueta: 'Eventos registrados', valor: eventos.length, icono: 'calendarioDias', color: '#4f46e5', fondo: '#eef2ff', tendencia: `+${esteMes} este mes`, sube: esteMes > 0 }),
+      kpiTendencia({ etiqueta: 'Eventos activos', valor: activos, icono: 'checkCirculo', color: '#059669', fondo: '#ecfdf5', tendencia: enVivo ? `${enVivo} en vivo` : 'En progreso', sube: activos > 0 }),
+      kpiTendencia({ etiqueta: 'Reservas recibidas', valor: num(recibidas.length), icono: 'usuarios', color: '#f4845f', fondo: '#fff7f5', tendencia: `${num(entradas)} entrada${entradas !== 1 ? 's' : ''}`, sube: entradas > 0 }),
+      kpiTendencia({ etiqueta: 'Reservas pendientes', valor: num(pendientes), icono: 'reloj', color: '#d97706', fondo: '#fffbeb', tendencia: pendientes ? `${num(entradasPendientes)} entradas por confirmar` : 'Nada por confirmar', sube: false }),
     ].join('')
   },
 
@@ -72,7 +88,7 @@ export const MisEventosView = {
     const conComentario = calificaciones.filter(c => c.comentario)
     const datos = [
       ['Ciudad', evento.ciudad], ['Fecha', evento.fecha], ['Capacidad', num(evento.capacidad)],
-      ['Precio', evento.precio], ['Reservas', num(evento.reservas)], ['Estado', evento.estado],
+      ['Precio', evento.precio], ['Entradas reservadas', num(evento.reservas)], ['Estado', evento.estado],
     ]
     const estrellaLlena = (t) => icono('estrella', t, { relleno: '#f59e0b' }).replace('stroke="currentColor"', 'stroke="#f59e0b"')
 

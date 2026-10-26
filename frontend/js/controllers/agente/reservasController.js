@@ -12,6 +12,7 @@ import { ReservasAgenteView } from '../../views/agente/reservasAgenteView.js'
 import { abrirModal, cerrarModal } from '../../views/componentes/modal.js'
 import { paginar } from '../../views/componentes/paginacion.js'
 import { mostrarToast } from '../../views/componentes/toast.js'
+import { conectarSelectorEntradas } from '../comun/selectorEntradasController.js'
 
 const POR_PAGINA = 8
 const $ = (id) => document.getElementById(id)
@@ -73,6 +74,8 @@ function actualizarEstado(reserva) {
   let elegido = null
   let guardando = false
   const caja = abrirModal(ReservasAgenteView.modalActualizar(reserva), { cerrarAlHacerClicFuera: false })
+      // Cuántas entradas cancelar (si la reserva tiene más de 1)
+  const cantidadElegida = conectarSelectorEntradas(caja, reserva.entradas, reserva.precioBase)
 
   caja.querySelector('#opciones-estado').addEventListener('click', (e) => {
     const boton = e.target.closest('[data-estado]')
@@ -93,12 +96,16 @@ function actualizarEstado(reserva) {
     ReservasAgenteView.guardando(true)
     try {
       // PATCH /api/reservas/:id/estado (el backend revisa que la reserva sea de MIS eventos)
-      const actualizada = await ReservaModel.cambiarEstadoPorNombre(
-        reserva.id, elegido, elegido === 'Cancelada' ? causa : null)
-      reservas = reservas.map(r => String(r.id) === String(reserva.id) ? actualizada : r)
-      cerrarModal()
-      dibujarReservas()
-      mostrarToast(`Reserva ${elegido === 'Confirmada' ? 'confirmada' : 'cancelada'}.`, { detalle: actualizada.codigo })
+        const cancela = elegido === 'Cancelada'
+        const cantidad = cancela ? cantidadElegida() : null
+        const actualizada = await ReservaModel.cambiarEstadoPorNombre(
+          reserva.id, elegido, cancela ? causa : null, cantidad)
+        reservas = reservas.map(r => String(r.id) === String(reserva.id) ? actualizada : r)
+        cerrarModal()
+        dibujarReservas()
+        const mensaje = !cancela ? 'Reserva confirmada.'
+          : cantidad < reserva.entradas ? `Se cancelaron ${cantidad} de ${reserva.entradas} entradas.` : 'Reserva cancelada.'
+        mostrarToast(mensaje, { detalle: actualizada.codigo })
     } catch (error) {
       // p. ej. 409 "No se puede confirmar: el evento está Finalizado."
       ReservasAgenteView.errorEstado(error.message)

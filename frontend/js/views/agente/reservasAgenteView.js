@@ -6,6 +6,7 @@ import { icono } from '../componentes/iconos.js'
 import { paginacion } from '../componentes/paginacion.js'
 import { insigniaReserva, kpiFila, filaVacia } from './comunAgenteView.js'
 import { esc } from '../../utils/formato.js'
+import { selectorEntradas } from '../componentes/selectorEntradas.js'
 
 const ini = (nombre) => (nombre || '?').split(' ').filter(Boolean).map(n => n[0]).join('').slice(0, 2).toUpperCase()
 const COLORES_ESTADO = { Reservada: ['#fffbeb', '#d97706'], Confirmada: ['#ecfdf5', '#059669'], Cancelada: ['#fef2f2', '#dc2626'] }
@@ -103,8 +104,8 @@ export const ReservasAgenteView = {
           </div>
           ${fila('dolar', 'Precio por entrada', '$ ' + r.precioBase.toLocaleString('es-CO'))}
           ${fila('calendario', 'Fecha de reserva', r.fechaReserva)}
-          ${r.observaciones ? fila('documento', 'Observaciones', r.observaciones) : ''}
         </div>
+                  ${r.observaciones ? `<div class="caja-gris"><p class="rotulo-seccion">Observaciones</p><p style="white-space:pre-line;font-size:13px;line-height:20px;color:var(--gris-600)">${esc(r.observaciones)}</p></div>` : ''}
         <div class="linea" style="height:1px;background:var(--gris-100)"></div>
         <div class="fila-detalle"><p class="rotulo-seccion">Estado actual</p>${insigniaReserva(r.estado)}</div>
         ${r.estado === 'Cancelada' && r.causaCancelacion ? `<div class="alerta alerta--roja" style="display:block;padding:14px"><p class="alerta__titulo" style="color:#ef4444">Causa de cancelación</p><p style="font-size:14px;color:#b91c1c">${esc(r.causaCancelacion)}</p></div>` : ''}
@@ -135,6 +136,7 @@ export const ReservasAgenteView = {
           </div>
         </div>
         <div class="campo" id="campo-causa" hidden>
+                    ${selectorEntradas(r.entradas, '¿Cuántas entradas vas a cancelar?')}
           <label class="campo__etiqueta" for="causa">Causa de cancelación <span class="campo__requerido--rojo">*</span></label>
           <textarea id="causa" class="area-texto" rows="3" maxlength="${MAX_CAUSA}" placeholder="Describe el motivo de la cancelación (el cliente la verá en Mis reservas)…"></textarea>
           <span class="campo__error" id="error-causa"></span>
