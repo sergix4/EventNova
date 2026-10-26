@@ -11,11 +11,11 @@ const IMAGEN_DEFECTO = img('1501386761578-eac5c94b800a')
 
 // Equivalencia del estado del evento con el texto que muestra la página de inicio
 const ESTADO_EN_INICIO = {
-  'Programado':   { texto: 'Disponible',       color: 'verde' },
-  'En Boletería': { texto: 'Últimas entradas', color: 'ambar' },
-  'En boletería': { texto: 'Últimas entradas', color: 'ambar' },
-  'En Vivo':      { texto: 'Disponible',       color: 'verde' },
-  'En vivo':      { texto: 'Disponible',       color: 'verde' },
+  'Programado':   { texto: 'Próximamente',     color: 'ambar' },
+  'En Boletería': { texto: 'Disponible',       color: 'verde' },
+  'En boletería': { texto: 'Disponible',       color: 'verde' },
+  'En Vivo':      { texto: 'En curso',         color: 'rojo'  },
+  'En vivo':      { texto: 'En curso',         color: 'rojo'  },
   'Finalizado':   { texto: 'Agotado',          color: 'rojo'  },
   'Cancelado':    { texto: 'Agotado',          color: 'rojo'  },
 }
@@ -77,6 +77,7 @@ function adaptarEventoBD(fila) {
     id_estado: fila.id_estado,
     estado: fila.nombre_estado,
     causa_cancelacion: fila.causa_cancelacion || '',
+    reservas_canceladas: Number(fila.reservas_canceladas) || 0, // al cancelar el evento
     id_agente: fila.id_agente,
     nombre_agente: fila.nombre_agente,
     nombre_empresa: fila.nombre_empresa,
@@ -154,8 +155,11 @@ export const EventoModel = {
       .map((e) => {
         const disponibles = e.capacidad - e.reservas
         let est = ESTADO_EN_INICIO[e.estado] ?? ESTADO_EN_INICIO['Programado']
-        if (disponibles <= 0) est = { texto: 'Agotado', color: 'rojo' }
-        else if (disponibles < e.capacidad * 0.2) est = { texto: 'Últimas entradas', color: 'ambar' }
+        // "Agotado" y "Últimas entradas" solo aplican cuando la venta está abierta
+        if (e.estado === 'En Boletería') {
+          if (disponibles <= 0) est = { texto: 'Agotado', color: 'rojo' }
+          else if (disponibles < e.capacidad * 0.2) est = { texto: 'Últimas entradas', color: 'ambar' }
+        }
         return {
           id: e.id,
           nombre: e.nombre,
