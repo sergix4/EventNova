@@ -5,6 +5,7 @@
 import { iniciarPanel } from '../comun/panelController.js'
 import { montarFormulario } from './formularioEventoController.js'
 import { EventoModel } from '../../models/eventoModel.js'
+import { ReservaModel } from '../../models/reservaModel.js'
 import { MisEventosView } from '../../views/agente/misEventosView.js'
 import { abrirModal, cerrarModal } from '../../views/componentes/modal.js'
 import { paginar } from '../../views/componentes/paginacion.js'
@@ -16,6 +17,7 @@ const POR_PAGINA = 6
 const contenido = document.getElementById('contenido')
 let htmlLista = ''
 let eventos = []
+let reservas = [] // reservas REALES de mis eventos (para las tarjetas de arriba)
 let pagina = 1
 
 // Llena el filtro de ciudades con las ciudades reales presentes en los eventos del agente
@@ -45,7 +47,7 @@ function filtrar() {
 
 function dibujar() {
   const lista = filtrar()
-  MisEventosView.mostrarIndicadores(eventos)
+    MisEventosView.mostrarIndicadores(eventos, reservas)
   MisEventosView.mostrarTabla(paginar(lista, pagina, POR_PAGINA), lista.length, pagina, POR_PAGINA)
 }
 
@@ -123,7 +125,11 @@ async function iniciar() {
   await iniciarPanel({ rol: 'agente', activo: 'mis-eventos' })
   htmlLista = contenido.innerHTML
   try {
-    eventos = await EventoModel.obtenerDelAgente()
+      // Si las reservas fallan, las tarjetas de reservas quedan en 0 pero la tabla de eventos se muestra
+      ;[eventos, reservas] = await Promise.all([
+        EventoModel.obtenerDelAgente(),
+        ReservaModel.delAgente().catch(() => []),
+      ])
   } catch (err) {
     mostrarToast(err.message || 'Error al cargar tus eventos.', { tipo: 'error' })
     eventos = []

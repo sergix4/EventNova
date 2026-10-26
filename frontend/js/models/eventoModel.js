@@ -72,7 +72,8 @@ function adaptarEventoBD(fila) {
     capacidad: Number(fila.capacidad) || 0,
     precio_base: precioNum,
     precio: precioNum === 0 ? 'Gratis' : '$ ' + precioNum.toLocaleString('es-CO'),
-    reservas: Number(fila.reservas) || 0,
+    reservas: Number(fila.reservas) || 0,          // entradas reservadas (sin canceladas)
+    fechaRegistro: fila.fecha_registro || null,   // cuándo se registró el evento (tarjeta "+N este mes")
     id_estado: fila.id_estado,
     estado: fila.nombre_estado,
     causa_cancelacion: fila.causa_cancelacion || '',
