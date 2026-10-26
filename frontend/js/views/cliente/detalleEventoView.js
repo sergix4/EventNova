@@ -99,7 +99,7 @@ export const DetalleEventoView = {
             </div>
             <div class="linea"></div>
                ${estadoReserva !== 'ninguna' && !agregando
-                 ? this.reservaHecha(estadoReserva, reserva)
+                 ? this.reservaHecha(estadoReserva, reserva, evento.estado)
                  : this.formularioReserva(evento, cantidad, total, disponibles, agregando ? reserva : null)}
           </section>
           <div class="ayuda">
@@ -128,6 +128,13 @@ export const DetalleEventoView = {
      formularioReserva(evento, cantidad, total, disponibles, reservaActual = null) {
        const yaTiene = reservaActual ? reservaActual.entradas : 0
        const volver = reservaActual ? '<button type="button" class="boton boton--contorno boton--bloque" data-accion="cancelar-agregar">Volver a mi reserva</button>' : ''
+       // Solo se reserva cuando el evento está "En Boletería"
+       if (evento.estado === 'Programado') {
+         return `<div class="alerta alerta--ambar">${icono('reloj', 14)}<div><p class="alerta__titulo">Aún no está en boletería</p><p>Este evento está programado, pero la venta de entradas todavía no se ha abierto. Vuelve pronto para reservar.</p></div></div>${volver}`
+       }
+       if (evento.estado !== 'En Boletería') {
+         return `<div class="alerta alerta--roja">${icono('info', 14)}<div><p class="alerta__titulo">Venta cerrada</p><p>No se pueden reservar entradas: el evento está ${esc(evento.estado)}.</p></div></div>${volver}`
+       }
        if (disponibles <= 0) {
          return `<button type="button" class="boton boton--neutro boton--bloque" disabled>Sin cupos disponibles</button>${volver}`
        }
@@ -162,7 +169,7 @@ export const DetalleEventoView = {
          <p class="tarjeta-reserva__seguridad">Pago 100% seguro · Múltiples métodos disponibles</p>`
   },
 
-  reservaHecha(estado, reserva) {
+  reservaHecha(estado, reserva, estadoEvento) {
     const pildora = AVISOS[estado].pildora
     return `
       <div class="pila-16">
@@ -174,7 +181,7 @@ export const DetalleEventoView = {
           <div class="estado-reserva__fila"><span>Estado</span><span class="insignia" style="background:${pildora[0]};color:${pildora[1]};font-weight:700">${pildora[2]}</span></div>
         </div>
         ${estado === 'cancelada' ? '<button type="button" class="boton boton--contorno boton--bloque" data-accion="volver-a-reservar">Volver a reservar</button>' : ''}
-        ${estado !== 'cancelada' && reserva.entradas < MAX_ENTRADAS ? '<button type="button" class="boton boton--contorno boton--bloque" data-accion="agregar-entradas">Agregar más entradas</button>' : ''}
+        ${estado !== 'cancelada' && estadoEvento === 'En Boletería' && reserva.entradas < MAX_ENTRADAS ? '<button type="button" class="boton boton--contorno boton--bloque" data-accion="agregar-entradas">Agregar más entradas</button>' : ''}
       </div>`
   },
 

@@ -24,8 +24,8 @@ const SELECT_BASE = `
   JOIN public."CIUDAD" c          ON c.id_ciudad = e.id_ciudad
   JOIN public."USUARIO" u         ON u.numero_id = r.id_cliente`;
 
-// Estados del evento en los que ya NO se puede reservar
-const EVENTO_NO_RESERVABLE = ["Finalizado", "Cancelado"];
+// Único estado del evento en el que SÍ se pueden reservar entradas
+const ESTADO_RESERVABLE = "En Boletería";
 
 // Error con un código para que el controlador (tarea 6) sepa qué responder
 function errorReserva(codigo, mensaje, extra = {}) {
@@ -40,7 +40,8 @@ function errorReserva(codigo, mensaje, extra = {}) {
 // termine el primero y los cupos nunca se sobrepasan.
 async function bloquearEvento(client, id_evento) {
   const result = await client.query(
-    `SELECT e.id_evento, e.capacidad, e.precio_base, es.nombre_estado
+    `SELECT e.id_evento, e.capacidad, e.precio_base, es.nombre_estado,
+            (e.fecha_inicio <= (NOW() AT TIME ZONE 'America/Bogota')) AS ya_empezo
      FROM public."EVENTO" e
      JOIN public."ESTADO" es ON es.id_estado = e.id_estado
      WHERE e.id_evento = $1
@@ -71,10 +72,23 @@ async function validarCupos(client, id_evento, numero_entradas, excluirReserva =
   if (!evento) {
     throw errorReserva("EVENTO_NO_EXISTE", "El evento no existe.");
   }
-  if (EVENTO_NO_RESERVABLE.includes(evento.nombre_estado)) {
+  if (evento.nombre_estado === "Programado") {
+    throw errorReserva(
+      "EVENTO_NO_DISPONIBLE",
+      "Este evento está programado, pero todavía no está en boletería. Podrás reservar cuando se abra la venta de entradas.",
+    );
+  }
+  if (evento.nombre_estado !== ESTADO_RESERVABLE) {
     throw errorReserva(
       "EVENTO_NO_DISPONIBLE",
       `No se puede reservar: el evento está ${evento.nombre_estado}.`,
+    );
+  }
+  // Por si el estado automático aún no se actualizó: si ya empezó, no se reserva
+  if (evento.ya_empezo) {
+    throw errorReserva(
+      "EVENTO_NO_DISPONIBLE",
+      "No se puede reservar: el evento ya comenzó.",
     );
   }
   const ocupadas = await entradasOcupadas(client, id_evento, excluirReserva);

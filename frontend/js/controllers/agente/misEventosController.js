@@ -13,6 +13,8 @@ import { mostrarToast } from '../../views/componentes/toast.js'
 import { esc } from '../../utils/formato.js'
 
 const POR_PAGINA = 6
+// Estados en los que el evento ya no se puede editar (igual que en el backend)
+const NO_EDITABLES = ['En Vivo', 'Finalizado', 'Cancelado']
 
 const contenido = document.getElementById('contenido')
 let htmlLista = ''
@@ -84,6 +86,10 @@ function eliminar(evento) {
 // ─── Edición dentro de la misma página ──────────────────────────────────────
 function editar(evento) {
   if (!evento) return
+  if (NO_EDITABLES.includes(evento.estado)) {
+    mostrarToast(`No se puede editar un evento que está ${evento.estado}.`, { tipo: 'error', duracion: 3000 })
+    return
+  }
   MisEventosView.cabecera(true)
   contenido.classList.remove('panel__contenido')
   document.getElementById('principal').scrollTop = 0
@@ -108,7 +114,16 @@ function editar(evento) {
       if (idx !== -1) eventos[idx] = actualizado
 
       volverALista()
-      mostrarToast('Evento actualizado correctamente.', { duracion: 2500 })
+      if (actualizado.estado === 'Cancelado') {
+        const n = actualizado.reservas_canceladas || 0
+        mostrarToast('Evento cancelado.', {
+          detalle: n === 0 ? 'No tenía reservas activas.'
+            : n === 1 ? 'También se canceló 1 reserva.' : `También se cancelaron ${n} reservas.`,
+          duracion: 3500,
+        })
+      } else {
+        mostrarToast('Evento actualizado correctamente.', { duracion: 2500 })
+      }
     },
   })
 }

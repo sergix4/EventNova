@@ -4,9 +4,30 @@
 const EventoModel = require('../models/eventoModel');
 const CiudadModel = require('../models/ciudadModel');
 
+// ─── Reglas de negocio de fechas ────────────────────────────────────────────
+const DURACION_MINIMA_HORAS = 1;      // un evento dura mínimo 1 hora
+const ANTICIPACION_MINIMA_HORAS = 24; // se registra con mínimo 24 horas de anticipación
+const UNA_HORA_MS = 60 * 60 * 1000;
+
+// ─── Reglas de cambio de estado ─────────────────────────────────────────────
+// A qué estados puede pasar el agente/admin A MANO desde cada estado.
+// "En Vivo" y "Finalizado" NO están en ninguna lista: los pone el sistema solo.
+const TRANSICIONES_MANUALES = {
+  'Programado':   ['En Boletería', 'Cancelado'],
+  'En Boletería': ['Cancelado'],
+  'En Vivo':      [],
+  'Finalizado':   [],
+  'Cancelado':    [],
+};
+const ESTADOS_AUTOMATICOS = ['En Vivo', 'Finalizado'];
+// Estados en los que el evento ya no se puede editar
+const ESTADOS_NO_EDITABLES = ['En Vivo', 'Finalizado', 'Cancelado'];
+
 // Valida y limpia los campos de creación/edición de un evento.
+// opciones.validarAnticipacion: revisa que el inicio no haya pasado y que falten
+// mínimo 24 h (al crear siempre; al editar, solo si se cambió la fecha de inicio).
 // Devuelve { error } o { datos } listos para enviar al Modelo.
-function validarDatosEvento(body) {
+function validarDatosEvento(body, { validarAnticipacion = true } = {}) {
   const nombre_evento = (body.nombre_evento || '').trim();
   const descripcion_evento = (body.descripcion_evento || '').trim() || null;
   const teatro = (body.teatro || '').trim();
@@ -35,6 +56,18 @@ function validarDatosEvento(body) {
   }
   if (finMs <= inicioMs) {
     return { error: 'La fecha de finalización debe ser posterior a la fecha de inicio.' };
+  }
+  if (finMs - inicioMs < DURACION_MINIMA_HORAS * UNA_HORA_MS) {
+    return { error: `El evento debe durar mínimo ${DURACION_MINIMA_HORAS} hora.` };
+  }
+  if (validarAnticipacion) {
+    const ahora = Date.now();
+    if (inicioMs <= ahora) {
+      return { error: 'La fecha y hora de inicio ya pasaron. Elige una fecha futura.' };
+    }
+    if (inicioMs - ahora < ANTICIPACION_MINIMA_HORAS * UNA_HORA_MS) {
+      return { error: `El evento debe registrarse con mínimo ${ANTICIPACION_MINIMA_HORAS} horas de anticipación.` };
+    }
   }
 
   if (!Number.isInteger(capacidad) || capacidad <= 0) {
@@ -219,8 +252,6 @@ const eventoController = {
   // PUT /api/eventos/:id (solo el agente dueño o un administrador)
   async actualizar(req, res) {
     const { id } = req.params;
-    const { error, datos } = validarDatosEvento(req.body);
-    if (error) return res.status(400).json({ error });
 
     try {
       const actual = await EventoModel.getById(id);
@@ -229,6 +260,16 @@ const eventoController = {
       if (!tienePermisoSobreEvento(req.session.usuario, actual)) {
         return res.status(403).json({ error: 'No tienes permiso para modificar este evento.' });
       }
+
+      // Un evento En Vivo, Finalizado o Cancelado ya no se edita
+      if (ESTADOS_NO_EDITABLES.includes(actual.nombre_estado)) {
+        return res.status(409).json({ error: `No se puede editar un evento que está ${actual.nombre_estado}.` });
+      }
+
+      // Las 24 h de anticipación solo se exigen si el agente CAMBIÓ la fecha/hora de inicio
+      const cambioInicio = Date.parse(req.body.fecha_inicio) !== new Date(actual.fecha_inicio).getTime();
+      const { error, datos } = validarDatosEvento(req.body, { validarAnticipacion: cambioInicio });
+      if (error) return res.status(400).json({ error });
 
       if (!(await CiudadModel.getById(datos.id_ciudad))) {
         return res.status(400).json({ error: 'La ciudad seleccionada no existe.' });
@@ -266,15 +307,32 @@ const eventoController = {
         return res.status(400).json({ error: 'El estado seleccionado no existe.' });
       }
 
-      if (estadoDestino.nombre_estado === 'Cancelado' && !causaCancelacion) {
-        return res.status(400).json({ error: 'Debes indicar la causa de cancelación.' });
+      const origen = actual.nombre_estado;
+      const destino = estadoDestino.nombre_estado;
+
+      if (destino === origen) {
+        return res.status(400).json({ error: `El evento ya está ${origen}.` });
+      }
+      // "En Vivo" y "Finalizado" los pone el sistema según la fecha y hora
+      if (ESTADOS_AUTOMATICOS.includes(destino)) {
+        return res.status(400).json({
+          error: `El estado ${destino} se asigna automáticamente según la fecha y hora del evento.`,
+        });
+      }
+      if (!(TRANSICIONES_MANUALES[origen] || []).includes(destino)) {
+        return res.status(409).json({ error: `No se puede pasar un evento de ${origen} a ${destino}.` });
       }
 
-      const actualizado = await EventoModel.cambiarEstado(
-        id,
-        idEstado,
-        estadoDestino.nombre_estado === 'Cancelado' ? causaCancelacion : null,
-      );
+      if (destino === 'Cancelado') {
+        if (!causaCancelacion) {
+          return res.status(400).json({ error: 'Debes indicar la causa de cancelación.' });
+        }
+        // Cancela el evento y TODAS sus reservas activas
+        const cancelado = await EventoModel.cancelarConReservas(id, idEstado, causaCancelacion);
+        return res.json(cancelado);
+      }
+
+      const actualizado = await EventoModel.cambiarEstado(id, idEstado, null);
       res.json(actualizado);
     } catch (err) {
       console.error('Error al cambiar estado del evento:', err);
