@@ -9,6 +9,19 @@ import { EventoModel } from '../../models/eventoModel.js'
 import { FormularioEventoView } from '../../views/agente/formularioEventoView.js'
 import { mostrarToast } from '../../views/componentes/toast.js'
 
+// Reglas de negocio (las mismas que valida el backend en eventoController.js)
+const DURACION_MINIMA_MS = 60 * 60 * 1000          // 1 hora
+const ANTICIPACION_MINIMA_MS = 24 * 60 * 60 * 1000 // 24 horas
+// A qué estados se puede pasar a mano desde cada estado (En Vivo y Finalizado son automáticos)
+const TRANSICIONES_MANUALES = {
+  'Programado':   ['En Boletería', 'Cancelado'],
+  'En Boletería': ['Cancelado'],
+  'En Vivo':      [],
+  'Finalizado':   [],
+  'Cancelado':    [],
+}
+const ESTADOS_AUTOMATICOS = ['En Vivo', 'Finalizado']
+
 const OBLIGATORIOS = ['nombre', 'descripcion', 'pais', 'departamento', 'ciudad', 'teatro', 'direccion', 'fecha', 'hora', 'fecha_fin', 'hora_fin', 'capacidad', 'precio']
 
 /** "85000" → "$ 85.000" */
@@ -32,6 +45,7 @@ function limpiarPrecio(texto) {
 export async function montarFormulario(contenedor, { modo, datos = {}, alGuardar, alCancelar }) {
   const editar = modo === 'editar'
   let estado = datos.estado || 'Programado'
+  const estadoOriginal = estado
   let imagenDataUrl = datos.imagen_evento || null
   let errores = {}
   let listaEstados = []
@@ -130,12 +144,23 @@ export async function montarFormulario(contenedor, { modo, datos = {}, alGuardar
   $('estados').addEventListener('click', (e) => {
     const chip = e.target.closest('[data-estado]')
     if (!chip) return
+    const elegido = chip.dataset.estado
     // Al registrar un evento nuevo, la regla de negocio exige que nazca en "Programado"
-    if (!editar && chip.dataset.estado !== 'Programado') {
+    if (!editar && elegido !== 'Programado') {
       mostrarToast('Un evento nuevo siempre se crea en estado Programado.', { duracion: 2200 })
       return
     }
-    estado = chip.dataset.estado
+    if (editar && elegido !== estadoOriginal) {
+      if (ESTADOS_AUTOMATICOS.includes(elegido)) {
+        mostrarToast(`El estado ${elegido} cambia automáticamente según la fecha y hora del evento.`, { duracion: 2800 })
+        return
+      }
+      if (!TRANSICIONES_MANUALES[estadoOriginal]?.includes(elegido)) {
+        mostrarToast(`No se puede pasar un evento de ${estadoOriginal} a ${elegido}.`, { duracion: 2800 })
+        return
+      }
+    }
+    estado = elegido
     FormularioEventoView.marcarEstado(estado)
   })
 
@@ -207,8 +232,25 @@ export async function montarFormulario(contenedor, { modo, datos = {}, alGuardar
 
     const fechaInicioISO = valores.fecha && valores.hora ? `${valores.fecha}T${valores.hora}:00` : ''
     const fechaFinISO = valores.fecha_fin && valores.hora_fin ? `${valores.fecha_fin}T${valores.hora_fin}:00` : ''
-    if (fechaInicioISO && fechaFinISO && Date.parse(fechaFinISO) <= Date.parse(fechaInicioISO)) {
-      errores.fecha_fin = 'La fecha/hora de fin debe ser posterior al inicio.'
+    if (fechaInicioISO && fechaFinISO) {
+      const inicioMs = Date.parse(fechaInicioISO)
+      const finMs = Date.parse(fechaFinISO)
+      if (finMs <= inicioMs) {
+        errores.fecha_fin = 'La fecha/hora de fin debe ser posterior al inicio.'
+      } else if (finMs - inicioMs < DURACION_MINIMA_MS) {
+        errores.hora_fin = 'El evento debe durar mínimo 1 hora.'
+      }
+
+      // Las 24 h se exigen al registrar, o al editar si se cambió la fecha/hora de inicio
+      const cambioInicio = !editar ||
+        valores.fecha !== datos.fecha_inicio_input || valores.hora !== datos.hora_inicio_input
+      if (cambioInicio) {
+        if (inicioMs <= Date.now()) {
+          errores.fecha = 'Esa fecha y hora ya pasaron.'
+        } else if (inicioMs - Date.now() < ANTICIPACION_MINIMA_MS) {
+          errores.fecha = 'Debe faltar mínimo 24 horas para el inicio del evento.'
+        }
+      }
     }
 
     if (editar && estado === 'Cancelado' && !valores.causa_cancelacion) {

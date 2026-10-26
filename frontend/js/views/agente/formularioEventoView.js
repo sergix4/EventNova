@@ -103,14 +103,16 @@ export const FormularioEventoView = {
       campoTexto({ id: 'teatro', texto: 'Teatro o recinto', requerido: true, placeholder: 'Ej. Teatro Jorge Isaacs / Coliseo de Ferias', valor: datos.teatro }) +
       campoTexto({ id: 'direccion', texto: 'Dirección exacta', requerido: true, placeholder: 'Ej. Cra 3 # 12-28', valor: datos.direccion })
 
-    const ahora = new Date()
-    const hoy = `${ahora.getFullYear()}-${String(ahora.getMonth() + 1).padStart(2, '0')}-${String(ahora.getDate()).padStart(2, '0')}`
+    // Con la regla de 24 h de anticipación, la primera fecha posible es MAÑANA
+    const manana = new Date()
+    manana.setDate(manana.getDate() + 1)
+    const minFecha = `${manana.getFullYear()}-${String(manana.getMonth() + 1).padStart(2, '0')}-${String(manana.getDate()).padStart(2, '0')}`
 
     const fecha =
-      campoTexto({ id: 'fecha', texto: 'Fecha de inicio', requerido: true, tipo: 'date', valor: datos.fecha_inicio_input, extra: editar ? '' : `min="${hoy}"` }) +
+      campoTexto({ id: 'fecha', texto: 'Fecha de inicio', requerido: true, tipo: 'date', valor: datos.fecha_inicio_input, extra: editar ? '' : `min="${minFecha}"`, ayuda: 'Mínimo 24 horas de anticipación.' }) +
       campoTexto({ id: 'hora', texto: 'Hora de inicio', requerido: true, tipo: 'time', valor: datos.hora_inicio_input || '19:00' }) +
-      campoTexto({ id: 'fecha_fin', texto: 'Fecha de finalización', requerido: true, tipo: 'date', valor: datos.fecha_fin_input || datos.fecha_inicio_input, extra: editar ? '' : `min="${hoy}"` }) +
-      campoTexto({ id: 'hora_fin', texto: 'Hora de finalización', requerido: true, tipo: 'time', valor: datos.hora_fin_input || '22:00' })
+      campoTexto({ id: 'fecha_fin', texto: 'Fecha de finalización', requerido: true, tipo: 'date', valor: datos.fecha_fin_input || datos.fecha_inicio_input, extra: editar ? '' : `min="${minFecha}"` }) +
+      campoTexto({ id: 'hora_fin', texto: 'Hora de finalización', requerido: true, tipo: 'time', valor: datos.hora_fin_input || '22:00', ayuda: 'Duración mínima: 1 hora.' })
 
     const capacidad =
       campoTexto({ id: 'capacidad', texto: 'Capacidad', requerido: true, tipo: 'number', placeholder: 'Ej. 500', valor: datos.capacidad, ayuda: 'Número máximo de asistentes (> 0).', extra: 'min="1"' }) +
@@ -123,8 +125,10 @@ export const FormularioEventoView = {
         <span class="campo__etiqueta">Estado</span>
         <div class="estados-evento" id="estados" role="group" aria-label="Estado del evento">${chipsEstado(estados, estadoActual)}</div>
         ${editar
-          ? `<div id="bloque-causa" style="margin-top:12px" ${mostrarCausa ? '' : 'hidden'}>
+          ? `<p class="nota-estado">Los estados <strong>En Vivo</strong> y <strong>Finalizado</strong> cambian solos según la fecha y hora del evento.</p>
+             <div id="bloque-causa" style="margin-top:12px" ${mostrarCausa ? '' : 'hidden'}>
                ${campoArea({ id: 'causa_cancelacion', texto: 'Causa de cancelación', requerido: true, filas: 2, placeholder: 'Explica el motivo por el cual se cancela el evento…', valor: datos.causa_cancelacion })}
+               <div class="alerta alerta--roja">${icono('advertencia', 14)}<p>Al cancelar el evento se cancelarán automáticamente <strong>todas sus reservas</strong>.</p></div>
              </div>`
           : '<p class="nota-estado">Todo evento nuevo se registra inicialmente en estado <strong>Programado</strong>.</p>'}
       </div>`
