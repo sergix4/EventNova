@@ -428,3 +428,6 @@
 .filtro-error { font-size: 13px; line-height: 18px; font-weight: 500; color: var(--rojo); }
 .catalogo-mensaje { padding: 32px 16px; text-align: center; font-size: 14px; line-height: 20px; color: var(--gris-500); }
 .catalogo-mensaje--error { color: var(--rojo); }
+
+/* Observaciones con varias líneas (notas de cancelación parcial) en el panel de Mis reservas */
+.cajon .lista-datos dd { white-space: pre-line; }

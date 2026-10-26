@@ -95,6 +95,8 @@ function adaptarReservaBD(fila) {
     cancelable: fila.estado_reserva !== 'Cancelada' && !EVENTO_NO_CANCELABLE.includes(fila.estado_evento),
     // Estados a los que el agente puede cambiarla (Tarea 8)
     siguientesEstados: siguientesEstados(fila),
+        // > 0 cuando el cliente ya tenía reserva de este evento y se le SUMARON entradas
+    entradasAgregadas: Number(fila.entradas_agregadas) || 0,
     id_cliente: fila.id_cliente,
     cliente: fila.nombre_cliente || '',
     correo: fila.correo_cliente || '',
@@ -147,20 +149,20 @@ export const ReservaModel = {
     return adaptarReservaBD(await peticion(`/reservas/${id}`, { metodo: 'PUT', datos }))
   },
 
-  /** Cambia el estado (PATCH /api/reservas/:id/estado) */
-  async cambiarEstado(id, id_estado_reserva, causa_cancelacion = null) {
+  /** Cambia el estado (PATCH /api/reservas/:id/estado).
+   *  entradas_cancelar (opcional): cuántas entradas cancelar. Si son menos que
+   *  las de la reserva, el backend solo quita esas y la reserva sigue activa. */
+  async cambiarEstado(id, id_estado_reserva, causa_cancelacion = null, entradas_cancelar = null) {
     const fila = await peticion(`/reservas/${id}/estado`, {
       metodo: 'PATCH',
-      datos: { id_estado_reserva, causa_cancelacion },
+      datos: { id_estado_reserva, causa_cancelacion, entradas_cancelar },
     })
     return adaptarReservaBD(fila)
   },
 
-  /** Atajo: cambia la reserva al estado "Cancelada" */
-  async cancelar(id, causa = null) {
-    const estados = await this.listarEstados()
-    const cancelada = estados.find(e => e.nombre_estado === 'Cancelada')
-    return this.cambiarEstado(id, cancelada.id_estado_reserva, causa)
+  /** Atajo: cancela la reserva completa o solo "entradas" de ellas */
+  async cancelar(id, causa = null, entradas = null) {
+    return this.cambiarEstadoPorNombre(id, 'Cancelada', causa, entradas)
   },
 
   /** Elimina una reserva (DELETE /api/reservas/:id, solo administrador) */
@@ -217,10 +219,10 @@ export const ReservaModel = {
 
   /** Cambia el estado usando su NOMBRE ('Confirmada' | 'Cancelada').
    *  Busca el id en ESTADO_RESERVA y llama a PATCH /api/reservas/:id/estado */
-  async cambiarEstadoPorNombre(id, nombreEstado, causa = null) {
+  async cambiarEstadoPorNombre(id, nombreEstado, causa = null, entradas = null) {
     const estados = await this.listarEstados()
     const estado = estados.find(e => e.nombre_estado === nombreEstado)
     if (!estado) throw new Error(`El estado "${nombreEstado}" no existe.`)
-    return this.cambiarEstado(id, estado.id_estado_reserva, causa)
+    return this.cambiarEstado(id, estado.id_estado_reserva, causa, entradas)
   },
 }
