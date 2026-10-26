@@ -12,6 +12,7 @@ import { MisReservasView } from '../../views/cliente/misReservasView.js'
 import { abrirModal, cerrarModal } from '../../views/componentes/modal.js'
 import { paginar } from '../../views/componentes/paginacion.js'
 import { mostrarToast } from '../../views/componentes/toast.js'
+import { conectarSelectorEntradas } from '../comun/selectorEntradasController.js'
 
 const POR_PAGINA = 5
 const buscar = document.getElementById('buscar')
@@ -88,28 +89,31 @@ function abrirCancelacion(id) {
   const r = buscarReserva(id)
   if (!r || !r.cancelable) return
   const caja = abrirModal(MisReservasView.modalCancelar(r))
-  const confirmar = caja.querySelector('#confirmar-cancelacion')
+    const confirmar = caja.querySelector('#confirmar-cancelacion')
+    // Cuántas entradas cancelar (si la reserva tiene más de 1)
+    const cantidadElegida = conectarSelectorEntradas(caja, r.entradas, r.precioBase)
 
-  confirmar.addEventListener('click', async () => {
-    confirmar.disabled = true
-    confirmar.textContent = 'Cancelando…'
-    const causa = caja.querySelector('#causa-cancelacion').value.trim() || null
-    try {
-      // PATCH /api/reservas/:id/estado -> Cancelada (el backend revisa que sea suya)
-      const actualizada = await ReservaModel.cancelar(r.id, causa)
-      reservas = reservas.map(x => String(x.id) === String(r.id) ? actualizada : x)
-      cerrarModal()
-      MisReservasView.mostrarEstadisticas(reservas)
-      dibujar()
-      if (document.querySelector('.cajon-fondo')) abrirDetalle(r.id) // refresca el panel
-      mostrarToast('Reserva cancelada.', { detalle: actualizada.codigo })
-    } catch (error) {
-      // p. ej. 409 "Una reserva cancelada ya no se puede cambiar."
-      MisReservasView.mostrarErrorCancelacion(error.message)
-      confirmar.disabled = false
-      confirmar.textContent = 'Sí, cancelar reserva'
-    }
-  })
+    confirmar.addEventListener('click', async () => {
+      confirmar.disabled = true
+      confirmar.textContent = 'Cancelando…'
+      const causa = caja.querySelector('#causa-cancelacion').value.trim() || null
+      const cantidad = cantidadElegida()
+      try {
+        // PATCH /api/reservas/:id/estado -> Cancelada (todas) o quita "cantidad" entradas
+        const actualizada = await ReservaModel.cancelar(r.id, causa, cantidad)
+        reservas = reservas.map(x => String(x.id) === String(r.id) ? actualizada : x)
+        cerrarModal()
+        MisReservasView.mostrarEstadisticas(reservas)
+        dibujar()
+        if (document.querySelector('.cajon-fondo')) abrirDetalle(r.id) // refresca el panel
+        mostrarToast(cantidad < r.entradas ? `Se cancelaron ${cantidad} entradas.` : 'Reserva cancelada.', { detalle: actualizada.codigo })
+      } catch (error) {
+        // p. ej. 409 "Una reserva cancelada ya no se puede cambiar."
+        MisReservasView.mostrarErrorCancelacion(error.message)
+        confirmar.disabled = false
+        confirmar.textContent = 'Confirmar cancelación'
+      }
+    })
 }
 
 // ─── Ventana de calificación ─────────────────────────────────────────────────

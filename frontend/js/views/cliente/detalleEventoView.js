@@ -7,7 +7,8 @@ import { insigniaEvento } from './comunClienteView.js'
 import { esc } from '../../utils/formato.js'
 
 const pesos = (v) => '$ ' + v.toLocaleString('es-CO')
-
+   // Máximo de entradas por reserva (el mismo MAX_ENTRADAS del backend)
+const MAX_ENTRADAS = 10
 const AVISOS = {
   reservada: { icono: 'reloj', color: '#d97706', titulo: 'Reserva pendiente de confirmación', texto: 'Tu reserva fue registrada exitosamente. Está pendiente de confirmación por parte del agente.', pildora: ['#fef3c7', '#92400e', 'Reservada'] },
   confirmada: { icono: 'check', color: '#16a34a', titulo: '¡Reserva confirmada!', texto: 'Tu reserva está confirmada. Recibirás tus entradas digitales en el correo registrado.', pildora: ['#dcfce7', '#15803d', 'Confirmada'] },
@@ -31,7 +32,7 @@ function filaInfo(nombreIcono, etiqueta, valor) {
 
 export const DetalleEventoView = {
   /** Dibuja toda la página (se llama de nuevo cuando cambia el estado) */
-  mostrar(evento, { cantidad, estadoReserva, meGusta, reserva }) {
+     mostrar(evento, { cantidad, estadoReserva, meGusta, reserva, agregando }) {
     const disponibles = evento.capacidad - evento.vendidas
     const porcentaje = Math.round((evento.vendidas / evento.capacidad) * 100)
     const total = evento.precio * cantidad
@@ -97,7 +98,9 @@ export const DetalleEventoView = {
               ${insigniaEvento(evento.estado, { borde: false, grande: true })}
             </div>
             <div class="linea"></div>
-            ${estadoReserva !== 'ninguna' ? this.reservaHecha(estadoReserva, reserva) : this.formularioReserva(evento, cantidad, total, disponibles)}
+               ${estadoReserva !== 'ninguna' && !agregando
+                 ? this.reservaHecha(estadoReserva, reserva)
+                 : this.formularioReserva(evento, cantidad, total, disponibles, agregando ? reserva : null)}
           </section>
           <div class="ayuda">
             <p>¿Necesitas ayuda?</p>
@@ -121,13 +124,23 @@ export const DetalleEventoView = {
       </div>`
   },
 
-  formularioReserva(evento, cantidad, total, disponibles) {
-    if (disponibles <= 0) {
-      return `<button type="button" class="boton boton--neutro boton--bloque" disabled>Sin cupos disponibles</button>`
-    }
-    const tope = Math.min(10, disponibles)
-    return `
-      <div class="campo campo--holgado">
+     /** reservaActual: la reserva activa del cliente cuando está AGREGANDO entradas a ella */
+     formularioReserva(evento, cantidad, total, disponibles, reservaActual = null) {
+       const yaTiene = reservaActual ? reservaActual.entradas : 0
+       const volver = reservaActual ? '<button type="button" class="boton boton--contorno boton--bloque" data-accion="cancelar-agregar">Volver a mi reserva</button>' : ''
+       if (disponibles <= 0) {
+         return `<button type="button" class="boton boton--neutro boton--bloque" disabled>Sin cupos disponibles</button>${volver}`
+       }
+       if (yaTiene >= MAX_ENTRADAS) {
+         return `<p class="aviso-reserva__texto">Ya tienes el máximo de ${MAX_ENTRADAS} entradas en tu reserva ${esc(reservaActual.codigo)}.</p>${volver}`
+       }
+       const tope = Math.min(MAX_ENTRADAS - yaTiene, disponibles)
+       const avisoSuma = reservaActual
+         ? `<div class="alerta alerta--ambar">${icono('info', 14)}<p>Ya tienes <strong>${yaTiene} entrada${yaTiene > 1 ? 's' : ''}</strong> en tu reserva ${esc(reservaActual.codigo)}. Las que agregues se sumarán a esa misma reserva (puedes agregar hasta ${tope}).</p></div>`
+         : ''
+       return `
+         ${avisoSuma}
+         <div class="campo campo--holgado">
         <span class="campo__etiqueta">Número de entradas</span>
         <div class="cantidad">
           <button type="button" data-accion="menos" ${cantidad <= 1 ? 'disabled' : ''} aria-label="Quitar una entrada">−</button>
@@ -144,8 +157,9 @@ export const DetalleEventoView = {
         <div class="desglose__fila desglose__fila--claro"><span>Cargo por servicio</span><span>$ 0</span></div>
         <div class="desglose__total"><span>Total</span><strong>${pesos(total)}</strong></div>
       </div>
-      <button type="button" class="boton boton--coral boton--bloque" data-accion="abrir-pago">${icono('ticket', 18)}Reservar y pagar</button>
-      <p class="tarjeta-reserva__seguridad">Pago 100% seguro · Múltiples métodos disponibles</p>`
+         <button type="button" class="boton boton--coral boton--bloque" data-accion="abrir-pago">${icono('ticket', 18)}${reservaActual ? 'Agregar y pagar' : 'Reservar y pagar'}</button>
+         ${volver}
+         <p class="tarjeta-reserva__seguridad">Pago 100% seguro · Múltiples métodos disponibles</p>`
   },
 
   reservaHecha(estado, reserva) {
@@ -160,6 +174,7 @@ export const DetalleEventoView = {
           <div class="estado-reserva__fila"><span>Estado</span><span class="insignia" style="background:${pildora[0]};color:${pildora[1]};font-weight:700">${pildora[2]}</span></div>
         </div>
         ${estado === 'cancelada' ? '<button type="button" class="boton boton--contorno boton--bloque" data-accion="volver-a-reservar">Volver a reservar</button>' : ''}
+        ${estado !== 'cancelada' && reserva.entradas < MAX_ENTRADAS ? '<button type="button" class="boton boton--contorno boton--bloque" data-accion="agregar-entradas">Agregar más entradas</button>' : ''}
       </div>`
   },
 
@@ -223,8 +238,10 @@ export const DetalleEventoView = {
     return `
       <div class="pago__exito">
         <div class="pago__exito-icono">${icono('check', 28, { grosor: 2.5 })}</div>
-        <strong>¡Reserva registrada!</strong>
-        <p>Queda pendiente de confirmación por parte del agente</p>
+           <strong>${reserva.entradasAgregadas ? '¡Entradas agregadas a tu reserva!' : '¡Reserva registrada!'}</strong>
+           <p>${reserva.entradasAgregadas
+             ? `Se sumaron ${reserva.entradasAgregadas} entrada${reserva.entradasAgregadas > 1 ? 's' : ''} a tu reserva. Queda pendiente de confirmación por parte del agente`
+             : 'Queda pendiente de confirmación por parte del agente'}</p>
       </div>
       <div class="pago__seccion" style="border-bottom:0;padding-top:20px">
         ${filas.map(([e, v]) => `<div class="pago__fila" style="padding:10px 0"><span>${e}</span><strong>${esc(v)}</strong></div>`).join('')}
