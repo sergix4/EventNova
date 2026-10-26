@@ -140,14 +140,58 @@ const ReservaModel = {
     return result.rows;
   },
 
-  // Crea la reserva. Siempre nace en estado "Reservada".
+  // Crea la reserva (nace en estado "Reservada").
+  // UNA SOLA FILA POR CLIENTE Y EVENTO: si el cliente ya tiene una reserva
+  // activa (Reservada o Confirmada) de ese evento, NO se crea otra: se le
+  // SUMAN las entradas nuevas y vuelve a "Reservada" para que el agente
+  // confirme las nuevas entradas.
   // datos = { id_evento, numero_entradas, observaciones }
+  // maxEntradas = tope de entradas por reserva (lo manda el controlador)
   // El valor total lo calcula PostgreSQL: numero_entradas x precio_base.
-  async create(datos, id_cliente) {
+  async create(datos, id_cliente, maxEntradas = 10) {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+      // Bloquea el evento: si el cliente da doble clic, la 2.ª petición espera
       await validarCupos(client, datos.id_evento, datos.numero_entradas);
+
+      // ¿Ya tiene una reserva activa de este evento?
+      const existente = await client.query(
+        `SELECT r.id_reserva, r.numero_entradas
+         FROM public."RESERVA" r
+         JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+         WHERE r.id_cliente = $1 AND r.id_evento = $2
+           AND er.nombre_estado <> 'Cancelada'
+         ORDER BY r.id_reserva ASC
+         LIMIT 1
+         FOR UPDATE OF r`,
+        [id_cliente, datos.id_evento],
+      );
+
+      if (existente.rowCount > 0) {
+        const { id_reserva, numero_entradas: yaTiene } = existente.rows[0];
+        if (yaTiene + datos.numero_entradas > maxEntradas) {
+          throw errorReserva(
+            "MAXIMO_ENTRADAS",
+            `Ya tienes ${yaTiene} entradas reservadas para este evento: puedes agregar máximo ${Math.max(0, maxEntradas - yaTiene)} más.`,
+          );
+        }
+        await client.query(
+          `UPDATE public."RESERVA" r
+           SET numero_entradas = r.numero_entradas + $1::int,
+               valor_total = (r.numero_entradas + $1::int) * e.precio_base,
+               observaciones = CASE WHEN $2::text IS NULL THEN r.observaciones
+                                    ELSE concat_ws(E'\n', r.observaciones, $2::text) END,
+               id_estado_reserva = (SELECT id_estado_reserva FROM public."ESTADO_RESERVA"
+                                    WHERE nombre_estado = 'Reservada')
+           FROM public."EVENTO" e
+           WHERE e.id_evento = r.id_evento AND r.id_reserva = $3`,
+          [datos.numero_entradas, datos.observaciones || null, id_reserva],
+        );
+        await client.query("COMMIT");
+        const reserva = await this.getById(id_reserva);
+        return { ...reserva, entradas_agregadas: datos.numero_entradas };
+      }
 
       const result = await client.query(
         `INSERT INTO public."RESERVA"
@@ -234,6 +278,25 @@ const ReservaModel = {
     return this.getById(id);
   },
 
+    // Cancelación PARCIAL: le quita "cantidad" entradas a la reserva (sigue
+  // activa con las demás), recalcula el valor total y deja una nota en
+  // observaciones para que quede registro de qué se canceló y por qué.
+  async cancelarEntradas(id, cantidad, nota) {
+    const result = await pool.query(
+      `UPDATE public."RESERVA" r
+       SET numero_entradas = r.numero_entradas - $1::int,
+           valor_total = (r.numero_entradas - $1::int) * e.precio_base,
+           observaciones = concat_ws(E'\n', r.observaciones, $2::text)
+       FROM public."EVENTO" e
+       WHERE e.id_evento = r.id_evento AND r.id_reserva = $3
+         AND r.numero_entradas > $1::int
+       RETURNING r.id_reserva`,
+      [cantidad, nota, id],
+    );
+    if (result.rowCount === 0) return undefined;
+    return this.getById(id);
+  },
+  
   // Cupos que le quedan a un evento (lo usará la vista de detalle al reservar)
   async cuposDisponibles(id_evento) {
     const result = await pool.query(
