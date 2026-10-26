@@ -8,6 +8,11 @@
 // Como la interfaz y la API salen del MISMO servidor (http://localhost:3000),
 // ya no hace falta CORS ni un segundo servidor para el frontend.
 
+// Hora de Colombia para TODO el servidor. Las fechas de los eventos se guardan
+// en hora de Colombia, así "ahora" y "fecha del evento" se comparan igual sin
+// importar en qué computador o servidor corra EventNova.
+process.env.TZ = 'America/Bogota';
+
 require('dotenv').config();
 const path = require('path');
 const express = require('express');

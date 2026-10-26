@@ -12,6 +12,11 @@ const departamentoRoutes = require('./departamentoRoutes');
 const ciudadRoutes = require('./ciudadRoutes');   
 const eventoRoutes = require('./eventoRoutes');
 const reservaRoutes = require('./reservaRoutes');
+const sincronizarEstados = require('../middlewares/sincronizarEstados');
+
+// Antes de cualquier ruta de eventos o reservas se actualizan los estados
+// automáticos (En Vivo / Finalizado) según la fecha y hora actual.
+router.use(['/eventos', '/reservas'], sincronizarEstados);
 
 router.get('/status', homeController.estado); 
 router.use('/auth', authRoutes);

@@ -214,6 +214,72 @@ const EventoModel = {
     return this.getById(id);
   },
 
+    // Cancela el evento Y todas sus reservas activas (Reservada o Confirmada),
+  // en una sola transacción: o se cancela todo, o no se cancela nada.
+  // Devuelve el evento actualizado y cuántas reservas se cancelaron.
+  async cancelarConReservas(id, id_estado, causa_cancelacion) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      const evento = await client.query(
+        `UPDATE public."EVENTO" SET id_estado = $1, causa_cancelacion = $2
+         WHERE id_evento = $3 RETURNING id_evento`,
+        [id_estado, causa_cancelacion, id],
+      );
+      if (evento.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return undefined;
+      }
+
+      const reservas = await client.query(
+        `UPDATE public."RESERVA" r
+         SET id_estado_reserva = (SELECT id_estado_reserva FROM public."ESTADO_RESERVA"
+                                  WHERE nombre_estado = 'Cancelada'),
+             causa_cancelacion = 'Evento cancelado por el organizador: ' || $1::text
+         FROM public."ESTADO_RESERVA" er
+         WHERE er.id_estado_reserva = r.id_estado_reserva
+           AND er.nombre_estado <> 'Cancelada'
+           AND r.id_evento = $2`,
+        [causa_cancelacion, id],
+      );
+
+      await client.query("COMMIT");
+      const actualizado = await this.getById(id);
+      return { ...actualizado, reservas_canceladas: reservas.rowCount };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  // Estados AUTOMÁTICOS según la hora actual de Colombia:
+  //   1. Ya pasó la hora de fin             -> "Finalizado"
+  //   2. Ya empezó pero no ha terminado     -> "En Vivo"
+  // Los eventos "Cancelado" nunca se tocan.
+  async actualizarEstadosAutomaticos() {
+    await pool.query(`
+      UPDATE public."EVENTO" e
+      SET id_estado = destino.id_estado
+      FROM public."ESTADO" destino, public."ESTADO" actual
+      WHERE destino.nombre_estado = 'Finalizado'
+        AND actual.id_estado = e.id_estado
+        AND actual.nombre_estado IN ('Programado', 'En Boletería', 'En Vivo')
+        AND e.fecha_fin <= (NOW() AT TIME ZONE 'America/Bogota');
+
+      UPDATE public."EVENTO" e
+      SET id_estado = destino.id_estado
+      FROM public."ESTADO" destino, public."ESTADO" actual
+      WHERE destino.nombre_estado = 'En Vivo'
+        AND actual.id_estado = e.id_estado
+        AND actual.nombre_estado IN ('Programado', 'En Boletería')
+        AND e.fecha_inicio <= (NOW() AT TIME ZONE 'America/Bogota')
+        AND e.fecha_fin > (NOW() AT TIME ZONE 'America/Bogota');
+    `);
+  },
+
   // ¿El evento tiene reservas? (no se debe eliminar si las tiene)
   async tieneReservas(id) {
     const result = await pool.query(
