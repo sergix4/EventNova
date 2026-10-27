@@ -318,3 +318,7 @@
   .resumen-ingresos { flex-direction: column; align-items: flex-start; gap: 12px; }
   .resumen-ingresos .texto-derecha { text-align: left; }
 }
+
+/* ─── Dashboard con datos reales ─────────────────────────────────────────── */
+.texto-rojo { font-size: 12px; line-height: 16px; font-weight: 600; color: #dc2626; }
+.mensaje-tarjeta-vacia { padding: 32px 16px; text-align: center; font-size: 14px; line-height: 20px; color: var(--gris-500); }
