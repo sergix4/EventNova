@@ -157,6 +157,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Vista "Mis reservas" del cliente: listado real de sus reservas con filtros (texto, estado, fecha), detalle del evento asociado y cancelación de reservas propias.
 - ✅ Administrar reservas (perfil agente): listado real de las reservas de sus eventos con filtros (texto, evento, estado, fecha), detalle y cambio de estado Reservada → Confirmada / Cancelada con causa obligatoria.
 - ✅ Reglas de eventos: duración mínima de 1 hora, registro con 24 h de anticipación y sin fechas pasadas; solo se reserva En Boletería; En Vivo y Finalizado cambian solos según la hora; cancelar un evento cancela todas sus reservas.
+- ✅ Dashboard del administrador con estadísticas reales (`/api/reportes/dashboard`, solo administrador): totales de usuarios, reservas y eventos; ingresos, reservas y eventos por mes del año elegido; cobertura por país/departamento/ciudad; actividad reciente y resumen de pagos de reservas (`migracion_06.sql`).
 - 🟡 Eventos y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
   Cuando exista cada endpoint solo se cambia el modelo correspondiente
   (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y

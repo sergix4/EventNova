@@ -1,40 +1,15 @@
 // js/models/reporteModel.js
 // MODELO de reportes del administrador.
-// Por ahora devuelve datos de ejemplo. En el Sprint 3 cada función se
-// reemplaza por una consulta SQL expuesta en /api/reportes/...
+// dashboard() ya trae datos REALES de PostgreSQL (GET /api/reportes/dashboard).
+// Las demás funciones siguen con datos de ejemplo hasta que se construya
+// su consulta SQL en /api/reportes/...
 
-import { EVENTOS, RESERVAS, AGENTES, CALIFICACIONES, PAGOS, ULTIMOS_REGISTROS } from './datosEjemplo.js'
+import { peticion } from './api.js'
+import { EVENTOS, RESERVAS, AGENTES, CALIFICACIONES, ULTIMOS_REGISTROS } from './datosEjemplo.js'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
-// ─── Dashboard ──────────────────────────────────────────────────────────────
-const INGRESOS_MES = [18400000, 22150000, 31800000, 27600000, 38200000, 45750000, 41300000, 53900000, 49100000, 62400000, 58800000, 74200000]
-const RESERVAS_MES = {
-  confirmadas: [142, 189, 264, 218, 312, 378, 341, 427, 394, 486, 452, 538],
-  pendientes: [38, 52, 71, 44, 88, 96, 79, 112, 93, 128, 104, 147],
-  canceladas: [21, 17, 29, 33, 24, 41, 38, 52, 44, 61, 57, 68],
-}
-const EVENTOS_MES = [14, 19, 28, 23, 34, 31, 27, 38, 42, 36, 29, 51]
-const COBERTURA = [
-  { pais: 'Colombia', departamento: 'Bogotá D.C.', ciudad: 'Bogotá', eventos: 112 },
-  { pais: 'Colombia', departamento: 'Antioquia', ciudad: 'Medellín', eventos: 78 },
-  { pais: 'Colombia', departamento: 'Valle del Cauca', ciudad: 'Cali', eventos: 54 },
-  { pais: 'Colombia', departamento: 'Atlántico', ciudad: 'Barranquilla', eventos: 31 },
-  { pais: 'Colombia', departamento: 'Caldas', ciudad: 'Manizales', eventos: 18 },
-  { pais: 'Colombia', departamento: 'Santander', ciudad: 'Bucaramanga', eventos: 14 },
-  { pais: 'México', departamento: 'Jalisco', ciudad: 'Guadalajara', eventos: 9 },
-  { pais: 'Argentina', departamento: 'Buenos Aires', ciudad: 'Buenos Aires', eventos: 10 },
-]
-const ACTIVIDAD = [
-  { tipo: 'cliente', titulo: 'Nuevo cliente registrado', detalle: 'María López', hora: 'Hoy, 10:42 AM' },
-  { tipo: 'agente', titulo: 'Nuevo agente registrado', detalle: 'SonidosPro S.A.S.', hora: 'Hoy, 09:18 AM' },
-  { tipo: 'evento', titulo: 'Nuevo evento creado', detalle: 'Festival Electrónico Bogotá', hora: 'Hoy, 08:55 AM' },
-  { tipo: 'reserva', titulo: 'Nueva reserva registrada', detalle: 'Concierto Talento Local · 3 entradas', hora: 'Ayer, 11:30 PM' },
-  { tipo: 'cancelada', titulo: 'Reserva cancelada', detalle: 'Noche de Comedia Stand Up · Causa: cambio de planes', hora: 'Ayer, 09:14 PM' },
-  { tipo: 'evento', titulo: 'Nuevo evento creado', detalle: 'Feria Gastronómica Cali 2026', hora: 'Ayer, 06:02 PM' },
-  { tipo: 'cliente', titulo: 'Nuevo cliente registrado', detalle: 'Sebastián Ruiz', hora: 'Ayer, 03:47 PM' },
-  { tipo: 'reserva', titulo: 'Nueva reserva registrada', detalle: 'Gran Concierto de Diciembre · 5 entradas', hora: 'Ayer, 02:11 PM' },
-]
+// Totales de ejemplo que todavía usa generales() (se reemplazan en su tarea)
 const TOTALES = { clientes: 1248, agentes: 86, administradores: 4, reservas: 3842, eventos: 326 }
 
 // ─── Reportes generales ─────────────────────────────────────────────────────
@@ -111,19 +86,9 @@ const ACTIVIDAD_CUENTA = [
 export const ReporteModel = {
   MESES,
 
-  async dashboard() {
-    const pagado = PAGOS.filter(p => p.estado === 'Pagado').reduce((s, p) => s + p.valor, 0)
-    return {
-      totales: TOTALES,
-      ingresosMes: INGRESOS_MES,
-      reservasMes: RESERVAS_MES,
-      eventosMes: EVENTOS_MES,
-      cobertura: COBERTURA,
-      actividad: ACTIVIDAD,
-      pagos: PAGOS,
-      // Ingresos por pagos de la plataforma (solo meses con datos)
-      ingresosPagos: [600000, 450000, 780000, 520000, 860000, 1100000, 950000, pagado],
-    }
+// Dashboard con datos reales del año elegido en el selector de período
+  async dashboard(anio) {
+    return peticion(`/reportes/dashboard?anio=${encodeURIComponent(anio)}`)
   },
 
   async generales() {
