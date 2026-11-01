@@ -84,8 +84,14 @@ El equipo usa una base compartida en **Neon Postgres** (nube).
    licencia ODbL, mediante el paquete npm [`country-state-city`](https://github.com/harpreetkhalsagtbit/country-state-city)).
 4. `npm run db:admin` → administrador inicial.
 
+> `develop.sql` es el script **consolidado**: ya trae todos los cambios de las
+> migraciones 01 a 07, así que una base nueva queda igual a la de Neon **sin**
+> ejecutar ninguna migración.
+
 **Para aplicar una migración nueva a una base que ya existe** (no borra datos):
-`npm run db:migrar -- migracion_05.sql` (cambiar por el nombre de la migración)
+`npm run db:migrar -- migracion_07.sql` (cambiar por el nombre de la migración).
+Los archivos `migracion_XX.sql` son el historial de cambios que se aplicó a Neon;
+solo sirven para bases creadas antes de esa migración.
 
 ### 2. Servidor
 
@@ -158,6 +164,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Administrar reservas (perfil agente): listado real de las reservas de sus eventos con filtros (texto, evento, estado, fecha), detalle y cambio de estado Reservada → Confirmada / Cancelada con causa obligatoria.
 - ✅ Reglas de eventos: duración mínima de 1 hora, registro con 24 h de anticipación y sin fechas pasadas; solo se reserva En Boletería; En Vivo y Finalizado cambian solos según la hora; cancelar un evento cancela todas sus reservas.
 - ✅ Dashboard del administrador con estadísticas reales (`/api/reportes/dashboard`, solo administrador): totales de usuarios, reservas y eventos; ingresos, reservas y eventos por mes del año elegido; cobertura por país/departamento/ciudad; actividad reciente y resumen de pagos de reservas (`migracion_06.sql`).
+- ✅ Script de base de datos consolidado: `develop.sql` crea las 13 tablas finales con sus triggers; se quitaron las tablas que no pide el enunciado (CATEGORIA, AGRUPA, RESEÑA, METODO_PAGO y TIPO) con `migracion_07.sql`.
 - 🟡 Eventos y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
   Cuando exista cada endpoint solo se cambia el modelo correspondiente
   (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y
