@@ -19,7 +19,7 @@ EventNova/
 │   ├── controllers/          # CONTROLADOR: reciben la petición y responden JSON
 │   ├── routes/               # Rutas /api/auth, /api/paises, /api/departamentos, /api/ciudades, /api/status
 │   ├── middlewares/          # authMiddleware.js: soloAdmin protege crear/editar/eliminar
-│   ├── database/             # develop.sql, migraciones, seed_planes.sql, seed_estados.sql, seed_admin.js
+│   ├── database/             # develop.sql, migraciones, seed_planes.sql, seed_estados.sql, seed_admin.js, seed_demo.js
 │   └── .env.example          # Plantilla de variables de entorno
 │
 └── frontend/                 # Interfaz HTML5 + CSS + JavaScript
@@ -83,6 +83,14 @@ El equipo usa una base compartida en **Neon Postgres** (nube).
    (datos de [countries-states-cities-database](https://github.com/dr5hn/countries-states-cities-database),
    licencia ODbL, mediante el paquete npm [`country-state-city`](https://github.com/harpreetkhalsagtbit/country-state-city)).
 4. `npm run db:admin` → administrador inicial.
+5. `npm run db:demo` → **datos de demostración** (opcional): 5 agentes, 12 clientes,
+   22 eventos en 15 ciudades de 5 países (en todos los estados) y 82 reservas
+   repartidas en los meses de 2026. No borra nada y no duplica si se ejecuta dos veces.
+   Contraseña de todos los usuarios demo: `Demo12345` (por ejemplo
+   `laura.gomez@demo.eventnova.com` como cliente y
+   `valle.producciones@demo.eventnova.com` como agente).
+   Para **quitar** la demo después: `npm run db:demo -- --borrar` (borra solo los
+   usuarios `@demo.eventnova.com`, sus eventos y sus reservas; lo demás no se toca).
 
 > `develop.sql` es el script **consolidado**: ya trae todos los cambios de las
 > migraciones 01 a 07, así que una base nueva queda igual a la de Neon **sin**
@@ -165,6 +173,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Reglas de eventos: duración mínima de 1 hora, registro con 24 h de anticipación y sin fechas pasadas; solo se reserva En Boletería; En Vivo y Finalizado cambian solos según la hora; cancelar un evento cancela todas sus reservas.
 - ✅ Dashboard del administrador con estadísticas reales (`/api/reportes/dashboard`, solo administrador): totales de usuarios, reservas y eventos; ingresos, reservas y eventos por mes del año elegido; cobertura por país/departamento/ciudad; actividad reciente y resumen de pagos de reservas (`migracion_06.sql`).
 - ✅ Script de base de datos consolidado: `develop.sql` crea las 13 tablas finales con sus triggers; se quitaron las tablas que no pide el enunciado (CATEGORIA, AGRUPA, RESEÑA, METODO_PAGO y TIPO) con `migracion_07.sql`.
+- ✅ Datos de demostración (`npm run db:demo`, `backend/database/seed_demo.js`): clientes, agentes, eventos y reservas en todos los estados (con causas de cancelación) para probar los reportes y la sustentación.
 - 🟡 Eventos y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
   Cuando exista cada endpoint solo se cambia el modelo correspondiente
   (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y
