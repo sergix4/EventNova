@@ -417,6 +417,8 @@ main:focus { outline: none; }
 .toast__detalle { display: block; font-size: 12px; line-height: 16px; font-weight: 400; color: #d1fae5; margin-top: 2px; }
 .toast__cerrar { opacity: 0.7; margin-left: 8px; color: #fff; }
 .toast__cerrar:hover { opacity: 1; }
+.toast--error { background: var(--rojo); }
+.toast--error .toast__detalle { color: #fee2e2; }
 
 /* ─── 12. Animaciones ───────────────────────────────────────────────────────── */
 @keyframes pulso { 50% { opacity: 0.4; } }
