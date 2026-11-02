@@ -4,12 +4,13 @@
 // El controlador (usuariosController.js) decide CUÁNDO se usa cada función.
 
 import { icono } from '../componentes/iconos.js'
-import { esc, iniciales, num } from '../../utils/formato.js'
+import { cop, esc, iniciales, num } from '../../utils/formato.js'
 
 // ─── Columnas de la tabla según el rol ──────────────────────────────────────
 const COLUMNAS = {
   cliente: ['Cliente', 'Identificación', 'Ubicación', 'Teléfono', 'Puntos', 'Reservas', 'Acciones'],
   agente:  ['Agente', 'Empresa', 'Plan', 'Comisión', 'Eventos', 'Ubicación', 'Acciones'],
+  administrador: ['Administrador', 'Identificación', 'Horario', 'Salario', 'Ubicación', 'Acciones'],
 }
 
 const NOMBRE_ROL = { cliente: 'Cliente', agente: 'Agente', administrador: 'Administrador' }
@@ -26,24 +27,29 @@ function ubicacionCorta(u) {
   return u.ciudad ? `${u.ciudad}, ${u.departamento}` : '—'
 }
 
-/** Avatar + nombre + correo dentro de la tabla */
-function celdaPersona(p) {
+/** Avatar + nombre + correo dentro de la tabla.
+ *  extra: HTML opcional que va junto al nombre (ej. la etiqueta "Tú") */
+function celdaPersona(p, extra = '') {
   return `
     <div class="persona">
       <span class="avatar">${esc(iniciales(p.nombre))}</span>
-      <div><p class="persona__nombre">${esc(p.nombre)}</p><p class="persona__correo">${esc(p.correo)}</p></div>
+      <div><p class="persona__nombre">${esc(p.nombre)}${extra}</p><p class="persona__correo">${esc(p.correo)}</p></div>
     </div>`
 }
 
-/** Botones Ver / Editar / Eliminar (mismo estilo que ubicacion.html) */
-function celdaAcciones(p) {
+/** Botones Ver / Editar / Eliminar (mismo estilo que ubicacion.html).
+ *  esYo = true cuando la fila es el administrador con sesión: no puede eliminarse. */
+function celdaAcciones(p, esYo = false) {
   const id = esc(p.numero_id)
   const nombre = esc(p.nombre)
+  const botonEliminar = esYo
+    ? `<button type="button" class="crud__eliminar" disabled title="No puedes eliminar tu propia cuenta">Eliminar</button>`
+    : `<button type="button" class="crud__eliminar" data-eliminar="${id}" aria-label="Eliminar ${nombre}">Eliminar</button>`
   return `
     <td class="crud__acciones">
       <button type="button" class="crud__editar" data-ver="${id}" aria-label="Ver ${nombre}">Ver</button>
       <button type="button" class="crud__editar" data-editar="${id}" aria-label="Editar ${nombre}">Editar</button>
-      <button type="button" class="crud__eliminar" data-eliminar="${id}" aria-label="Eliminar ${nombre}">Eliminar</button>
+      ${botonEliminar}
     </td>`
 }
 
@@ -73,6 +79,19 @@ function filaAgente(p) {
     </tr>`
 }
 
+function filaAdministrador(p, idSesion) {
+  const esYo = p.numero_id === idSesion
+  return `
+    <tr>
+      <td>${celdaPersona(p, esYo ? '<span class="etiqueta-tu">Tú</span>' : '')}</td>
+      <td class="sin-salto">${esc(p.numero_id)}</td>
+      <td>${esc(p.administrador.horario)}</td>
+      <td class="sin-salto texto-seminegrita">${cop(p.administrador.salario)}</td>
+      <td>${esc(ubicacionCorta(p.ubicacion))}</td>
+      ${celdaAcciones(p, esYo)}
+    </tr>`
+}
+ 
 /** Una fila "dato" del modal Ver */
 function dato(etiqueta, valor) {
   return `<div class="dato"><p class="dato__etiqueta">${etiqueta}</p><p class="dato__valor">${esc(valor ?? '—') || '—'}</p></div>`
@@ -107,12 +126,19 @@ export const UsuariosView = {
       `<th class="${c === 'Acciones' ? 'crud__acciones' : ['Puntos', 'Reservas', 'Comisión', 'Eventos'].includes(c) ? 'texto-centro' : ''}">${c}</th>`).join('')}</tr>`
   },
 
-  /** Filas de la tabla (solo la página actual) */
-  filas(rol, lista, textoVacio) {
+  /** Filas de la tabla (solo la página actual).
+   *  idSesion: identificación del administrador con sesión (para marcar "Tú") */
+  filas(rol, lista, textoVacio, idSesion = null) {
     const columnas = COLUMNAS[rol].length
+    const FILA = { cliente: filaCliente, agente: filaAgente, administrador: (p) => filaAdministrador(p, idSesion) }
     document.getElementById('tabla-usuarios').innerHTML = lista.length === 0
       ? `<tr><td colspan="${columnas}" class="tabla__vacia">${esc(textoVacio)}</td></tr>`
-      : lista.map(rol === 'cliente' ? filaCliente : filaAgente).join('')
+      : lista.map(FILA[rol]).join('')
+  },
+ 
+  /** El botón "Registrar administrador" solo se ve en esa pestaña */
+  botonRegistrar(visible) {
+    document.getElementById('boton-registrar-admin').hidden = !visible
   },
 
   cargandoTabla(rol) {
@@ -143,6 +169,12 @@ export const UsuariosView = {
           dato('Puntos', num(p.cliente.puntos)),
           dato('Reservas', p.cliente.total_reservas),
           dato('Recibe publicidad', p.cliente.visualizar_publicidad ? 'Sí' : 'No'),
+        ]
+      : p.rol === 'administrador'
+      ? [
+          dato('Código de administrador', p.administrador.codigo_admin),
+          dato('Salario', cop(p.administrador.salario)),
+          dato('Horario', p.administrador.horario),
         ]
       : [
           dato('Empresa', p.agente.nombre_empresa),
@@ -197,6 +229,10 @@ export const UsuariosView = {
             <span>Recibe publicidad de eventos</span>
           </label>
         </div>`
+      : p.rol === 'administrador'
+      ? `
+        ${campo('salario', 'Salario mensual (COP)', entrada('salario', p.administrador.salario, 'type="number" min="0" step="1000" placeholder="Ej. 3500000"'), { requerido: true })}
+        ${campo('horario', 'Horario', entrada('horario', p.administrador.horario, 'maxlength="100" placeholder="Lunes a viernes 8:00 - 17:00"'), { requerido: true })}`
       : `
         ${campo('empresa', 'Empresa', entrada('empresa', p.agente.nombre_empresa, 'maxlength="150"'), { requerido: true })}
         ${campo('plan', 'Plan', `<div class="envoltura-select"><select class="selector" id="plan">${planes.map(pl =>
@@ -208,19 +244,29 @@ export const UsuariosView = {
     return `
       <form id="form-usuario" novalidate>
         <div class="modal__cabecera">
-          <div><h3 class="modal__titulo">Editar ${NOMBRE_ROL[p.rol].toLowerCase()}</h3><p class="modal__subtitulo">${esc(p.nombre)} · ${esc(p.numero_id)}</p></div>
+          ${p.nuevo
+            ? `<div><h3 class="modal__titulo">Registrar administrador</h3><p class="modal__subtitulo">Tendrá acceso completo al panel de administración</p></div>`
+            : `<div><h3 class="modal__titulo">Editar ${NOMBRE_ROL[p.rol].toLowerCase()}</h3><p class="modal__subtitulo">${esc(p.nombre)} · ${esc(p.numero_id)}</p></div>`}
           <button type="button" class="boton-icono boton-icono--sin-borde" data-cerrar-modal aria-label="Cerrar">${icono('cerrar', 18)}</button>
         </div>
         <div class="modal__cuerpo">
           <p class="form-usuario__seccion">Datos personales</p>
           <div class="form-usuario__grid">
             ${campo('nombre', 'Nombre completo', entrada('nombre', p.nombre, 'maxlength="100" autocomplete="off"'), { requerido: true, ancho: true })}
-            ${campo('numero-id', 'Identificación', entrada('numero-id', p.numero_id, 'disabled'))}
+            ${campo('numero-id', 'Identificación', entrada('numero-id', p.numero_id,
+              p.nuevo ? 'maxlength="20" autocomplete="off" placeholder="Ej. 1112223334"' : 'disabled'), { requerido: p.nuevo })}
             ${campo('correo', 'Correo', entrada('correo', p.correo, 'type="email" maxlength="150" autocomplete="off"'), { requerido: true })}
             ${campo('fecha-nacimiento', 'Fecha de nacimiento', entrada('fecha-nacimiento', p.fecha_nacimiento, `type="date" max="${hoy}"`))}
             ${campo('direccion', 'Dirección', entrada('direccion', p.direccion, 'maxlength="255"'))}
           </div>
 
+          ${p.nuevo ? `
+          <p class="form-usuario__seccion">Acceso</p>
+          <div class="form-usuario__grid">
+            ${campo('contrasena', 'Contraseña', entrada('contrasena', '', 'type="password" minlength="8" autocomplete="new-password" placeholder="Mínimo 8 caracteres"'), { requerido: true })}
+            ${campo('confirmar-contrasena', 'Confirmar contraseña', entrada('confirmar-contrasena', '', 'type="password" autocomplete="new-password"'), { requerido: true })}
+          </div>` : ''}
+ 
           <p class="form-usuario__seccion">Teléfonos <span class="campo__opcional">(de 1 a 3)</span></p>
           <div class="form-usuario__grid form-usuario__grid--3">
             ${campo('tel-0', 'Principal', tel(0), { requerido: true })}
@@ -242,7 +288,7 @@ export const UsuariosView = {
         </div>
         <div class="modal__pie">
           <button type="button" class="boton boton--neutro" data-cerrar-modal>Cancelar</button>
-          <button type="submit" class="boton boton--primario boton--seminegrita" id="guardar-usuario">Guardar cambios</button>
+          <button type="submit" class="boton boton--primario boton--seminegrita" id="guardar-usuario">${p.nuevo ? 'Registrar administrador' : 'Guardar cambios'}</button>
         </div>
       </form>`
   },
@@ -264,17 +310,20 @@ export const UsuariosView = {
     caja.textContent = mensaje || ''
   },
 
-  guardando(activo) {
+  guardando(activo, textoNormal = 'Guardar cambios') {
     const boton = document.getElementById('guardar-usuario')
     if (!boton) return
     boton.disabled = activo
-    boton.textContent = activo ? 'Guardando…' : 'Guardar cambios'
+    boton.textContent = activo ? 'Guardando…' : textoNormal
   },
 
   // ─── Modal ELIMINAR ───────────────────────────────────────────────────────
   confirmarEliminar(p) {
     // Aviso adelantado: el backend igual decide (responde 409 si no se puede)
-    const asociados = p.rol === 'cliente' ? p.cliente.total_reservas : p.agente.total_eventos
+    // El administrador no tiene reservas ni eventos: su regla (no a sí mismo,
+    // al menos uno) la valida el backend y llega como toast si no se puede.
+    const asociados = p.rol === 'cliente' ? p.cliente.total_reservas
+      : p.rol === 'agente' ? p.agente.total_eventos : 0
     const cosa = p.rol === 'cliente' ? 'reserva(s) asociada(s)' : 'evento(s) asociado(s)'
     const aviso = asociados > 0
       ? `<div class="alerta alerta--ambar">${icono('advertencia', 16)}<span>Tiene <strong>${asociados} ${cosa}</strong>. El sistema no permitirá eliminarlo.</span></div>`

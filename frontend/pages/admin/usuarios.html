@@ -22,7 +22,7 @@
         <button type="button" class="boton-menu" data-accion="abrir-menu" aria-label="Abrir menú"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg></button>
         <div>
           <h1 class="cabecera-gestion__titulo">Usuarios</h1>
-          <p class="cabecera-gestion__subtitulo">Consulta, edita y elimina los clientes y agentes registrados en EventNova.</p>
+          <p class="cabecera-gestion__subtitulo">Consulta, edita y elimina los clientes, agentes y administradores de EventNova.</p>
         </div>
       </div>
     </header>
@@ -33,8 +33,7 @@
         <div class="pestanas" role="tablist" aria-label="Tipo de usuario">
           <button type="button" class="pestana" role="tab" id="pestana-cliente" data-rol="cliente" aria-controls="panel-usuarios" aria-selected="true">Clientes</button>
           <button type="button" class="pestana" role="tab" id="pestana-agente" data-rol="agente" aria-controls="panel-usuarios" aria-selected="false">Agentes</button>
-          <!-- La pestaña Administradores se activa en la Tarea 6 (CRUD de administradores) -->
-          <button type="button" class="pestana" role="tab" id="pestana-administrador" aria-selected="false" disabled>Administradores<span class="etiqueta-pronto">Pronto</span></button>
+          <button type="button" class="pestana" role="tab" id="pestana-administrador" data-rol="administrador" aria-controls="panel-usuarios" aria-selected="false">Administradores</button>
         </div>
 
         <div id="panel-usuarios" role="tabpanel" aria-labelledby="pestana-cliente">
@@ -45,7 +44,14 @@
               <label for="buscar-usuario" class="solo-lector">Buscar usuario</label>
               <input type="search" class="entrada" id="buscar-usuario" placeholder="Buscar por nombre, correo o identificación…" autocomplete="off" maxlength="100">
             </div>
-            <p class="usuarios__total" id="total-usuarios" aria-live="polite"></p>
+            <div class="usuarios__acciones">
+              <p class="usuarios__total" id="total-usuarios" aria-live="polite"></p>
+              <!-- Solo se muestra en la pestaña Administradores (Tarea 6) -->
+              <button type="button" class="boton boton--primario boton--seminegrita" id="boton-registrar-admin" hidden>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+                Registrar administrador
+              </button>
+            </div>
           </div>
 
           <p class="crud__error usuarios__error" id="error-usuarios" role="alert" hidden></p>
