@@ -27,6 +27,7 @@ const MENU_ADMIN = [
   { clave: 'reportes-comerciales', texto: 'Reportes comerciales', icono: 'dolar',      url: '/pages/admin/reportes-comerciales.html' },
   { clave: 'cobertura',            texto: 'Cobertura y eventos',  icono: 'globo',      url: '/pages/admin/cobertura.html' },
   { clave: 'reservas-operacion',   texto: 'Reservas y operación', icono: 'ticket',     url: '/pages/admin/operacion.html' },
+  { clave: 'usuarios',             texto: 'Usuarios',             icono: 'usuarios',   url: '/pages/admin/usuarios.html' },
   { clave: 'ubicacion',            texto: 'Ubicación geográfica', icono: 'ubicacion',  url: '/pages/admin/ubicacion.html' },
   { clave: 'perfil',               texto: 'Perfil',               icono: 'perfil',     url: '/pages/admin/perfil.html' },
 ]

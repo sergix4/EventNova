@@ -322,3 +322,21 @@
 /* ─── Dashboard con datos reales ─────────────────────────────────────────── */
 .texto-rojo { font-size: 12px; line-height: 16px; font-weight: 600; color: #dc2626; }
 .mensaje-tarjeta-vacia { padding: 32px 16px; text-align: center; font-size: 14px; line-height: 20px; color: var(--gris-500); }
+/* ─── Gestión de usuarios (clientes y agentes) · Sprint 3 Tarea 5 ─────────── */
+.usuarios .pestanas { overflow-x: auto; }
+.usuarios .pestana { white-space: nowrap; }
+.usuarios__barra { padding: 16px 24px; border-bottom: 1px solid var(--gris-100); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.usuarios__barra .buscador { max-width: 420px; }
+.usuarios__total { font-size: 13px; line-height: 20px; font-weight: 600; color: var(--gris-500); }
+.usuarios__error { margin: 16px 24px 0; }
+.usuarios .tabla td .persona__correo { max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.modal--xl { max-width: 680px; }
+.form-usuario__seccion { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--gris-400); text-transform: uppercase; letter-spacing: 0.04em; margin-top: 4px; }
+.form-usuario__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.form-usuario__grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.form-usuario__ancho { grid-column: 1 / -1; }
+.form-usuario__casilla { align-items: center; min-height: 42px; }
+@media (max-width: 767px) {
+  .form-usuario__grid, .form-usuario__grid--3 { grid-template-columns: 1fr; }
+  .usuarios__barra .buscador { max-width: none; }
+}
