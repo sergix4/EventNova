@@ -13,6 +13,7 @@ const ciudadRoutes = require('./ciudadRoutes');
 const eventoRoutes = require('./eventoRoutes');
 const reservaRoutes = require('./reservaRoutes');
 const reporteRoutes = require('./reporteRoutes');
+const personaRoutes = require('./personaRoutes');
 const sincronizarEstados = require('../middlewares/sincronizarEstados');
 
 // Antes de cualquier ruta de eventos o reservas se actualizan los estados
@@ -27,5 +28,6 @@ router.use('/ciudades', ciudadRoutes);
 router.use('/eventos', eventoRoutes);
 router.use('/reservas', reservaRoutes);
 router.use('/reportes', reporteRoutes);
+router.use('/usuarios', personaRoutes); 
 
 module.exports = router;
