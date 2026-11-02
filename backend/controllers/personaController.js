@@ -35,8 +35,11 @@ async function prepararDatos(actual, body) {
 
   if (fecha_nacimiento) {
     const fecha = new Date(`${fecha_nacimiento}T00:00:00`);
-    if (!FECHA_VALIDA.test(fecha_nacimiento) || Number.isNaN(fecha.getTime())) {
-      return { error: 'La fecha de nacimiento debe tener el formato AAAA-MM-DD.' };
+    // Comprueba que la fecha exista de verdad (ej. 2025-02-31 NO existe)
+    const [anio, mes, dia] = String(fecha_nacimiento).split('-').map(Number);
+    const fechaReal = fecha.getFullYear() === anio && fecha.getMonth() + 1 === mes && fecha.getDate() === dia;
+    if (!FECHA_VALIDA.test(fecha_nacimiento) || Number.isNaN(fecha.getTime()) || !fechaReal) {
+      return { error: 'La fecha de nacimiento no es válida (formato AAAA-MM-DD).' };
     }
     if (fecha > new Date()) return { error: 'La fecha de nacimiento no puede ser futura.' };
   }
