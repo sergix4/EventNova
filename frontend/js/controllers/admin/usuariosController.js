@@ -1,5 +1,6 @@
 // js/controllers/admin/usuariosController.js
-// CONTROLADOR de la gestión de clientes y agentes (Sprint 3 · Tarea 5).
+// CONTROLADOR de la gestión de clientes, agentes (Sprint 3 · Tarea 5)
+// y administradores (Sprint 3 · Tarea 6).
 // Conecta pages/admin/usuarios.html con:
 //   - PersonaModel  → /api/usuarios (listar, editar y eliminar personas)
 //   - PlanModel     → /api/planes   (selector de plan del agente)
@@ -18,7 +19,9 @@ import { paginacion, paginar } from '../../views/componentes/paginacion.js'
 import { esc } from '../../utils/formato.js'
 
 const POR_PAGINA = 8
-const PLURAL = { cliente: 'clientes', agente: 'agentes' }
+const PLURAL = { cliente: 'clientes', agente: 'agentes', administrador: 'administradores' }
+const NOMBRE_ROL = { cliente: 'Cliente', agente: 'Agente', administrador: 'Administrador' }
+const NUMERO_ID_VALIDO = /^[A-Za-z0-9-]{5,20}$/
 const TELEFONO_VALIDO = /^\+?[\d\s-]{7,20}$/
 const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -29,6 +32,7 @@ let pagina = 1
 let temporizador = null  // para no llamar a la API en cada tecla del buscador
 let planes = null        // se piden una sola vez (al editar el primer agente)
 let paises = null        // ídem
+let usuarioSesion = null // administrador que tiene la sesión abierta (no puede eliminarse)
 
 // ─── Listado ────────────────────────────────────────────────────────────────
 async function cargarUsuarios() {
@@ -51,7 +55,7 @@ function dibujarTabla() {
     ? `No hay ${PLURAL[rol]} que coincidan con "${buscar}".`
     : `Aún no hay ${PLURAL[rol]} registrados.`
 
-  UsuariosView.filas(rol, paginar(usuarios, pagina, POR_PAGINA), textoVacio)
+  UsuariosView.filas(rol, paginar(usuarios, pagina, POR_PAGINA), textoVacio, usuarioSesion?.numero_id)
   UsuariosView.total(`${usuarios.length} ${usuarios.length === 1 ? rol : PLURAL[rol]}`)
   UsuariosView.paginacion(paginacion(pagina, usuarios.length, POR_PAGINA, PLURAL[rol]))
 }
@@ -62,6 +66,7 @@ function cambiarPestana(nuevoRol) {
   document.getElementById('buscar-usuario').value = ''
   UsuariosView.pestanaActiva(rol)
   UsuariosView.cabecera(rol)
+  UsuariosView.botonRegistrar(rol === 'administrador')
   cargarUsuarios()
 }
 
@@ -116,9 +121,18 @@ function leerFormulario(persona) {
     id_ciudad: Number(valor('ciudad')),
     telefonos: ['tel-0', 'tel-1', 'tel-2'].map(valor).filter(Boolean),
   }
+  if (persona.nuevo) {
+    // Solo al registrar: identificación y contraseña
+    datos.numero_id = valor('numero-id')
+    datos.password = document.getElementById('contrasena').value
+    datos.confirmar = document.getElementById('confirmar-contrasena').value
+  }
   if (persona.rol === 'cliente') {
     datos.puntos = Number(valor('puntos'))
     datos.visualizar_publicidad = document.getElementById('publicidad').checked
+  } else if (persona.rol === 'administrador') {
+    datos.salario = valor('salario') === '' ? NaN : Number(valor('salario'))
+    datos.horario = valor('horario')
   } else {
     datos.nombre_empresa = valor('empresa')
     datos.id_plan = Number(valor('plan'))
@@ -131,6 +145,9 @@ function leerFormulario(persona) {
 
 /** Validación rápida en el navegador (el backend vuelve a validar todo) */
 function validar(datos) {
+  if ('numero_id' in datos && !NUMERO_ID_VALIDO.test(datos.numero_id)) return 'La identificación debe tener entre 5 y 20 caracteres (letras, números o guiones).'
+  if ('password' in datos && datos.password.length < 8) return 'La contraseña debe tener al menos 8 caracteres.'
+  if ('password' in datos && datos.password !== datos.confirmar) return 'Las contraseñas no coinciden.'
   if (!datos.nombre) return 'El nombre es obligatorio.'
   if (!CORREO_VALIDO.test(datos.correo)) return 'El correo no tiene un formato válido.'
   if (datos.telefonos.length === 0) return 'Debes registrar al menos un teléfono.'
@@ -138,6 +155,8 @@ function validar(datos) {
   if (!datos.id_ciudad) return 'Debes seleccionar país, departamento y ciudad.'
   if ('puntos' in datos && (!Number.isInteger(datos.puntos) || datos.puntos < 0)) return 'Los puntos deben ser un entero mayor o igual a 0.'
   if ('nombre_empresa' in datos && !datos.nombre_empresa) return 'El nombre de la empresa es obligatorio.'
+  if ('salario' in datos && (Number.isNaN(datos.salario) || datos.salario < 0)) return 'El salario debe ser un número mayor o igual a 0.'
+  if ('horario' in datos && !datos.horario) return 'El horario es obligatorio.'
   return ''
 }
 
@@ -169,7 +188,7 @@ async function editar(id) {
     try {
       await PersonaModel.actualizar(id, datos)
       cerrarModal()
-      mostrarToast(`${persona.rol === 'cliente' ? 'Cliente' : 'Agente'} actualizado correctamente.`, { duracion: 2500 })
+      mostrarToast(`${NOMBRE_ROL[persona.rol]} actualizado correctamente.`, { duracion: 2500 })
       const paginaActual = pagina
       await cargarUsuarios()
       pagina = Math.min(paginaActual, Math.max(1, Math.ceil(usuarios.length / POR_PAGINA)))
@@ -181,6 +200,48 @@ async function editar(id) {
   })
 }
 
+// ─── Registrar administrador (Tarea 6) ──────────────────────────────────────
+// Reutiliza el mismo formulario de "Editar" con una persona vacía marcada
+// como nueva: así aparecen los campos de identificación y contraseña.
+async function registrar() {
+  const nuevo = {
+    nuevo: true,
+    rol: 'administrador',
+    numero_id: '', nombre: '', correo: '', direccion: '', fecha_nacimiento: '',
+    telefonos: [],
+    ubicacion: {},
+    administrador: { salario: '', horario: 'Lunes a viernes 8:00 - 17:00' },
+  }
+ 
+  const caja = abrirModal(UsuariosView.formulario(nuevo), { clase: 'modal--xl', cerrarAlHacerClicFuera: false })
+  try {
+    await prepararUbicacion(nuevo.ubicacion)
+  } catch (error) {
+    UsuariosView.errorFormulario(error.message)
+  }
+  caja.querySelector('#nombre').focus()
+ 
+  caja.querySelector('#form-usuario').addEventListener('submit', async (e) => {
+    e.preventDefault()
+    const datos = leerFormulario(nuevo)
+    const problema = validar(datos)
+    UsuariosView.errorFormulario(problema)
+    if (problema) return
+ 
+    delete datos.confirmar // el backend solo necesita la contraseña
+    UsuariosView.guardando(true)
+    try {
+      await PersonaModel.crearAdministrador(datos)
+      cerrarModal()
+      mostrarToast(`${esc(datos.nombre)} ya es administrador de EventNova.`, { duracion: 3000 })
+      await cargarUsuarios()
+    } catch (error) {
+      UsuariosView.errorFormulario(error.message) // p. ej. 409 "Ya existe un usuario con ese correo…"
+      UsuariosView.guardando(false, 'Registrar administrador')
+    }
+  })
+}
+ 
 // ─── Eliminar ───────────────────────────────────────────────────────────────
 function eliminar(id) {
   const persona = buscarPersona(id)
@@ -200,8 +261,10 @@ function eliminar(id) {
 }
 
 // ─── Arranque ───────────────────────────────────────────────────────────────
-await iniciarAdmin('usuarios')
+usuarioSesion = await iniciarAdmin('usuarios')
 UsuariosView.cabecera(rol)
+ 
+document.getElementById('boton-registrar-admin').addEventListener('click', registrar)
 
 document.querySelectorAll('[data-rol]').forEach(boton =>
   boton.addEventListener('click', () => cambiarPestana(boton.dataset.rol)))

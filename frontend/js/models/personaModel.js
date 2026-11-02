@@ -17,6 +17,10 @@ export const PersonaModel = {
   obtener(numeroId) {
     return peticion(`/usuarios/${encodeURIComponent(numeroId)}`)
   },
+    /** Tarea 6: registra un administrador nuevo (persona + contraseña + salario y horario) */
+  crearAdministrador(datos) {
+    return peticion('/usuarios/administradores', { metodo: 'POST', datos })
+  },
   /** datos: solo los campos que se quieren cambiar (lo demás se conserva) */
   actualizar(numeroId, datos) {
     return peticion(`/usuarios/${encodeURIComponent(numeroId)}`, { metodo: 'PUT', datos })

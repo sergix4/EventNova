@@ -133,8 +133,70 @@ const PersonaModel = {
     return result.rowCount > 0;
   },
 
+  // ¿Ya existe un usuario con ese correo O con esa identificación? (para registrar)
+  async existeCorreoOIdentificacion(correo, numero_id) {
+    const result = await pool.query(
+      `SELECT 1 FROM public."USUARIO" WHERE LOWER(correo) = LOWER($1) OR numero_id = $2 LIMIT 1`,
+      [correo, numero_id]
+    );
+    return result.rowCount > 0;
+  },
+ 
+  // Sprint 3 · Tarea 6: registra un ADMINISTRADOR nuevo EN UNA TRANSACCIÓN.
+  // Se insertan USUARIO, sus TELEFONOS y la fila de ADMINISTRADOR; si algo
+  // falla no queda nada a medias. 'datos' ya viene validado desde el controlador
+  // y la contraseña ya viene encriptada (contrasenaHash).
+  async crearAdministrador(datos) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+ 
+      // 1. La persona
+      await client.query(
+        `INSERT INTO public."USUARIO"
+           (numero_id, correo, nombre, contraseña, direccion, fecha_nacimiento, id_ciudad)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [datos.numero_id, datos.correo, datos.nombre, datos.contrasenaHash,
+         datos.direccion, datos.fecha_nacimiento, datos.id_ciudad]
+      );
+ 
+      // 2. Sus teléfonos (de 1 a 3)
+      for (const telefono of datos.telefonos) {
+        await client.query(
+          `INSERT INTO public."TELEFONOS" (numero_id, telefono) VALUES ($1, $2)`,
+          [datos.numero_id, telefono]
+        );
+      }
+ 
+      // 3. Los datos propios del administrador
+      await client.query(
+        `INSERT INTO public."ADMINISTRADOR" (numero_id, codigo_admin, salario, horario)
+         VALUES ($1, $2, $3, $4)`,
+        [datos.numero_id, `ADM-${datos.numero_id}`, datos.salario, datos.horario]
+      );
+ 
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+    return PersonaModel.obtener(datos.numero_id); // el administrador recién creado
+  },
+ 
+  // ¿Esa identificación sigue siendo de un administrador? (lo usa soloAdmin)
+  async esAdministrador(numero_id) {
+    const result = await pool.query(
+      `SELECT 1 FROM public."ADMINISTRADOR" WHERE numero_id = $1`,
+      [numero_id]
+    );
+    return result.rowCount > 0;
+  },
+ 
   // Cuántos administradores hay (siempre debe quedar al menos uno)
   async contarAdministradores() {
+
     const result = await pool.query(`SELECT COUNT(*)::int AS total FROM public."ADMINISTRADOR"`);
     return result.rows[0].total;
   },

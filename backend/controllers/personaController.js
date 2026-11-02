@@ -5,6 +5,7 @@
 // consulte o guarde, y responde en JSON. Solo el administrador llega hasta
 // aquí (lo garantiza soloAdmin en routes/personaRoutes.js).
 
+const bcrypt = require('bcryptjs');
 const PersonaModel = require('../models/personaModel');
 const PlanModel = require('../models/planModel');
 const CiudadModel = require('../models/ciudadModel');
@@ -14,6 +15,8 @@ const TELEFONO_VALIDO = /^\+?[\d\s-]{7,20}$/;
 const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FECHA_VALIDA = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_TELEFONOS = 3;
+const NUMERO_ID_VALIDO = /^[A-Za-z0-9-]{5,20}$/;
+const MIN_CONTRASENA = 8;
 
 // "Si el campo no viene en el body, se conserva el valor actual".
 // Así el frontend puede mandar solo lo que cambió.
@@ -124,6 +127,54 @@ const personaController = {
     }
   },
 
+  // POST /api/usuarios/administradores   (Sprint 3 · Tarea 6)
+  // Solo un administrador con sesión llega aquí (soloAdmin en las rutas).
+  async crearAdministrador(req, res) {
+    const body = req.body || {};
+    const numero_id = String(body.numero_id || '').trim();
+    const contrasena = String(body.password || '');
+ 
+    // 1. Lo que solo existe al registrar: identificación y contraseña
+    if (!NUMERO_ID_VALIDO.test(numero_id)) {
+      return res.status(400).json({ error: 'La identificación debe tener entre 5 y 20 caracteres (letras, números o guiones).' });
+    }
+    if (contrasena.length < MIN_CONTRASENA) {
+      return res.status(400).json({ error: `La contraseña debe tener al menos ${MIN_CONTRASENA} caracteres.` });
+    }
+ 
+    // 2. El resto se valida con la MISMA función que usa "Editar".
+    //    Se le pasa un administrador "vacío" para que todos los campos
+    //    tengan que venir en el body (no hay valores actuales que conservar).
+    const vacio = {
+      rol: 'administrador',
+      nombre: '', correo: '', direccion: null, fecha_nacimiento: null,
+      telefonos: [], ubicacion: { id_ciudad: null },
+      administrador: { salario: undefined, horario: '' },
+    };
+ 
+    try {
+      const { error, datos } = await prepararDatos(vacio, body);
+      if (error) return res.status(400).json({ error });
+ 
+      // 3. Correo e identificación deben ser únicos
+      if (await PersonaModel.existeCorreoOIdentificacion(datos.correo, numero_id)) {
+        return res.status(409).json({ error: 'Ya existe un usuario con ese correo o número de identificación.' });
+      }
+ 
+      // 4. Se guarda con la contraseña encriptada (nunca en texto plano)
+      const contrasenaHash = await bcrypt.hash(contrasena, 10);
+      const administrador = await PersonaModel.crearAdministrador({ ...datos, numero_id, contrasenaHash });
+ 
+      res.status(201).json({ mensaje: 'Administrador registrado correctamente.', usuario: administrador });
+    } catch (error) {
+      if (error.code === '23505') { // UNIQUE / PK repetida (dos registros al mismo tiempo)
+        return res.status(409).json({ error: 'Ya existe un usuario con ese correo o número de identificación.' });
+      }
+      console.error('Error al registrar administrador:', error);
+      res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+  },
+ 
   // PUT /api/usuarios/:id
   async actualizar(req, res) {
     const { id } = req.params;

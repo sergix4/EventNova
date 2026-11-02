@@ -328,6 +328,10 @@
 .usuarios__barra { padding: 16px 24px; border-bottom: 1px solid var(--gris-100); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .usuarios__barra .buscador { max-width: 420px; }
 .usuarios__total { font-size: 13px; line-height: 20px; font-weight: 600; color: var(--gris-500); }
+.usuarios__acciones { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.usuarios__acciones .boton { padding: 8px 16px; }
+.usuarios .crud__eliminar:disabled { opacity: 0.4; cursor: not-allowed; }
+.etiqueta-tu { font-size: 11px; line-height: 16px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: #fef3c7; color: #92400e; margin-left: 6px; vertical-align: middle; }
 .usuarios__error { margin: 16px 24px 0; }
 .usuarios .tabla td .persona__correo { max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .modal--xl { max-width: 680px; }
