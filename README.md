@@ -194,7 +194,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 
 ## Equipo
 
-- Sergio Alejandro Morales Florez
 - Daniel Castañeda Londoño
+- Sergio Alejandro Morales Florez
 - Paola Andrea Carmona Salazar
 - Isabella Serna Torres

@@ -16,6 +16,10 @@ const reporteRoutes = require('./reporteRoutes');
 const personaRoutes = require('./personaRoutes');
 const planRoutes = require('./planRoutes');
 const sincronizarEstados = require('../middlewares/sincronizarEstados');
+const adminVigente = require('../middlewares/adminVigente');
+
+// Primero: si el admin con sesión ya fue eliminado, se le quita la sesión.
+router.use(adminVigente);
 
 // Antes de cualquier ruta de eventos o reservas se actualizan los estados
 // automáticos (En Vivo / Finalizado) según la fecha y hora actual.
