@@ -14,6 +14,16 @@ const PlanModel = {
     );
     return result.rows[0] || null;
   },
+
+  // Busca un plan por su id (lo usa personaController al editar un agente)
+  async getById(id_plan) {
+    const result = await pool.query(
+      `SELECT id_plan, nombre_plan, precio_plan, limite_evento
+       FROM public."TIPO_PLAN" WHERE id_plan = $1`,
+      [id_plan]
+    );
+    return result.rows[0] || null;
+  },
 };
 
 module.exports = PlanModel;
