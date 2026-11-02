@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Usuarios · EventNova</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/panel.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="panel panel--gestion">
+  <div class="panel__velo"></div>
+
+  <!-- Barra lateral: la dibuja js/views/componentes/panel.js -->
+  <aside class="barra-lateral barra-lateral--gestion" id="barra-lateral"></aside>
+
+  <main class="panel__principal" id="principal">
+    <header class="cabecera-gestion">
+      <div class="cabecera-gestion__izq">
+        <button type="button" class="boton-menu" data-accion="abrir-menu" aria-label="Abrir menú"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg></button>
+        <div>
+          <h1 class="cabecera-gestion__titulo">Usuarios</h1>
+          <p class="cabecera-gestion__subtitulo">Consulta, edita y elimina los clientes y agentes registrados en EventNova.</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="panel__contenido" id="contenido">
+      <section class="tarjeta tarjeta--recortada usuarios" aria-label="Gestión de usuarios">
+        <!-- Pestañas: el controlador cambia de rol al hacer clic -->
+        <div class="pestanas" role="tablist" aria-label="Tipo de usuario">
+          <button type="button" class="pestana" role="tab" id="pestana-cliente" data-rol="cliente" aria-controls="panel-usuarios" aria-selected="true">Clientes</button>
+          <button type="button" class="pestana" role="tab" id="pestana-agente" data-rol="agente" aria-controls="panel-usuarios" aria-selected="false">Agentes</button>
+          <!-- La pestaña Administradores se activa en la Tarea 6 (CRUD de administradores) -->
+          <button type="button" class="pestana" role="tab" id="pestana-administrador" aria-selected="false" disabled>Administradores<span class="etiqueta-pronto">Pronto</span></button>
+        </div>
+
+        <div id="panel-usuarios" role="tabpanel" aria-labelledby="pestana-cliente">
+          <!-- Buscador + total -->
+          <div class="usuarios__barra">
+            <div class="buscador">
+              <span class="buscador__icono"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+              <label for="buscar-usuario" class="solo-lector">Buscar usuario</label>
+              <input type="search" class="entrada" id="buscar-usuario" placeholder="Buscar por nombre, correo o identificación…" autocomplete="off" maxlength="100">
+            </div>
+            <p class="usuarios__total" id="total-usuarios" aria-live="polite"></p>
+          </div>
+
+          <p class="crud__error usuarios__error" id="error-usuarios" role="alert" hidden></p>
+
+          <div class="tabla-contenedor">
+            <table class="tabla tabla--compacta">
+              <thead id="cabecera-usuarios"></thead>
+              <tbody id="tabla-usuarios"><tr><td class="tabla__vacia">Cargando usuarios…</td></tr></tbody>
+            </table>
+          </div>
+
+          <!-- Paginación: la dibuja js/views/componentes/paginacion.js -->
+          <div id="paginacion-usuarios"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module" src="/js/controllers/admin/usuariosController.js"></script>
+</body>
+</html>

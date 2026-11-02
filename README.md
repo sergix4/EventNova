@@ -159,7 +159,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 | PATCH          | `/api/reservas/:id/estado`        | Confirmar o cancelar una reserva                                      |
 | GET            | `/api/usuarios`                   | Listar usuarios (admin; opcional `?rol=` cliente, agente o administrador y `?buscar=`) |
 | GET/PUT/DELETE | `/api/usuarios/:id`               | Consultar / editar (persona, teléfonos y datos del rol) / eliminar (admin) |
-
+| GET            | `/api/planes`                     | Listar los planes de agente (tabla TIPO_PLAN) |
 
 ## Estado actual
 
@@ -178,6 +178,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Script de base de datos consolidado: `develop.sql` crea las 13 tablas finales con sus triggers; se quitaron las tablas que no pide el enunciado (CATEGORIA, AGRUPA, RESEÑA, METODO_PAGO y TIPO) con `migracion_07.sql`.
 - ✅ Datos de demostración (`npm run db:demo`, `backend/database/seed_demo.js`): clientes, agentes, eventos y reservas en todos los estados (con causas de cancelación) para probar los reportes y la sustentación.
 - ✅ API de usuarios (`/api/usuarios`, solo administrador): listado por rol con búsqueda, consulta, edición en transacción (persona, teléfonos y datos de cliente/agente/administrador) y eliminación protegida (no se borra a quien tiene reservas o eventos, ni el admin a sí mismo).
+- ✅ Gestión de clientes y agentes (`pages/admin/usuarios.html`, solo administrador): pestañas con buscador, paginación, Ver, Editar (persona, teléfonos, país → departamento → ciudad y datos del rol) y Eliminar con confirmación y aviso cuando tiene reservas o eventos.
 - 🟡 Eventos y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
   Cuando exista cada endpoint solo se cambia el modelo correspondiente
   (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y
