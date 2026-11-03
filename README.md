@@ -181,7 +181,8 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ API de usuarios (`/api/usuarios`, solo administrador): listado por rol con búsqueda, consulta, edición en transacción (persona, teléfonos y datos de cliente/agente/administrador) y eliminación protegida (no se borra a quien tiene reservas o eventos, ni el admin a sí mismo).
 - ✅ Gestión de clientes y agentes (`pages/admin/usuarios.html`, solo administrador): pestañas con buscador, paginación, Ver, Editar (persona, teléfonos, país → departamento → ciudad y datos del rol) y Eliminar con confirmación y aviso cuando tiene reservas o eventos.
 - ✅ CRUD de administradores (pestaña «Administradores» en `pages/admin/usuarios.html`): solo un administrador con sesión registra a otro (persona, contraseña, salario y horario); un administrador no puede eliminarse a sí mismo, siempre queda al menos uno, y si un administrador es eliminado su sesión deja de servir.
-- 🟡 Eventos y reportes usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
+- ✅ Reporte general con datos reales (`/api/reportes/generales`, solo administrador): totales de clientes, agentes, administradores, reservas y eventos con los nuevos del mes; eventos y reservas por estado; reservas y eventos por mes del año elegido y los últimos 50 registros del sistema con filtros.
+- 🟡 Reportes comerciales, cobertura y operación todavía usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
   Cuando exista cada endpoint solo se cambia el modelo correspondiente
   (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y
   controladores no cambian.
