@@ -241,19 +241,19 @@ const ReporteModel = {
       `SELECT * FROM (
          SELECT 'cliente' AS tipo,
                 u.nombre || ' · ' || u.correo AS descripcion,
-                u.fecha_registro AS fecha, 'Activo' AS estado
+                u.fecha_registro AS fecha, 'Registrado' AS estado
          FROM public."CLIENTE" c JOIN public."USUARIO" u ON u.numero_id = c.numero_id
  
          UNION ALL
          SELECT 'agente',
                 COALESCE(a.nombre_empresa, u.nombre) || ' · ' || u.correo,
-                u.fecha_registro, 'Activo'
+                u.fecha_registro, 'Registrado'
          FROM public."AGENTE" a JOIN public."USUARIO" u ON u.numero_id = a.numero_id
  
          UNION ALL
          SELECT 'admin',
                 u.nombre || ' · ' || u.correo,
-                u.fecha_registro, 'Activo'
+                u.fecha_registro, 'Registrado'
          FROM public."ADMINISTRADOR" ad JOIN public."USUARIO" u ON u.numero_id = ad.numero_id
  
          UNION ALL

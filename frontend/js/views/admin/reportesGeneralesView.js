@@ -21,7 +21,7 @@ export const TIPOS_REGISTRO = {
 // Colores de cada estado real de la base de datos: [fondo, texto/color]
 const COLOR_ESTADO = {
   // Usuarios
-  'Activo':       ['#ecfdf5', '#047857'],
+  'Registrado':   ['#eef2ff', '#4f46e5'],
   // Eventos (tabla ESTADO)
   'Programado':   ['#eff6ff', '#1d4ed8'],
   'En Boletería': ['#ecfdf5', '#059669'],
@@ -112,7 +112,7 @@ function resumen(cats) {
     <section class="tarjeta tarjeta--recortada">
       <div class="tarjeta__cabecera"><div>
         <h2 class="tarjeta__titulo">Resumen de registros</h2>
-        <p class="tarjeta__subtitulo">Distribución porcentual del total del sistema (${num(total)} registros)</p>
+        <p class="tarjeta__subtitulo">Totales históricos del sistema (${num(total)} registros) · no dependen del año elegido</p>
       </div></div>
       <div class="tabla-contenedor">
         <table class="tabla tabla--amplia">
