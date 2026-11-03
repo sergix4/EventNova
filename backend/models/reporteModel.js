@@ -16,6 +16,16 @@ const AHORA = `(NOW() AT TIME ZONE 'America/Bogota')`;
 // (en Neon es UTC). Esta expresión la pasa a hora de Colombia.
 const REGISTRO_EVENTO = `((e.fecha_registro AT TIME ZONE current_setting('TimeZone')) AT TIME ZONE 'America/Bogota')`;
 
+// Reservas que cuentan como VENTA en un año ($1): las NO canceladas.
+// Se usa como CTE ("WITH ventas AS (...)") en los reportes comerciales.
+const VENTAS_DEL_ANIO = `
+  SELECT r.id_reserva, r.id_cliente, r.numero_entradas, r.valor_total, e.id_agente
+  FROM public."RESERVA" r
+  JOIN public."EVENTO" e          ON e.id_evento = r.id_evento
+  JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+  WHERE er.nombre_estado <> 'Cancelada'
+    AND EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1`;
+
 // Convierte filas { mes, valor } en un arreglo de 12 posiciones (Ene..Dic)
 function porMes(filas, campo = "valor") {
   const meses = Array(12).fill(0);
@@ -281,6 +291,121 @@ const ReporteModel = {
     return result.rows;
   },
 
+    // ═════════════════════════════════════════════════════════════════════════
+  // REPORTES COMERCIALES (Sprint 3 · Tarea 8)
+  // ═════════════════════════════════════════════════════════════════════════
+
+  // ─── 8.1 Ingresos por agente en el año elegido ───────────────────────────
+  // Salen TODOS los agentes (aunque no hayan vendido nada) para que el
+  // promedio general se calcule sobre todos los agentes registrados.
+  //   eventos  = eventos que ha creado el agente (histórico)
+  //   reservas = reservas NO canceladas de sus eventos en el año
+  //   ingresos = suma de valor_total de esas reservas
+  //   ciudad   = la ciudad donde más eventos ha hecho (o la de su registro)
+  async ingresosPorAgente(anio) {
+    const result = await pool.query(
+      `WITH ventas AS (${VENTAS_DEL_ANIO})
+       SELECT a.numero_id                AS id,
+              a.nombre_empresa           AS agente,
+              u.nombre                   AS responsable,
+              COALESCE(
+                (SELECT c.nombre_ciudad
+                   FROM public."EVENTO" e
+                   JOIN public."CIUDAD" c ON c.id_ciudad = e.id_ciudad
+                  WHERE e.id_agente = a.numero_id
+                  GROUP BY c.nombre_ciudad
+                  ORDER BY COUNT(*) DESC, c.nombre_ciudad
+                  LIMIT 1),
+                cu.nombre_ciudad, 'Sin ciudad')                                       AS ciudad,
+              (SELECT COUNT(*) FROM public."EVENTO" e WHERE e.id_agente = a.numero_id)::int AS eventos,
+              (SELECT COUNT(*) FROM ventas v WHERE v.id_agente = a.numero_id)::int          AS reservas,
+              (SELECT COALESCE(SUM(v.valor_total), 0) FROM ventas v WHERE v.id_agente = a.numero_id) AS ingresos
+       FROM public."AGENTE" a
+       JOIN public."USUARIO" u     ON u.numero_id = a.numero_id
+       LEFT JOIN public."CIUDAD" cu ON cu.id_ciudad = u.id_ciudad
+       ORDER BY ingresos DESC, agente ASC`,
+      [anio],
+    );
+    return result.rows.map((f) => ({ ...f, ingresos: Number(f.ingresos) }));
+  },
+
+  // ─── 8.1 Ingresos por cliente en el año elegido ──────────────────────────
+  // Igual que el de agentes: salen TODOS los clientes, aunque no hayan
+  // comprado, para que el promedio general sea sobre todos los clientes.
+  async ingresosPorCliente(anio) {
+    const result = await pool.query(
+      `WITH ventas AS (${VENTAS_DEL_ANIO})
+       SELECT c.numero_id AS id,
+              u.nombre    AS cliente,
+              u.correo,
+              (SELECT COUNT(*) FROM ventas v WHERE v.id_cliente = c.numero_id)::int                         AS reservas,
+              (SELECT COALESCE(SUM(v.numero_entradas), 0) FROM ventas v WHERE v.id_cliente = c.numero_id)::int AS entradas,
+              (SELECT COALESCE(SUM(v.valor_total), 0) FROM ventas v WHERE v.id_cliente = c.numero_id)         AS ingresos
+       FROM public."CLIENTE" c
+       JOIN public."USUARIO" u ON u.numero_id = c.numero_id
+       ORDER BY ingresos DESC, cliente ASC`,
+      [anio],
+    );
+    return result.rows.map((f) => ({ ...f, ingresos: Number(f.ingresos) }));
+  },
+
+  // ─── 8.3 Número de reservas por evento y por mes del año ─────────────────
+  // Cuenta TODAS las reservas registradas (también las canceladas), igual
+  // que el reporte general. Devuelve una fila por evento con sus 12 meses.
+  async reservasPorEventoMes(anio) {
+    const result = await pool.query(
+      `SELECT e.codigo_evento AS codigo,
+              e.nombre_evento AS evento,
+              EXTRACT(MONTH FROM r.fecha_hora_reserva)::int AS mes,
+              COUNT(*)::int AS reservas
+       FROM public."RESERVA" r
+       JOIN public."EVENTO" e ON e.id_evento = r.id_evento
+       WHERE EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1
+       GROUP BY e.codigo_evento, e.nombre_evento, mes`,
+      [anio],
+    );
+
+    // Agrupa las filas { codigo, mes, reservas } en { codigo, evento, datos[12], total }
+    const eventos = new Map();
+    result.rows.forEach((f) => {
+      if (!eventos.has(f.codigo)) {
+        eventos.set(f.codigo, { codigo: f.codigo, evento: f.evento, datos: Array(12).fill(0), total: 0 });
+      }
+      const fila = eventos.get(f.codigo);
+      fila.datos[f.mes - 1] = f.reservas;
+      fila.total += f.reservas;
+    });
+    // El evento con más reservas primero
+    return [...eventos.values()].sort((a, b) => b.total - a.total || a.evento.localeCompare(b.evento));
+  },
+
+  // ─── 8.4 Eventos creados por cada agente y por ciudad (histórico) ────────
+  // Una fila por cada pareja agente + ciudad, con el desglose por estado:
+  //   activos = Programado, En Boletería o En Vivo
+  async eventosPorAgenteCiudad() {
+    const result = await pool.query(`
+      SELECT a.numero_id           AS id_agente,
+             a.nombre_empresa      AS agente,
+             c.nombre_ciudad       AS ciudad,
+             d.nombre_departamento AS departamento,
+             p.nombre_pais         AS pais,
+             COUNT(*)::int AS creados,
+             COUNT(*) FILTER (WHERE es.nombre_estado IN ('Programado', 'En Boletería', 'En Vivo'))::int AS activos,
+             COUNT(*) FILTER (WHERE es.nombre_estado = 'Finalizado')::int AS finalizados,
+             COUNT(*) FILTER (WHERE es.nombre_estado = 'Cancelado')::int  AS cancelados
+      FROM public."EVENTO" e
+      JOIN public."AGENTE" a       ON a.numero_id = e.id_agente
+      JOIN public."ESTADO" es      ON es.id_estado = e.id_estado
+      JOIN public."CIUDAD" c       ON c.id_ciudad = e.id_ciudad
+      JOIN public."DEPARTAMENTO" d ON d.id_departamento = c.id_departamento
+      JOIN public."PAIS" p         ON p.id_pais = d.id_pais
+      GROUP BY a.numero_id, a.nombre_empresa, c.id_ciudad, c.nombre_ciudad,
+               d.nombre_departamento, p.nombre_pais
+      ORDER BY agente ASC, creados DESC, ciudad ASC
+    `);
+    return result.rows;
+  },
+  
   // ─── Años con movimiento (para llenar el selector de período) ────────────
   async aniosDisponibles() {
     const result = await pool.query(`

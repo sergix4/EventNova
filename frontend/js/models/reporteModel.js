@@ -1,32 +1,15 @@
 // js/models/reporteModel.js
 // MODELO de reportes del administrador.
-// dashboard() y generales() ya traen datos REALES de PostgreSQL
-// (GET /api/reportes/dashboard y GET /api/reportes/generales).
+// dashboard(), generales() y comerciales() ya traen datos REALES de PostgreSQL
+// (GET /api/reportes/dashboard, /generales y /comerciales).
 // Las demás funciones siguen con datos de ejemplo hasta que se construya
 // su consulta SQL en /api/reportes/...
 
 import { peticion } from './api.js'
-import { EVENTOS, RESERVAS, AGENTES } from './datosEjemplo.js'
+import { EVENTOS, RESERVAS } from './datosEjemplo.js'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
-
-
-// ─── Reportes comerciales ───────────────────────────────────────────────────
-const INGRESOS_COMERCIALES = [42800000, 58300000, 74100000, 63500000, 89700000, 112400000, 98200000, 127600000, 118900000, 143300000, 135800000, 162400000]
-const RESERVAS_POR_EVENTO = [
-  { evento: 'Maluma · World Tour', datos: [58, 72, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
-  { evento: 'Festival Estéreo Picnic', datos: [0, 0, 143, 128, 0, 0, 0, 0, 0, 0, 0, 0] },
-  { evento: 'Gran Concierto Diciembre', datos: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 318] },
-  { evento: 'Feria Gastronómica Cali', datos: [0, 0, 0, 0, 88, 102, 0, 0, 0, 0, 0, 0] },
-  { evento: 'Teatro · Obra Contemporánea', datos: [0, 0, 0, 0, 0, 0, 74, 89, 81, 0, 0, 0] },
-  { evento: 'Festival Electrónico Bogotá', datos: [0, 0, 0, 0, 0, 0, 0, 0, 0, 201, 187, 0] },
-  { evento: 'Stand-Up Comedy Night', datos: [31, 28, 35, 0, 0, 0, 0, 0, 0, 0, 0, 42] },
-]
-const DEPTO_POR_CIUDAD = {
-  'Medellín': 'Antioquia', 'Bogotá': 'Cundinamarca', 'Cali': 'Valle del Cauca',
-  'Barranquilla': 'Atlántico', 'Bucaramanga': 'Santander', 'Cartagena': 'Bolívar', 'Pereira': 'Risaralda',
-}
 
 // ─── Cobertura ──────────────────────────────────────────────────────────────
 const GEOGRAFIA = {
@@ -90,17 +73,9 @@ export const ReporteModel = {
     return peticion(`/reportes/generales?anio=${encodeURIComponent(anio)}`)
   },
 
-  async comerciales() {
-    const agentes = AGENTES.map(a => ({ nombre: a.nombre, ciudad: a.ciudad, eventos: a.eventos, reservas: a.reservas, ingresos: a.ingresos }))
-    const porAgenteYCiudad = AGENTES.map(a => {
-      const cancelados = Math.max(1, Math.round(a.eventos * 0.12))
-      const finalizados = Math.round(a.eventos * 0.55)
-      return {
-        agente: a.nombre, ciudad: a.ciudad, departamento: DEPTO_POR_CIUDAD[a.ciudad] ?? a.ciudad,
-        creados: a.eventos, activos: Math.max(1, a.eventos - finalizados - cancelados), finalizados, cancelados,
-      }
-    })
-    return { ingresosMes: INGRESOS_COMERCIALES, agentes, reservasPorEvento: RESERVAS_POR_EVENTO, porAgenteYCiudad }
+  // Reportes comerciales con datos reales del año elegido en el selector de período
+  async comerciales(anio) {
+    return peticion(`/reportes/comerciales?anio=${encodeURIComponent(anio)}`)
   },
 
   async cobertura() {

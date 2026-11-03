@@ -105,6 +105,68 @@ async function generales(req, res) {
   }
 }
 
-module.exports = { dashboard, generales };
+// GET /api/reportes/comerciales?anio=2026
+// Reportes comerciales del año elegido:
+//   8.1 ingresos por agente y por cliente (con el promedio general)
+//   8.2 ingresos totales por mes
+//   8.3 reservas por evento y por mes
+//   8.4 eventos creados por agente y ciudad (histórico)
+async function comerciales(req, res) {
+  const { anio, error } = leerAnio(req.query);
+  if (error) return res.status(400).json({ error });
+
+  try {
+    const [
+      agentes, clientes, ingresosMes, ingresosAnterior,
+      reservasPorEvento, reservasAnterior, porAgenteYCiudad, anios,
+    ] = await Promise.all([
+      ReporteModel.ingresosPorAgente(anio),
+      ReporteModel.ingresosPorCliente(anio),
+      ReporteModel.ingresosPorMes(anio),
+      ReporteModel.ingresosPorMes(anio - 1),
+      ReporteModel.reservasPorEventoMes(anio),
+      ReporteModel.reservasPorMes(anio - 1),
+      ReporteModel.eventosPorAgenteCiudad(),
+      ReporteModel.aniosDisponibles(),
+    ]);
+
+    const sumar = (lista) => lista.reduce((a, b) => a + b, 0);
+    const ingresosTotales = sumar(ingresosMes);
+
+    // Promedio GENERAL = ingresos del año / número de agentes (o clientes) registrados
+    const promedio = (total, cantidad) => (cantidad > 0 ? Math.round(total / cantidad) : 0);
+
+    res.json({
+      anio,
+      anios,
+      resumen: {
+        ingresosTotales,
+        promedioPorAgente: promedio(ingresosTotales, agentes.length),
+        promedioPorCliente: promedio(ingresosTotales, clientes.length),
+        totalReservas: sumar(reservasPorEvento.map((e) => e.total)),
+        totalEventos: sumar(porAgenteYCiudad.map((f) => f.creados)),
+        totalAgentes: agentes.length,
+        totalClientes: clientes.length,
+        clientesConCompras: clientes.filter((c) => c.reservas > 0).length,
+      },
+      // Totales del año anterior, para el "↑ X% vs. año anterior"
+      comparacion: {
+        ingresosAnterior: sumar(ingresosAnterior),
+        reservasAnterior: sumar(reservasAnterior.confirmadas)
+          + sumar(reservasAnterior.pendientes) + sumar(reservasAnterior.canceladas),
+      },
+      ingresosMes,
+      agentes,
+      clientes,
+      reservasPorEvento,
+      porAgenteYCiudad,
+    });
+  } catch (err) {
+    console.error('Error al generar los reportes comerciales:', err.message);
+    res.status(500).json({ error: 'No se pudieron cargar los reportes comerciales.' });
+  }
+}
+
+module.exports = { dashboard, generales, comerciales };
 
 
