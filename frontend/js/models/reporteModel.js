@@ -1,22 +1,16 @@
 // js/models/reporteModel.js
 // MODELO de reportes del administrador.
-// dashboard() ya trae datos REALES de PostgreSQL (GET /api/reportes/dashboard).
+// dashboard() y generales() ya traen datos REALES de PostgreSQL
+// (GET /api/reportes/dashboard y GET /api/reportes/generales).
 // Las demás funciones siguen con datos de ejemplo hasta que se construya
 // su consulta SQL en /api/reportes/...
 
 import { peticion } from './api.js'
-import { EVENTOS, RESERVAS, AGENTES, CALIFICACIONES, ULTIMOS_REGISTROS } from './datosEjemplo.js'
+import { EVENTOS, RESERVAS, AGENTES } from './datosEjemplo.js'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
-// Totales de ejemplo que todavía usa generales() (se reemplazan en su tarea)
-const TOTALES = { clientes: 1248, agentes: 86, administradores: 4, reservas: 3842, eventos: 326 }
 
-// ─── Reportes generales ─────────────────────────────────────────────────────
-const RESERVAS_EVENTOS_MES = {
-  reservas: [201, 258, 364, 295, 424, 515, 458, 591, 531, 675, 613, 753],
-  eventos: [14, 19, 28, 23, 34, 31, 27, 38, 42, 36, 29, 51],
-}
 
 // ─── Reportes comerciales ───────────────────────────────────────────────────
 const INGRESOS_COMERCIALES = [42800000, 58300000, 74100000, 63500000, 89700000, 112400000, 98200000, 127600000, 118900000, 143300000, 135800000, 162400000]
@@ -91,14 +85,9 @@ export const ReporteModel = {
     return peticion(`/reportes/dashboard?anio=${encodeURIComponent(anio)}`)
   },
 
-  async generales() {
-    return {
-      totales: TOTALES,
-      reservasEventosMes: RESERVAS_EVENTOS_MES,
-      ultimosRegistros: ULTIMOS_REGISTROS,
-      calificaciones: CALIFICACIONES,
-      eventos: EVENTOS,
-    }
+  // Reporte general con datos reales del año elegido en el selector de período
+  async generales(anio) {
+    return peticion(`/reportes/generales?anio=${encodeURIComponent(anio)}`)
   },
 
   async comerciales() {
