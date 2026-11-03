@@ -64,3 +64,47 @@ async function dashboard(req, res) {
   }
 }
 
+// GET /api/reportes/generales?anio=2026
+// Reporte general: totales del sistema, reparto por estado, reservas y
+// eventos por mes del año elegido y los últimos registros.
+async function generales(req, res) {
+  const { anio, error } = leerAnio(req.query);
+  if (error) return res.status(400).json({ error });
+
+  try {
+    const [
+      totales, eventosPorEstado, reservasPorEstado,
+      reservasMes, eventosMes, ultimosRegistros, anios,
+    ] = await Promise.all([
+      ReporteModel.totales(),
+      ReporteModel.eventosPorEstado(),
+      ReporteModel.reservasPorEstado(),
+      ReporteModel.reservasPorMes(anio),
+      ReporteModel.eventosPorMes(anio),
+      ReporteModel.ultimosRegistros(50),
+      ReporteModel.aniosDisponibles(),
+    ]);
+
+    // Reservas del mes = confirmadas + pendientes + canceladas
+    const reservasTotalesMes = reservasMes.confirmadas.map(
+      (valor, i) => valor + reservasMes.pendientes[i] + reservasMes.canceladas[i],
+    );
+
+    res.json({
+      anio,
+      anios,
+      totales,
+      eventosPorEstado,
+      reservasPorEstado,
+      reservasEventosMes: { reservas: reservasTotalesMes, eventos: eventosMes },
+      ultimosRegistros,
+    });
+  } catch (err) {
+    console.error('Error al generar el reporte general:', err.message);
+    res.status(500).json({ error: 'No se pudo cargar el reporte general.' });
+  }
+}
+
+module.exports = { dashboard, generales };
+
+
