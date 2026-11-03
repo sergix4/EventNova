@@ -64,4 +64,3 @@ async function dashboard(req, res) {
   }
 }
 
-module.exports = { dashboard };

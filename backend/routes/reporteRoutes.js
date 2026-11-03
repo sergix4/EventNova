@@ -9,5 +9,6 @@ const { soloAdmin } = require('../middlewares/authMiddleware');
 router.use(soloAdmin);
 
 router.get('/dashboard', reporteController.dashboard);
+router.get('/generales', reporteController.generales);
 
 module.exports = router;

@@ -204,6 +204,82 @@ const ReporteModel = {
     );
     return result.rows;
   },
+  // ─── Eventos por estado (Reporte general) ────────────────────────────────
+  // LEFT JOIN desde ESTADO para que salgan los 5 estados, aunque tengan 0.
+  async eventosPorEstado() {
+    const result = await pool.query(`
+      SELECT es.nombre_estado AS estado, COUNT(e.id_evento)::int AS cantidad
+      FROM public."ESTADO" es
+      LEFT JOIN public."EVENTO" e ON e.id_estado = es.id_estado
+      GROUP BY es.id_estado, es.nombre_estado
+      ORDER BY es.id_estado
+    `);
+    return result.rows;
+  },
+ 
+  // ─── Reservas por estado (Reporte general) ───────────────────────────────
+  // Igual que arriba: salen los 3 estados aunque no tengan reservas.
+  async reservasPorEstado() {
+    const result = await pool.query(`
+      SELECT er.nombre_estado AS estado,
+             COUNT(r.id_reserva)::int                    AS cantidad,
+             COALESCE(SUM(r.numero_entradas), 0)::int    AS entradas,
+             COALESCE(SUM(r.valor_total), 0)             AS valor
+      FROM public."ESTADO_RESERVA" er
+      LEFT JOIN public."RESERVA" r ON r.id_estado_reserva = er.id_estado_reserva
+      GROUP BY er.id_estado_reserva, er.nombre_estado
+      ORDER BY er.id_estado_reserva
+    `);
+    return result.rows.map((f) => ({ ...f, valor: Number(f.valor) }));
+  },
+ 
+  // ─── Últimos registros del sistema (tabla del Reporte general) ───────────
+  // Une (UNION ALL) clientes, agentes, administradores, eventos y reservas,
+  // cada uno con su estado, y se queda con los más recientes.
+  async ultimosRegistros(limite = 50) {
+    const result = await pool.query(
+      `SELECT * FROM (
+         SELECT 'cliente' AS tipo,
+                u.nombre || ' · ' || u.correo AS descripcion,
+                u.fecha_registro AS fecha, 'Activo' AS estado
+         FROM public."CLIENTE" c JOIN public."USUARIO" u ON u.numero_id = c.numero_id
+ 
+         UNION ALL
+         SELECT 'agente',
+                COALESCE(a.nombre_empresa, u.nombre) || ' · ' || u.correo,
+                u.fecha_registro, 'Activo'
+         FROM public."AGENTE" a JOIN public."USUARIO" u ON u.numero_id = a.numero_id
+ 
+         UNION ALL
+         SELECT 'admin',
+                u.nombre || ' · ' || u.correo,
+                u.fecha_registro, 'Activo'
+         FROM public."ADMINISTRADOR" ad JOIN public."USUARIO" u ON u.numero_id = ad.numero_id
+ 
+         UNION ALL
+         SELECT 'evento',
+                e.codigo_evento || ' · ' || e.nombre_evento || ' (' || c.nombre_ciudad || ')',
+                ${REGISTRO_EVENTO}, es.nombre_estado
+         FROM public."EVENTO" e
+         JOIN public."ESTADO" es ON es.id_estado = e.id_estado
+         JOIN public."CIUDAD" c  ON c.id_ciudad = e.id_ciudad
+ 
+         UNION ALL
+         SELECT 'reserva',
+                r.codigo_reserva || ' · ' || u.nombre || ' → ' || e.nombre_evento || ' (' ||
+                  r.numero_entradas || CASE WHEN r.numero_entradas = 1 THEN ' entrada)' ELSE ' entradas)' END,
+                r.fecha_hora_reserva, er.nombre_estado
+         FROM public."RESERVA" r
+         JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+         JOIN public."EVENTO" e  ON e.id_evento = r.id_evento
+         JOIN public."USUARIO" u ON u.numero_id = r.id_cliente
+       ) AS registros
+       ORDER BY fecha DESC NULLS LAST
+       LIMIT $1`,
+      [limite],
+    );
+    return result.rows;
+  },
 
   // ─── Años con movimiento (para llenar el selector de período) ────────────
   async aniosDisponibles() {
