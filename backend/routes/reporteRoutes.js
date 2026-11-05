@@ -12,5 +12,6 @@ router.get('/dashboard', reporteController.dashboard);
 router.get('/generales', reporteController.generales);
 router.get('/comerciales', reporteController.comerciales);
 router.get('/cobertura', reporteController.cobertura);
+router.get('/operacion', reporteController.operacion);
 
 module.exports = router;
