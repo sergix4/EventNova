@@ -460,15 +460,18 @@ async function crearReserva(client, ev, idEvento, [claveCliente, entradas, estad
     fechaCancel = ev.cancelacion;
   }
 
+    // Quién canceló (Tarea 10): el agente si fue el evento, si no el cliente
+  const canceladaPor = estado !== 'Cancelada' ? null : ev.estado === 'Cancelado' ? 'Agente' : 'Cliente';
+
   await client.query(
     `INSERT INTO public."RESERVA"
        (fecha_hora_reserva, numero_entradas, valor_total, id_estado_reserva,
-        causa_cancelacion, fecha_cancelacion, id_cliente, id_evento)
+        causa_cancelacion, fecha_cancelacion, id_cliente, id_evento, cancelada_por)
      VALUES ($1, $2::int,
              $2::int * (SELECT precio_base FROM public."EVENTO" WHERE id_evento = $7),
              (SELECT id_estado_reserva FROM public."ESTADO_RESERVA" WHERE nombre_estado = $3),
-             $4, $5, $6, $7)`,
-    [fecha, entradas, estado, causa || null, fechaCancel || null, idCliente, idEvento],
+             $4, $5, $6, $7, $8)`,
+    [fecha, entradas, estado, causa || null, fechaCancel || null, idCliente, idEvento, canceladaPor],
   );
   return true;
 }
