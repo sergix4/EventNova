@@ -217,7 +217,9 @@ const EventoModel = {
     // Cancela el evento Y todas sus reservas activas (Reservada o Confirmada),
   // en una sola transacción: o se cancela todo, o no se cancela nada.
   // Devuelve el evento actualizado y cuántas reservas se cancelaron.
-  async cancelarConReservas(id, id_estado, causa_cancelacion) {
+  // cancelada_por = 'Agente' o 'Administrador' (quién canceló el evento): se
+  // guarda en cada reserva que se cancela por eso (Tarea 10).
+  async cancelarConReservas(id, id_estado, causa_cancelacion, cancelada_por = 'Agente') {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -236,12 +238,13 @@ const EventoModel = {
         `UPDATE public."RESERVA" r
          SET id_estado_reserva = (SELECT id_estado_reserva FROM public."ESTADO_RESERVA"
                                   WHERE nombre_estado = 'Cancelada'),
-             causa_cancelacion = 'Evento cancelado por el organizador: ' || $1::text
+             causa_cancelacion = 'Evento cancelado por el organizador: ' || $1::text,
+             cancelada_por = $3::varchar
          FROM public."ESTADO_RESERVA" er
          WHERE er.id_estado_reserva = r.id_estado_reserva
            AND er.nombre_estado <> 'Cancelada'
            AND r.id_evento = $2`,
-        [causa_cancelacion, id],
+        [causa_cancelacion, id, cancelada_por],
       );
 
       await client.query("COMMIT");

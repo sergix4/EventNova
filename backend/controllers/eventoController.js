@@ -328,7 +328,8 @@ const eventoController = {
           return res.status(400).json({ error: 'Debes indicar la causa de cancelación.' });
         }
         // Cancela el evento y TODAS sus reservas activas
-        const cancelado = await EventoModel.cancelarConReservas(id, idEstado, causaCancelacion);
+        const quien = req.session.usuario.rol === 'administrador' ? 'Administrador' : 'Agente';
+        const cancelado = await EventoModel.cancelarConReservas(id, idEstado, causaCancelacion, quien);
         return res.json(cancelado);
       }
 

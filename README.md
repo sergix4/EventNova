@@ -93,7 +93,7 @@ El equipo usa una base compartida en **Neon Postgres** (nube).
    usuarios `@demo.eventnova.com`, sus eventos y sus reservas; lo demás no se toca).
 
 > `develop.sql` es el script **consolidado**: ya trae todos los cambios de las
-> migraciones 01 a 07, así que una base nueva queda igual a la de Neon **sin**
+> migraciones 01 a 08, así que una base nueva queda igual a la de Neon **sin**
 > ejecutar ninguna migración.
 
 **Para aplicar una migración nueva a una base que ya existe** (no borra datos):
@@ -184,10 +184,8 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Reporte general con datos reales (`/api/reportes/generales`, solo administrador): totales de clientes, agentes, administradores, reservas y eventos con los nuevos del mes; eventos y reservas por estado; reservas y eventos por mes del año elegido y los últimos 50 registros del sistema con filtros.
 - ✅ Reportes comerciales con datos reales (`/api/reportes/comerciales?anio=2026`, solo administrador): ingresos por agente y por cliente con su promedio general, ingresos totales por mes, número de reservas por evento y por mes, y eventos creados por agente y ciudad (activos, finalizados y cancelados).
 - ✅ Reporte de cobertura y eventos con datos reales (`/api/reportes/cobertura?anio=2026` o `?anio=todos`, solo administrador): listado de eventos (código, nombre, estado, fecha) por país, departamento y ciudad de realización, filtros encadenados con el conteo de eventos de cada nivel, gráficas por país y departamento, ranking de ciudades y resumen de cobertura.
-- 🟡 Reportes comerciales, cobertura y operación todavía usan **datos de ejemplo** (`frontend/js/models/datosEjemplo.js`).
-  Cuando exista cada endpoint solo se cambia el modelo correspondiente
-  (por ejemplo `eventoModel.js`) para que use `peticion('/api/...')`; las vistas y
-  controladores no cambian.
+- ✅ Reporte de reservas y operación con datos reales (`/api/reportes/operacion?anio=2026` o `?anio=todos`, solo administrador): historial de reservas por cliente (selector, buscador y ficha del cliente), reservas canceladas con causa, fecha y **quién canceló** (`RESERVA.cancelada_por`), cancelaciones **parciales** de entradas (tabla `CANCELACION_ENTRADAS`), eventos cancelados con su causa y reservas afectadas, resumen operativo y actividad reciente (`migracion_08.sql`).
+- 🟡 «Mi perfil» del administrador (`perfilAdmin()` en `frontend/js/models/reporteModel.js`) todavía usa **datos de ejemplo** (tarea 13).
 
 ## Convenciones
 

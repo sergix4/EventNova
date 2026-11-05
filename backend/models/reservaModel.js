@@ -276,36 +276,53 @@ const ReservaModel = {
   },
 
   // Cambia el estado (Reservada -> Confirmada / Cancelada).
-  // La causa solo se guarda cuando el nuevo estado es "Cancelada".
-  async cambiarEstado(id, id_estado_reserva, causa_cancelacion = null) {
+  // La causa y quién canceló (Cliente, Agente o Administrador) solo se
+  // guardan cuando el nuevo estado es "Cancelada".
+  async cambiarEstado(id, id_estado_reserva, causa_cancelacion = null, cancelada_por = null) {
     const result = await pool.query(
       `UPDATE public."RESERVA" r
        SET id_estado_reserva = er.id_estado_reserva,
            causa_cancelacion = CASE WHEN er.nombre_estado = 'Cancelada'
-                                    THEN $2 ELSE NULL END
+                                    THEN $2 ELSE NULL END,
+           cancelada_por     = CASE WHEN er.nombre_estado = 'Cancelada'
+                                    THEN $4::varchar ELSE NULL END
        FROM public."ESTADO_RESERVA" er
        WHERE er.id_estado_reserva = $1 AND r.id_reserva = $3
        RETURNING r.id_reserva`,
-      [id_estado_reserva, causa_cancelacion, id],
+      [id_estado_reserva, causa_cancelacion, id, cancelada_por],
     );
     if (result.rowCount === 0) return undefined;
     return this.getById(id);
   },
 
-    // Cancelación PARCIAL: le quita "cantidad" entradas a la reserva (sigue
-  // activa con las demás), recalcula el valor total y deja una nota en
-  // observaciones para que quede registro de qué se canceló y por qué.
-  async cancelarEntradas(id, cantidad, nota) {
+  // Cancelación PARCIAL: le quita "cantidad" entradas a la reserva (sigue
+  // activa con las demás), recalcula el valor total, deja una nota en
+  // observaciones y GUARDA el registro en CANCELACION_ENTRADAS (Tarea 10),
+  // todo en una sola consulta: o se hace todo, o no se hace nada.
+  async cancelarEntradas(id, cantidad, nota, causa, cancelada_por) {
     const result = await pool.query(
-      `UPDATE public."RESERVA" r
-       SET numero_entradas = r.numero_entradas - $1::int,
-           valor_total = (r.numero_entradas - $1::int) * e.precio_base,
-           observaciones = concat_ws(E'\n', r.observaciones, $2::text)
-       FROM public."EVENTO" e
-       WHERE e.id_evento = r.id_evento AND r.id_reserva = $3
-         AND r.numero_entradas > $1::int
-       RETURNING r.id_reserva`,
-      [cantidad, nota, id],
+      `WITH actual AS (
+         SELECT r.id_reserva, r.numero_entradas, e.precio_base
+         FROM public."RESERVA" r
+         JOIN public."EVENTO" e ON e.id_evento = r.id_evento
+         WHERE r.id_reserva = $3 AND r.numero_entradas > $1::int
+         FOR UPDATE OF r
+       ), cambio AS (
+         UPDATE public."RESERVA" r
+         SET numero_entradas = a.numero_entradas - $1::int,
+             valor_total = (a.numero_entradas - $1::int) * a.precio_base,
+             observaciones = concat_ws(E'\n', r.observaciones, $2::text)
+         FROM actual a
+         WHERE r.id_reserva = a.id_reserva
+         RETURNING r.id_reserva
+       )
+       INSERT INTO public."CANCELACION_ENTRADAS"
+         (id_reserva, entradas_canceladas, entradas_antes, valor_cancelado, causa, cancelada_por)
+       SELECT a.id_reserva, $1::int, a.numero_entradas, $1::int * a.precio_base, $4::text, $5::varchar
+       FROM actual a
+       JOIN cambio c ON c.id_reserva = a.id_reserva
+       RETURNING id_reserva`,
+      [cantidad, nota, id, causa, cancelada_por],
     );
     if (result.rowCount === 0) return undefined;
     return this.getById(id);

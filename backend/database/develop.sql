@@ -1,7 +1,7 @@
 -- develop.sql
 -- Script CONSOLIDADO de la base de datos de EventNova (Sprint 3 · Tarea 2).
 -- Crea TODAS las tablas tal como están hoy en Neon: ya incluye los cambios de
--- migracion_01, 03, 04, 05 y 06, así que en una base nueva NO hay que correr
+-- migracion_01, 03, 04, 05, 06 y 08, así que en una base nueva NO hay que correr
 -- ninguna migración.
 --
 -- Uso:  npm run db:init   (lo ejecuta conectarsql.js junto con seed_planes.sql
@@ -166,7 +166,7 @@ CREATE INDEX IF NOT EXISTS ix_evento_ciudad ON public."EVENTO" (id_ciudad);
 CREATE INDEX IF NOT EXISTS ix_evento_agente ON public."EVENTO" (id_agente);
 
 -- ════════════════════════════════════════════════════════════════════════════
--- 5. Reservas · migracion_05 y 06
+-- 5. Reservas · migracion_05, 06 y 08
 -- ════════════════════════════════════════════════════════════════════════════
 DROP TABLE IF EXISTS public."RESERVA" CASCADE;
 CREATE TABLE public."RESERVA" (
@@ -181,6 +181,7 @@ CREATE TABLE public."RESERVA" (
     id_estado_reserva  INTEGER NOT NULL,               -- Reservada, Confirmada, Cancelada
     causa_cancelacion  TEXT,                           -- se llena cuando la reserva se cancela
     fecha_cancelacion  TIMESTAMP,                      -- la llena el trigger tg_reserva_fecha_cancelacion
+    cancelada_por      VARCHAR(15),                    -- quién la canceló: Cliente, Agente o Administrador
     id_cliente         VARCHAR(20) NOT NULL,           -- cliente que hizo la reserva
     id_evento          INTEGER NOT NULL,               -- evento reservado
 
@@ -189,13 +190,35 @@ CREATE TABLE public."RESERVA" (
     CONSTRAINT fk_reserva_evento   FOREIGN KEY (id_evento)         REFERENCES public."EVENTO" (id_evento),
     CONSTRAINT fk_reserva_estado   FOREIGN KEY (id_estado_reserva) REFERENCES public."ESTADO_RESERVA" (id_estado_reserva),
     CONSTRAINT ck_reserva_entradas CHECK (numero_entradas > 0),
-    CONSTRAINT ck_reserva_valor    CHECK (valor_total >= 0)
+    CONSTRAINT ck_reserva_valor    CHECK (valor_total >= 0),
+    CONSTRAINT ck_reserva_cancelada_por CHECK (cancelada_por IN ('Cliente', 'Agente', 'Administrador'))
 );
 
 -- Índices: mis reservas del cliente, reservas de un evento, filtro por estado
 CREATE INDEX IF NOT EXISTS ix_reserva_cliente ON public."RESERVA" (id_cliente);
 CREATE INDEX IF NOT EXISTS ix_reserva_evento  ON public."RESERVA" (id_evento);
 CREATE INDEX IF NOT EXISTS ix_reserva_estado  ON public."RESERVA" (id_estado_reserva);
+
+-- Cancelaciones PARCIALES de entradas (migracion_08): la reserva sigue activa
+-- con las entradas que quedan y aquí queda el registro de lo que se canceló.
+DROP TABLE IF EXISTS public."CANCELACION_ENTRADAS" CASCADE;
+CREATE TABLE public."CANCELACION_ENTRADAS" (
+    id_cancelacion      SERIAL PRIMARY KEY,
+    id_reserva          INTEGER NOT NULL,
+    entradas_canceladas INTEGER NOT NULL,              -- cuántas se cancelaron
+    entradas_antes      INTEGER NOT NULL,              -- cuántas tenía la reserva antes
+    valor_cancelado     NUMERIC(12, 2) NOT NULL,       -- entradas_canceladas x precio_base
+    causa               TEXT NOT NULL,
+    cancelada_por       VARCHAR(15) NOT NULL,          -- Cliente, Agente o Administrador
+    fecha_cancelacion   TIMESTAMP NOT NULL DEFAULT (NOW() AT TIME ZONE 'America/Bogota'),
+
+    CONSTRAINT fk_cancelacion_reserva FOREIGN KEY (id_reserva)
+      REFERENCES public."RESERVA" (id_reserva) ON DELETE CASCADE,
+    CONSTRAINT ck_cancelacion_entradas CHECK (entradas_canceladas > 0 AND entradas_canceladas < entradas_antes),
+    CONSTRAINT ck_cancelacion_valor    CHECK (valor_cancelado >= 0),
+    CONSTRAINT ck_cancelacion_por      CHECK (cancelada_por IN ('Cliente', 'Agente', 'Administrador'))
+);
+CREATE INDEX IF NOT EXISTS ix_cancelacion_reserva ON public."CANCELACION_ENTRADAS" (id_reserva);
 
 -- ════════════════════════════════════════════════════════════════════════════
 -- 6. Índices UNIQUE (sin distinguir mayúsculas, igual que el backend) · migracion_01 y 03

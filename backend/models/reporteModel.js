@@ -470,6 +470,158 @@ const ReporteModel = {
     return result.rows.map((f) => f.anio);
   },
   
+    // ═════════════════════════════════════════════════════════════════════════
+  // REPORTE DE RESERVAS Y OPERACIÓN (Sprint 3 · Tarea 10)
+  // anio = año en que se HIZO la reserva (fecha_hora_reserva) para las reservas
+  //        y año en que se REALIZA el evento (fecha_inicio) para los eventos.
+  //        null = todos los años.
+  // ═════════════════════════════════════════════════════════════════════════
+
+  // ─── 10.1 / 10.2 Todas las reservas con su cliente, evento y cancelación ──
+  //   cancelada_por         = quién canceló la reserva COMPLETA
+  //   entradas_canceladas   = entradas quitadas con cancelaciones PARCIALES
+  async reservasOperacion(anio = null) {
+    const result = await pool.query(
+      `SELECT r.id_reserva,
+              r.codigo_reserva                                   AS codigo,
+              TO_CHAR(r.fecha_hora_reserva, 'YYYY-MM-DD HH24:MI') AS fecha_reserva,
+              r.numero_entradas                                  AS entradas,
+              r.valor_total                                      AS valor,
+              r.observaciones,
+              er.nombre_estado                                   AS estado,
+              r.causa_cancelacion                                AS causa,
+              TO_CHAR(r.fecha_cancelacion, 'YYYY-MM-DD HH24:MI')  AS fecha_cancelacion,
+              r.cancelada_por,
+              r.id_cliente,
+              uc.nombre                                          AS cliente,
+              uc.correo,
+              e.codigo_evento,
+              e.nombre_evento                                    AS evento,
+              es.nombre_estado                                   AS estado_evento,
+              TO_CHAR(e.fecha_inicio, 'YYYY-MM-DD')              AS fecha_evento,
+              TO_CHAR(e.fecha_inicio, 'HH24:MI')                 AS hora,
+              c.nombre_ciudad                                    AS ciudad,
+              p.nombre_pais                                      AS pais,
+              COALESCE(a.nombre_empresa, ua.nombre)              AS agente,
+              COALESCE(pc.entradas, 0)::int                      AS entradas_canceladas,
+              COALESCE(pc.valor, 0)                              AS valor_parcial
+       FROM public."RESERVA" r
+       JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+       JOIN public."USUARIO" uc        ON uc.numero_id = r.id_cliente
+       JOIN public."EVENTO" e          ON e.id_evento = r.id_evento
+       JOIN public."ESTADO" es         ON es.id_estado = e.id_estado
+       JOIN public."CIUDAD" c          ON c.id_ciudad = e.id_ciudad
+       JOIN public."DEPARTAMENTO" d    ON d.id_departamento = c.id_departamento
+       JOIN public."PAIS" p            ON p.id_pais = d.id_pais
+       JOIN public."AGENTE" a          ON a.numero_id = e.id_agente
+       JOIN public."USUARIO" ua        ON ua.numero_id = a.numero_id
+       -- Cancelaciones parciales de cada reserva (ya sumadas)
+       LEFT JOIN (
+         SELECT id_reserva,
+                SUM(entradas_canceladas) AS entradas,
+                SUM(valor_cancelado)     AS valor
+         FROM public."CANCELACION_ENTRADAS"
+         GROUP BY id_reserva
+       ) pc ON pc.id_reserva = r.id_reserva
+       WHERE ($1::int IS NULL OR EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1)
+       ORDER BY r.fecha_hora_reserva DESC, r.id_reserva DESC`,
+      [anio],
+    );
+    return result.rows.map((f) => ({ ...f, valor: Number(f.valor), valor_parcial: Number(f.valor_parcial) }));
+  },
+
+  // ─── 10.2 Cancelaciones PARCIALES de entradas ────────────────────────────
+  // Una fila por cada vez que se cancelaron SOLO algunas entradas de una
+  // reserva (la reserva sigue activa con las demás).
+  async cancelacionesParciales(anio = null) {
+    const result = await pool.query(
+      `SELECT ce.id_cancelacion                                   AS id,
+              r.codigo_reserva                                    AS codigo,
+              uc.nombre                                           AS cliente,
+              uc.correo,
+              e.nombre_evento                                     AS evento,
+              COALESCE(a.nombre_empresa, ua.nombre)               AS agente,
+              ce.entradas_canceladas,
+              ce.entradas_antes,
+              ce.valor_cancelado                                  AS valor,
+              ce.causa,
+              ce.cancelada_por,
+              TO_CHAR(ce.fecha_cancelacion, 'YYYY-MM-DD HH24:MI') AS fecha_cancelacion,
+              er.nombre_estado                                    AS estado_reserva,
+              r.numero_entradas                                   AS entradas_actuales
+       FROM public."CANCELACION_ENTRADAS" ce
+       JOIN public."RESERVA" r         ON r.id_reserva = ce.id_reserva
+       JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+       JOIN public."USUARIO" uc        ON uc.numero_id = r.id_cliente
+       JOIN public."EVENTO" e          ON e.id_evento = r.id_evento
+       JOIN public."AGENTE" a          ON a.numero_id = e.id_agente
+       JOIN public."USUARIO" ua        ON ua.numero_id = a.numero_id
+       WHERE ($1::int IS NULL OR EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1)
+       ORDER BY ce.fecha_cancelacion DESC, ce.id_cancelacion DESC`,
+      [anio],
+    );
+    return result.rows.map((f) => ({ ...f, valor: Number(f.valor) }));
+  },
+
+  // ─── 10.3 Eventos cancelados con su causa ────────────────────────────────
+  // reservas_afectadas = reservas que se cancelaron PORQUE se canceló el
+  // evento (el sistema les pone "Evento cancelado por el organizador: ...").
+  async eventosCancelados(anio = null) {
+    const result = await pool.query(
+      `SELECT e.codigo_evento                                     AS codigo,
+              e.nombre_evento                                     AS nombre,
+              COALESCE(a.nombre_empresa, ua.nombre)               AS agente,
+              p.nombre_pais                                       AS pais,
+              d.nombre_departamento                               AS departamento,
+              c.nombre_ciudad                                     AS ciudad,
+              e.teatro,
+              TO_CHAR(e.fecha_inicio, 'YYYY-MM-DD')               AS fecha_evento,
+              TO_CHAR(e.fecha_inicio, 'HH24:MI')                  AS hora,
+              e.capacidad,
+              e.causa_cancelacion                                 AS causa,
+              TO_CHAR(e.fecha_cancelacion, 'YYYY-MM-DD HH24:MI')  AS fecha_cancelacion,
+              COALESCE(ra.reservas, 0)::int                       AS reservas_afectadas,
+              COALESCE(ra.entradas, 0)::int                       AS entradas_afectadas,
+              COALESCE(ra.valor, 0)                               AS valor_afectado
+       FROM public."EVENTO" e
+       JOIN public."ESTADO" es      ON es.id_estado = e.id_estado
+       JOIN public."CIUDAD" c       ON c.id_ciudad = e.id_ciudad
+       JOIN public."DEPARTAMENTO" d ON d.id_departamento = c.id_departamento
+       JOIN public."PAIS" p         ON p.id_pais = d.id_pais
+       JOIN public."AGENTE" a       ON a.numero_id = e.id_agente
+       JOIN public."USUARIO" ua     ON ua.numero_id = a.numero_id
+       LEFT JOIN (
+         SELECT id_evento,
+                COUNT(*)             AS reservas,
+                SUM(numero_entradas) AS entradas,
+                SUM(valor_total)     AS valor
+         FROM public."RESERVA"
+         WHERE causa_cancelacion LIKE 'Evento cancelado por el organizador:%'
+         GROUP BY id_evento
+       ) ra ON ra.id_evento = e.id_evento
+       WHERE es.nombre_estado = 'Cancelado'
+         AND ($1::int IS NULL OR EXTRACT(YEAR FROM e.fecha_inicio) = $1)
+       ORDER BY e.fecha_cancelacion DESC NULLS LAST, e.nombre_evento`,
+      [anio],
+    );
+    return result.rows.map((f) => ({ ...f, valor_afectado: Number(f.valor_afectado) }));
+  },
+
+  // ─── Eventos del período por estado (Resumen operativo) ──────────────────
+  async resumenEventos(anio = null) {
+    const result = await pool.query(
+      `SELECT COUNT(*)::int AS total,
+              COUNT(*) FILTER (WHERE es.nombre_estado IN ('Programado', 'En Boletería', 'En Vivo'))::int AS activos,
+              COUNT(*) FILTER (WHERE es.nombre_estado = 'Finalizado')::int AS finalizados,
+              COUNT(*) FILTER (WHERE es.nombre_estado = 'Cancelado')::int  AS cancelados
+       FROM public."EVENTO" e
+       JOIN public."ESTADO" es ON es.id_estado = e.id_estado
+       WHERE ($1::int IS NULL OR EXTRACT(YEAR FROM e.fecha_inicio) = $1)`,
+      [anio],
+    );
+    return result.rows[0];
+  },
+  
   // ─── Años con movimiento (para llenar el selector de período) ────────────
   async aniosDisponibles() {
     const result = await pool.query(`

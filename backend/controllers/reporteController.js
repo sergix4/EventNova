@@ -244,6 +244,87 @@ async function cobertura(req, res) {
   }
 }
 
-module.exports = { dashboard, generales, comerciales, cobertura };
+// Arma la "Actividad reciente" del reporte de operación con las últimas
+// reservas nuevas, reservas canceladas, entradas canceladas y eventos cancelados.
+// Las fechas vienen como 'YYYY-MM-DD HH24:MI', así que se ordenan como texto.
+function actividadOperacion({ reservas, parciales, eventosCancelados }, limite = 12) {
+  const plural = (n, palabra) => `${n} ${palabra}${n === 1 ? '' : 's'}`;
+  const lista = [
+    ...reservas.map((r) => ({
+      tipo: 'reserva-nueva', fecha: r.fecha_reserva, usuario: r.cliente, estado: r.estado,
+      descripcion: `${r.cliente} reservó ${plural(r.entradas + r.entradas_canceladas, 'entrada')} para ${r.evento} (${r.codigo})`,
+    })),
+    ...reservas.filter((r) => r.fecha_cancelacion).map((r) => ({
+      tipo: 'reserva-cancelada', fecha: r.fecha_cancelacion, usuario: r.cancelada_por || 'Sin registro', estado: 'Cancelada',
+      descripcion: `Se canceló la reserva ${r.codigo} de ${r.cliente} para ${r.evento}`,
+    })),
+    ...parciales.map((p) => ({
+      tipo: 'entradas-canceladas', fecha: p.fecha_cancelacion, usuario: p.cancelada_por, estado: 'Parcial',
+      descripcion: `Se ${p.entradas_canceladas === 1 ? 'canceló' : 'cancelaron'} ${p.entradas_canceladas} de ${p.entradas_antes} entradas de la reserva ${p.codigo} (${p.cliente})`,
+    })),
+    ...eventosCancelados.filter((e) => e.fecha_cancelacion).map((e) => ({
+      tipo: 'evento-cancelado', fecha: e.fecha_cancelacion, usuario: e.agente, estado: 'Cancelado',
+      descripcion: `${e.nombre} (${e.codigo}) fue cancelado · ${plural(e.reservas_afectadas, 'reserva')} afectada${e.reservas_afectadas === 1 ? '' : 's'}`,
+    })),
+  ];
+  return lista.sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, limite);
+}
+
+// GET /api/reportes/operacion?anio=2026   (o ?anio=todos)
+// Reporte de reservas y operación:
+//   10.1 historial de reservas por cliente (todas las reservas del período)
+//   10.2 reservas canceladas con causa, fecha y quién canceló + cancelaciones parciales
+//   10.3 eventos cancelados con su causa y las reservas afectadas
+// Período: reservas por el año en que se HICIERON; eventos por el año en que se REALIZAN.
+async function operacion(req, res) {
+  let anio = null; // null = todos los años
+  if (req.query.anio !== 'todos') {
+    const lectura = leerAnio(req.query);
+    if (lectura.error) return res.status(400).json({ error: lectura.error });
+    anio = lectura.anio;
+  }
+
+  try {
+    const [reservas, parciales, eventosCancelados, eventos, aniosReservas, aniosEventos] = await Promise.all([
+      ReporteModel.reservasOperacion(anio),
+      ReporteModel.cancelacionesParciales(anio),
+      ReporteModel.eventosCancelados(anio),
+      ReporteModel.resumenEventos(anio),
+      ReporteModel.aniosDisponibles(),
+      ReporteModel.aniosEventos(),
+    ]);
+
+    const contar = (estado) => reservas.filter((r) => r.estado === estado).length;
+    const canceladas = reservas.filter((r) => r.estado === 'Cancelada');
+
+    res.json({
+      anio: anio ?? 'todos',
+      // Años de reservas + años de eventos, sin repetir y de mayor a menor
+      anios: [...new Set([...aniosReservas, ...aniosEventos])].sort((a, b) => b - a),
+      resumen: {
+        reservas: {
+          total: reservas.length,
+          reservadas: contar('Reservada'),
+          confirmadas: contar('Confirmada'),
+          canceladas: canceladas.length,
+          valorCancelado: canceladas.reduce((t, r) => t + r.valor, 0),
+          parciales: parciales.length,
+          entradasParciales: parciales.reduce((t, p) => t + p.entradas_canceladas, 0),
+          valorParcial: parciales.reduce((t, p) => t + p.valor, 0),
+        },
+        eventos,
+      },
+      reservas,
+      parciales,
+      eventosCancelados,
+      actividad: actividadOperacion({ reservas, parciales, eventosCancelados }),
+    });
+  } catch (err) {
+    console.error('Error al generar el reporte de operación:', err.message);
+    res.status(500).json({ error: 'No se pudo cargar el reporte de reservas y operación.' });
+  }
+}
+
+module.exports = { dashboard, generales, comerciales, cobertura, operacion };
 
 

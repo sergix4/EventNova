@@ -21,6 +21,12 @@ const MAX_CAUSA = 300;
 // Estados del EVENTO en los que ya no se puede confirmar una reserva (Tarea 8)
 const EVENTO_CERRADO = ['Finalizado', 'Cancelado'];
 
+
+// Rol de la sesión -> texto que se guarda en RESERVA.cancelada_por (Tarea 10)
+function quienCancela(usuario) {
+  return { cliente: 'Cliente', agente: 'Agente' }[usuario.rol] || 'Administrador';
+}
+
 // Valida y limpia numero_entradas y observaciones.
 // Devuelve { error } o { datos }.
 function validarEntradas(body) {
@@ -269,13 +275,14 @@ const reservaController = {
             const quien = { cliente: 'El cliente', agente: 'El agente' }[usuario.rol] || 'El administrador';
             const fecha = new Date().toLocaleDateString('es-CO', { timeZone: 'America/Bogota' });
             const nota = `[${fecha}] ${quien} canceló ${cantidad} de ${actual.numero_entradas} entradas. Causa: ${causa}`;
-            const parcial = await ReservaModel.cancelarEntradas(id, cantidad, nota);
+            const parcial = await ReservaModel.cancelarEntradas(id, cantidad, nota, causa, quienCancela(usuario));
             return res.json(parcial);
           }
         }
       }
 
-      const actualizada = await ReservaModel.cambiarEstado(id, idEstado, causa);
+      const canceladaPor = destino.nombre_estado === 'Cancelada' ? quienCancela(usuario) : null;
+      const actualizada = await ReservaModel.cambiarEstado(id, idEstado, causa, canceladaPor);
       res.json(actualizada);
     } catch (err) {
       responderErrorModelo(res, err, 'cambiar el estado de la');
