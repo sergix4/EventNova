@@ -405,6 +405,70 @@ const ReporteModel = {
     `);
     return result.rows;
   },
+
+    // ═════════════════════════════════════════════════════════════════════════
+  // REPORTE DE COBERTURA Y EVENTOS (Sprint 3 · Tarea 9)
+  // ═════════════════════════════════════════════════════════════════════════
+
+  // ─── 9.1 Listado de eventos con su país, departamento y ciudad ───────────
+  // anio = año en que se REALIZA el evento (fecha_inicio). null = todos los años.
+  //   reservas = reservas NO canceladas del evento
+  //   entradas = entradas vendidas en esas reservas
+  async eventosCobertura(anio = null) {
+    const result = await pool.query(
+      `SELECT e.codigo_evento                  AS codigo,
+              e.nombre_evento                  AS nombre,
+              e.descripcion_evento             AS descripcion,
+              e.teatro,
+              e.direccion_evento               AS direccion,
+              TO_CHAR(e.fecha_inicio, 'YYYY-MM-DD') AS fecha,
+              TO_CHAR(e.fecha_inicio, 'HH24:MI')    AS hora,
+              e.capacidad,
+              e.precio_base                    AS precio,
+              es.nombre_estado                 AS estado,
+              e.causa_cancelacion,
+              p.id_pais,         p.nombre_pais         AS pais,
+              d.id_departamento, d.nombre_departamento AS departamento,
+              c.id_ciudad,       c.nombre_ciudad       AS ciudad,
+              COALESCE(a.nombre_empresa, u.nombre)     AS agente,
+              COALESCE(v.reservas, 0)::int             AS reservas,
+              COALESCE(v.entradas, 0)::int             AS entradas
+       FROM public."EVENTO" e
+       JOIN public."ESTADO" es      ON es.id_estado = e.id_estado
+       JOIN public."CIUDAD" c       ON c.id_ciudad = e.id_ciudad
+       JOIN public."DEPARTAMENTO" d ON d.id_departamento = c.id_departamento
+       JOIN public."PAIS" p         ON p.id_pais = d.id_pais
+       JOIN public."AGENTE" a       ON a.numero_id = e.id_agente
+       JOIN public."USUARIO" u      ON u.numero_id = a.numero_id
+       -- Reservas NO canceladas de cada evento (ya sumadas)
+       LEFT JOIN (
+         SELECT r.id_evento,
+                COUNT(*)               AS reservas,
+                SUM(r.numero_entradas) AS entradas
+         FROM public."RESERVA" r
+         JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+         WHERE er.nombre_estado <> 'Cancelada'
+         GROUP BY r.id_evento
+       ) v ON v.id_evento = e.id_evento
+       WHERE ($1::int IS NULL OR EXTRACT(YEAR FROM e.fecha_inicio) = $1)
+       ORDER BY p.nombre_pais, d.nombre_departamento, c.nombre_ciudad, e.fecha_inicio DESC`,
+      [anio],
+    );
+    return result.rows.map((f) => ({ ...f, precio: Number(f.precio) }));
+  },
+
+  // ─── Años en que se realizan eventos (selector de período de Cobertura) ──
+  async aniosEventos() {
+    const result = await pool.query(`
+      SELECT DISTINCT anio FROM (
+        SELECT EXTRACT(YEAR FROM fecha_inicio)::int AS anio FROM public."EVENTO"
+        UNION
+        SELECT EXTRACT(YEAR FROM ${AHORA})::int
+      ) AS anios
+      ORDER BY anio DESC
+    `);
+    return result.rows.map((f) => f.anio);
+  },
   
   // ─── Años con movimiento (para llenar el selector de período) ────────────
   async aniosDisponibles() {
