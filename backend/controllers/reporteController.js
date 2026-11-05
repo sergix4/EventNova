@@ -167,6 +167,83 @@ async function comerciales(req, res) {
   }
 }
 
-module.exports = { dashboard, generales, comerciales };
+// Árbol país → departamentos → ciudades con el NÚMERO DE EVENTOS de cada
+// nivel. El frontend lo usa para los filtros encadenados y las gráficas.
+function arbolGeografico(eventos) {
+  const paises = new Map();
+  eventos.forEach((e) => {
+    if (!paises.has(e.id_pais)) {
+      paises.set(e.id_pais, { id: e.id_pais, nombre: e.pais, eventos: 0, departamentos: new Map() });
+    }
+    const pais = paises.get(e.id_pais);
+    pais.eventos++;
+
+    if (!pais.departamentos.has(e.id_departamento)) {
+      pais.departamentos.set(e.id_departamento, { id: e.id_departamento, nombre: e.departamento, eventos: 0, ciudades: new Map() });
+    }
+    const depto = pais.departamentos.get(e.id_departamento);
+    depto.eventos++;
+
+    if (!depto.ciudades.has(e.id_ciudad)) {
+      depto.ciudades.set(e.id_ciudad, { id: e.id_ciudad, nombre: e.ciudad, eventos: 0 });
+    }
+    depto.ciudades.get(e.id_ciudad).eventos++;
+  });
+
+  // De mayor a menor número de eventos (y por nombre si empatan)
+  const ordenar = (lista) => lista.sort((a, b) => b.eventos - a.eventos || a.nombre.localeCompare(b.nombre));
+  return ordenar([...paises.values()].map((p) => ({
+    ...p,
+    departamentos: ordenar([...p.departamentos.values()].map((d) => ({
+      ...d,
+      ciudades: ordenar([...d.ciudades.values()]),
+    }))),
+  })));
+}
+
+// GET /api/reportes/cobertura?anio=2026   (o ?anio=todos)
+// Listado de eventos (código, nombre, estado, fecha...) con su país,
+// departamento y ciudad, el árbol geográfico con el conteo por nivel y
+// un resumen. El año es el de REALIZACIÓN del evento (fecha_inicio).
+async function cobertura(req, res) {
+  let anio = null; // null = todos los años
+  if (req.query.anio !== 'todos') {
+    const lectura = leerAnio(req.query);
+    if (lectura.error) return res.status(400).json({ error: lectura.error });
+    anio = lectura.anio;
+  }
+
+  try {
+    const [eventos, anios] = await Promise.all([
+      ReporteModel.eventosCobertura(anio),
+      ReporteModel.aniosEventos(),
+    ]);
+
+    const geografia = arbolGeografico(eventos);
+    const contar = (estados) => eventos.filter((e) => estados.includes(e.estado)).length;
+
+    res.json({
+      anio: anio ?? 'todos',
+      anios,
+      resumen: {
+        paises: geografia.length,
+        departamentos: geografia.reduce((t, p) => t + p.departamentos.length, 0),
+        ciudades: geografia.reduce((t, p) => t + p.departamentos.reduce((s, d) => s + d.ciudades.length, 0), 0),
+        totalEventos: eventos.length,
+        activos: contar(['Programado', 'En Boletería', 'En Vivo']),
+        finalizados: contar(['Finalizado']),
+        cancelados: contar(['Cancelado']),
+        reservas: eventos.reduce((t, e) => t + e.reservas, 0),
+      },
+      geografia,
+      eventos,
+    });
+  } catch (err) {
+    console.error('Error al generar el reporte de cobertura:', err.message);
+    res.status(500).json({ error: 'No se pudo cargar el reporte de cobertura.' });
+  }
+}
+
+module.exports = { dashboard, generales, comerciales, cobertura };
 
 

@@ -1,7 +1,7 @@
 // js/models/reporteModel.js
 // MODELO de reportes del administrador.
-// dashboard(), generales() y comerciales() ya traen datos REALES de PostgreSQL
-// (GET /api/reportes/dashboard, /generales y /comerciales).
+// dashboard(), generales(), comerciales() y cobertura() ya traen datos REALES
+// de PostgreSQL (GET /api/reportes/dashboard, /generales, /comerciales y /cobertura).
 // Las demás funciones siguen con datos de ejemplo hasta que se construya
 // su consulta SQL en /api/reportes/...
 
@@ -10,18 +10,6 @@ import { EVENTOS, RESERVAS } from './datosEjemplo.js'
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
-
-// ─── Cobertura ──────────────────────────────────────────────────────────────
-const GEOGRAFIA = {
-  'Colombia': {
-    'Antioquia': ['Medellín', 'Bello', 'Envigado'], 'Cundinamarca': ['Bogotá', 'Soacha', 'Chía'],
-    'Valle del Cauca': ['Cali', 'Buenaventura', 'Palmira'], 'Atlántico': ['Barranquilla', 'Soledad'],
-    'Santander': ['Bucaramanga', 'Floridablanca'], 'Bolívar': ['Cartagena', 'Magangué'], 'Risaralda': ['Pereira', 'Dosquebradas'],
-  },
-  'Ecuador': { 'Pichincha': ['Quito', 'Cayambe'], 'Guayas': ['Guayaquil', 'Samborondón'] },
-  'Perú': { 'Lima': ['Lima', 'Miraflores'], 'Cusco': ['Cusco', 'Urubamba'] },
-  'Panamá': { 'Panamá': ['Ciudad de Panamá', 'San Miguelito'], 'Colón': ['Colón'] },
-}
 
 // ─── Operación ──────────────────────────────────────────────────────────────
 const OTROS_EVENTOS_CANCELADOS = [
@@ -78,13 +66,9 @@ export const ReporteModel = {
     return peticion(`/reportes/comerciales?anio=${encodeURIComponent(anio)}`)
   },
 
-  async cobertura() {
-    const eventos = EVENTOS.map(e => ({
-      nombre: e.nombre, descripcion: e.descripcion, pais: e.pais, departamento: e.departamento, ciudad: e.ciudad,
-      direccion: e.direccion, fecha: e.fecha, hora: e.hora, agente: e.agente, capacidad: e.capacidad,
-      reservas: e.reservas, precio: e.precioStr, estado: e.estado, causaCancelacion: e.causaCancelacion,
-    }))
-    return { eventos, geografia: GEOGRAFIA }
+  // Cobertura y eventos con datos reales: anio = 2026, 2027… o 'todos'
+  async cobertura(anio) {
+    return peticion(`/reportes/cobertura?anio=${encodeURIComponent(anio)}`)
   },
 
   async operacion() {
