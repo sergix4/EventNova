@@ -93,7 +93,9 @@ export const PerfilAgenteView = {
           </div>
           <div class="plan-activo__precio"><strong>${esc(plan.precioCorto)}</strong><span>por mes</span></div>
         </div>
+        <p class="plan-activo__cobro" style="margin-top:12px">Eventos activos: <strong>${num(est.eventos_activos ?? 0)}</strong> ${plan.ilimitado ? "(sin límite)" : `de ${num(plan.limite)}`}</p>
         <ul class="plan-activo__beneficios">
+
           ${plan.beneficios
             .slice(0, 3)
             .map(

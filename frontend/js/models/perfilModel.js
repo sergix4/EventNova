@@ -16,6 +16,11 @@ export const PerfilModel = {
     return peticion("/auth/perfil", { metodo: "PUT", datos });
   },
 
+  /** Sprint 3 · Tarea 14: el agente cambia su plan. Devuelve { mensaje, usuario } */
+  cambiarPlan(id_plan) {
+    return peticion("/auth/perfil/plan", { metodo: "PUT", datos: { id_plan } });
+  },
+
   /** Cambia la contraseña pidiendo la actual */
   cambiarContrasena(actual, nueva) {
     return peticion("/auth/perfil/contrasena", {
