@@ -37,7 +37,7 @@ function editar(enfocar) {
     },
     leerExtra: (caja) => ({
       nombre_empresa: caja.querySelector("#pf-empresa").value.trim(),
-      experiencia: Number(caja.querySelector("#pf-experiencia").value),
+      experiencia: caja.querySelector("#pf-experiencia").value.trim(),
       descripcion_agente: caja.querySelector("#pf-descripcion").value.trim(),
     }),
     alGuardar: (perfil) => {
