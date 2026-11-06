@@ -138,8 +138,20 @@ async function prepararDatos(actual, body) {
         error:
           "Los años de experiencia deben ser un número entero entre 0 y 60.",
       };
-    if (!Number.isInteger(id_plan) || !(await PlanModel.getById(id_plan)))
-      return { error: "El plan seleccionado no existe." };
+    const plan = Number.isInteger(id_plan)
+      ? await PlanModel.getById(id_plan)
+      : null;
+    if (!plan) return { error: "El plan seleccionado no existe." };
+
+    // Sprint 3 · Tarea 14: no se puede bajar a un plan con menos cupo que los
+    // eventos activos que ya tiene el agente (vale para el admin y para el agente)
+    if (plan.id_plan !== actual.agente.id_plan) {
+      const cupo = await PlanModel.cupoDeAgente(actual.numero_id);
+      if (cupo && cupo.eventos_activos > plan.limite_evento)
+        return {
+          error: `No se puede cambiar al ${plan.nombre_plan}: permite ${plan.limite_evento} eventos activos y hay ${cupo.eventos_activos}. Primero deben finalizar o cancelarse algunos.`,
+        };
+    }
 
     Object.assign(datos, {
       nombre_empresa,
