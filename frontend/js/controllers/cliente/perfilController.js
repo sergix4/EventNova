@@ -1,40 +1,77 @@
 // js/controllers/cliente/perfilController.js
 // CONTROLADOR del perfil del cliente.
-// Muestra los datos reales de la sesión (tabla USUARIO). La edición del
-// perfil queda simulada hasta que exista el CRUD de personas.
+// Sprint 3 · Tarea 13: los datos salen de la BD (GET /api/auth/perfil) y
+// "Editar", "Publicidad personalizada" y "Cambiar contraseña" guardan en la BD.
 
-import { iniciarPanel } from '../comun/panelController.js'
-import { PerfilClienteView } from '../../views/cliente/perfilClienteView.js'
+import { iniciarPanel } from "../comun/panelController.js";
+import {
+  editarPerfil,
+  cambiarContrasena,
+} from "../comun/perfilComunController.js";
+import { PerfilModel } from "../../models/perfilModel.js";
+import { PerfilClienteView } from "../../views/cliente/perfilClienteView.js";
+import { mostrarToast } from "../../views/componentes/toast.js";
 
-const estado = { editando: false, preferencias: { publicidad: true, correo: true, reservas: true } }
-let usuario = null
+// Estas dos todavía no tienen columna en la BD: solo cambian en pantalla
+const preferencias = { correo: true, reservas: true };
+let perfil = null;
 
-function dibujar() {
-  PerfilClienteView.mostrar(usuario, estado)
+const dibujar = () => PerfilClienteView.mostrar(perfil, preferencias);
+
+// "Publicidad personalizada" = CLIENTE.visualizar_publicidad
+async function cambiarPublicidad(boton) {
+  const activo = !perfil.cliente.visualizar_publicidad;
+  boton.disabled = true;
+  try {
+    const { usuario } = await PerfilModel.actualizar({
+      visualizar_publicidad: activo,
+    });
+    perfil = usuario;
+    PerfilClienteView.marcarPreferencia("publicidad", activo);
+    mostrarToast(
+      activo
+        ? "Recibirás sugerencias de eventos."
+        : "Ya no recibirás publicidad personalizada.",
+      { duracion: 2500 },
+    );
+  } catch (error) {
+    mostrarToast(error.message, { error: true, duracion: 3500 });
+  } finally {
+    boton.disabled = false;
+  }
 }
 
 async function iniciar() {
-  usuario = await iniciarPanel({ rol: 'cliente', activo: 'perfil' })
-  dibujar()
+  await iniciarPanel({ rol: "cliente", activo: "perfil" });
 
-  document.getElementById('perfil').addEventListener('click', (e) => {
-    const preferencia = e.target.closest('[data-preferencia]')
-    if (preferencia) {
-      const clave = preferencia.dataset.preferencia
-      estado.preferencias[clave] = !estado.preferencias[clave]
-      preferencia.setAttribute('aria-checked', String(estado.preferencias[clave]))
-      return
+  try {
+    perfil = await PerfilModel.obtener();
+  } catch (error) {
+    return PerfilClienteView.mostrarError(error.message);
+  }
+  dibujar();
+
+  document.getElementById("perfil").addEventListener("click", (e) => {
+    const interruptor = e.target.closest("[data-preferencia]");
+    if (interruptor) {
+      const clave = interruptor.dataset.preferencia;
+      if (clave === "publicidad") return cambiarPublicidad(interruptor);
+      preferencias[clave] = !preferencias[clave];
+      return PerfilClienteView.marcarPreferencia(clave, preferencias[clave]);
     }
-    if (e.target.closest('[data-accion="editar"]')) {
-      const guardar = estado.editando
-      estado.editando = !estado.editando
-      dibujar()
-      if (guardar) {
-        PerfilClienteView.mostrarGuardado(true)
-        setTimeout(() => PerfilClienteView.mostrarGuardado(false), 2500)
-      }
+
+    const accion = e.target.closest("[data-accion]")?.dataset.accion;
+    if (accion === "editar") {
+      editarPerfil(perfil, {
+        rol: "cliente",
+        alGuardar: (nuevo) => {
+          perfil = nuevo;
+          dibujar();
+        },
+      });
     }
-  })
+    if (accion === "cambiar-clave") cambiarContrasena();
+  });
 }
 
-iniciar()
+iniciar();

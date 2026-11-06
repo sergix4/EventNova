@@ -3,15 +3,15 @@
 // necesita datos, y responde. Como el backend es una API, responde con
 // JSON en vez de renderizar una Vista HTML.
 
-const bcrypt = require('bcryptjs');
-const UsuarioModel = require('../models/usuarioModel');
-const PlanModel = require('../models/planModel'); 
-const CiudadModel = require('../models/ciudadModel');
+const bcrypt = require("bcryptjs");
+const UsuarioModel = require("../models/usuarioModel");
+const PlanModel = require("../models/planModel");
+const CiudadModel = require("../models/ciudadModel");
 
-const PLANES = {                                   
-  basico: 'Plan Básico',
-  profesional: 'Plan Profesional',
-  empresa: 'Plan Empresa',
+const PLANES = {
+  basico: "Plan Básico",
+  profesional: "Plan Profesional",
+  empresa: "Plan Empresa",
 };
 
 const TELEFONO_VALIDO = /^\+?[\d\s-]{7,20}$/;
@@ -20,16 +20,23 @@ const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Valida ciudad (obligatoria y existente) y teléfonos. Devuelve { error } o { idCiudad, tel, tel2 }
 async function validarCiudadYTelefono({ id_ciudad, telefono, telefono2 }) {
   const idCiudad = Number(id_ciudad);
-  if (!Number.isInteger(idCiudad) || idCiudad <= 0) return { error: 'Debes seleccionar una ciudad.' };
-  if (!(await CiudadModel.getById(idCiudad))) return { error: 'La ciudad seleccionada no existe.' };
+  if (!Number.isInteger(idCiudad) || idCiudad <= 0)
+    return { error: "Debes seleccionar una ciudad." };
+  if (!(await CiudadModel.getById(idCiudad)))
+    return { error: "La ciudad seleccionada no existe." };
 
-  const tel = (telefono || '').trim();
-  if (!TELEFONO_VALIDO.test(tel)) return { error: 'Ingresa un teléfono válido.' };
+  const tel = (telefono || "").trim();
+  if (!TELEFONO_VALIDO.test(tel))
+    return { error: "Ingresa un teléfono válido." };
 
   // Teléfono alternativo: es opcional, pero si viene debe ser válido y distinto al principal
-  const tel2 = (telefono2 || '').trim();
-  if (tel2 && !TELEFONO_VALIDO.test(tel2)) return { error: 'El teléfono alternativo no es válido.' };
-  if (tel2 && tel2 === tel) return { error: 'El teléfono alternativo debe ser diferente al principal.' };
+  const tel2 = (telefono2 || "").trim();
+  if (tel2 && !TELEFONO_VALIDO.test(tel2))
+    return { error: "El teléfono alternativo no es válido." };
+  if (tel2 && tel2 === tel)
+    return {
+      error: "El teléfono alternativo debe ser diferente al principal.",
+    };
 
   return { idCiudad, tel, tel2: tel2 || null };
 }
@@ -37,12 +44,26 @@ async function validarCiudadYTelefono({ id_ciudad, telefono, telefono2 }) {
 // Valida los datos propios del agente. Devuelve { error } o { com, exp }
 function validarDatosAgente({ comision, experiencia }) {
   const exp = Number(experiencia);
-  if (experiencia === undefined || experiencia === '' || !Number.isInteger(exp) || exp < 0 || exp > 60) {
-    return { error: 'Los años de experiencia deben ser un número entero entre 0 y 60.' };
+  if (
+    experiencia === undefined ||
+    experiencia === "" ||
+    !Number.isInteger(exp) ||
+    exp < 0 ||
+    exp > 60
+  ) {
+    return {
+      error: "Los años de experiencia deben ser un número entero entre 0 y 60.",
+    };
   }
   const com = Number(comision);
-  if (comision === undefined || comision === '' || Number.isNaN(com) || com < 0 || com > 100) {
-    return { error: 'La comisión debe ser un porcentaje entre 0 y 100.' };
+  if (
+    comision === undefined ||
+    comision === "" ||
+    Number.isNaN(com) ||
+    com < 0 ||
+    com > 100
+  ) {
+    return { error: "La comisión debe ser un porcentaje entre 0 y 100." };
   }
   return { com, exp };
 }
@@ -50,25 +71,29 @@ function validarDatosAgente({ comision, experiencia }) {
 const authController = {
   async login(req, res) {
     const { contraseña } = req.body;
-    const correo = (req.body.correo || '').trim().toLowerCase();
+    const correo = (req.body.correo || "").trim().toLowerCase();
 
     if (!correo || !contraseña) {
-      return res.status(400).json({ error: 'Correo y contraseña son obligatorios.' });
+      return res
+        .status(400)
+        .json({ error: "Correo y contraseña son obligatorios." });
     }
 
     try {
       const usuario = await UsuarioModel.findByEmail(correo);
       if (!usuario) {
-        return res.status(401).json({ error: 'Credenciales inválidas.' });
+        return res.status(401).json({ error: "Credenciales inválidas." });
       }
 
       const coincide = await bcrypt.compare(contraseña, usuario.contraseña);
       if (!coincide) {
-        return res.status(401).json({ error: 'Credenciales inválidas.' });
+        return res.status(401).json({ error: "Credenciales inválidas." });
       }
 
       if (!usuario.rol) {
-        return res.status(403).json({ error: 'El usuario no tiene un rol asignado.' });
+        return res
+          .status(403)
+          .json({ error: "El usuario no tiene un rol asignado." });
       }
 
       // Nunca guardar la contraseña en la sesión
@@ -83,40 +108,73 @@ const authController = {
         pais: usuario.pais,
         rol: usuario.rol,
         agente: usuario.agente,
+        inicio_sesion: new Date().toISOString(), // Tarea 13: «Sesión iniciada» en Mi perfil
       };
 
-      return res.json({ mensaje: 'Inicio de sesión exitoso', usuario: req.session.usuario });
+      return res.json({
+        mensaje: "Inicio de sesión exitoso",
+        usuario: req.session.usuario,
+      });
     } catch (error) {
-      console.error('Error en login:', error);
-      return res.status(500).json({ error: 'Error interno del servidor.' });
+      console.error("Error en login:", error);
+      return res.status(500).json({ error: "Error interno del servidor." });
     }
   },
 
   async register(req, res) {
     // CAMBIO 1: ahora también leemos id_ciudad, telefono y publicidad del body
 
-    const { identificacion, nombre, password, direccion,
-            id_ciudad, telefono, telefono2, publicidad } = req.body;
-    const correo = (req.body.correo || '').trim().toLowerCase();
+    const {
+      identificacion,
+      nombre,
+      password,
+      direccion,
+      id_ciudad,
+      telefono,
+      telefono2,
+      publicidad,
+    } = req.body;
+    const correo = (req.body.correo || "").trim().toLowerCase();
 
     if (!identificacion || !nombre || !correo || !password) {
-      return res.status(400).json({ error: 'Identificación, nombre, correo y contraseña son obligatorios.' });
+      return res
+        .status(400)
+        .json({
+          error:
+            "Identificación, nombre, correo y contraseña son obligatorios.",
+        });
     }
-        if (!CORREO_VALIDO.test(correo)) {
-      return res.status(400).json({ error: 'El correo no tiene un formato válido.' });
+    if (!CORREO_VALIDO.test(correo)) {
+      return res
+        .status(400)
+        .json({ error: "El correo no tiene un formato válido." });
     }
     if (password.length < 8) {
-      return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres.' });
+      return res
+        .status(400)
+        .json({ error: "La contraseña debe tener al menos 8 caracteres." });
     }
 
     try {
       // CAMBIO 2: validar ciudad y teléfono ANTES de tocar la BD
-      const ub = await validarCiudadYTelefono({ id_ciudad, telefono, telefono2 });
-      if (ub.error) return res.status(400).json({ error: ub.error });   
+      const ub = await validarCiudadYTelefono({
+        id_ciudad,
+        telefono,
+        telefono2,
+      });
+      if (ub.error) return res.status(400).json({ error: ub.error });
 
-      const yaExiste = await UsuarioModel.existsByEmailOrId(correo, identificacion);
+      const yaExiste = await UsuarioModel.existsByEmailOrId(
+        correo,
+        identificacion,
+      );
       if (yaExiste) {
-        return res.status(409).json({ error: 'Ya existe una cuenta con ese correo o número de identificación.' });
+        return res
+          .status(409)
+          .json({
+            error:
+              "Ya existe una cuenta con ese correo o número de identificación.",
+          });
       }
 
       const contraseñaHash = await bcrypt.hash(password, 10);
@@ -128,55 +186,104 @@ const authController = {
         nombre,
         contraseñaHash,
         direccion,
-        id_ciudad: ub.idCiudad,                  
-        telefono: ub.tel,  
-        telefono2: ub.tel2,                      
-        visualizar_publicidad: publicidad !== false, 
+        id_ciudad: ub.idCiudad,
+        telefono: ub.tel,
+        telefono2: ub.tel2,
+        visualizar_publicidad: publicidad !== false,
       });
 
       req.session.usuario = usuario; // registro con auto-login
-      return res.status(201).json({ mensaje: 'Cuenta creada correctamente', usuario });
+      return res
+        .status(201)
+        .json({ mensaje: "Cuenta creada correctamente", usuario });
     } catch (error) {
-      console.error('Error en registro:', error);
-      return res.status(500).json({ error: 'Error interno del servidor.' });
+      console.error("Error en registro:", error);
+      return res.status(500).json({ error: "Error interno del servidor." });
     }
   },
 
   async registerAgente(req, res) {
     // CAMBIO 1: ahora también leemos id_ciudad y telefono (SIN publicidad)
-    const { identificacion, nombre, password, direccion,
-            id_ciudad, telefono, telefono2,
-            empresa, descripcionNegocio, plan, comision, experiencia } = req.body;
-    const correo = (req.body.correo || '').trim().toLowerCase();
+    const {
+      identificacion,
+      nombre,
+      password,
+      direccion,
+      id_ciudad,
+      telefono,
+      telefono2,
+      empresa,
+      descripcionNegocio,
+      plan,
+      comision,
+      experiencia,
+    } = req.body;
+    const correo = (req.body.correo || "").trim().toLowerCase();
 
-    if (!identificacion || !nombre || !correo || !password || !empresa || !plan) {
-      return res.status(400).json({ error: 'Identificación, nombre, correo, contraseña, empresa y plan son obligatorios.' });
+    if (
+      !identificacion ||
+      !nombre ||
+      !correo ||
+      !password ||
+      !empresa ||
+      !plan
+    ) {
+      return res
+        .status(400)
+        .json({
+          error:
+            "Identificación, nombre, correo, contraseña, empresa y plan son obligatorios.",
+        });
     }
-        if (!CORREO_VALIDO.test(correo)) {
-      return res.status(400).json({ error: 'El correo no tiene un formato válido.' });
+    if (!CORREO_VALIDO.test(correo)) {
+      return res
+        .status(400)
+        .json({ error: "El correo no tiene un formato válido." });
     }
     if (password.length < 8) {
-      return res.status(400).json({ error: 'La contraseña debe tener al menos 8 caracteres.' });
+      return res
+        .status(400)
+        .json({ error: "La contraseña debe tener al menos 8 caracteres." });
     }
     if (!PLANES[plan]) {
-      return res.status(400).json({ error: 'El plan seleccionado no es válido.' });
+      return res
+        .status(400)
+        .json({ error: "El plan seleccionado no es válido." });
     }
-        const datosAgente = validarDatosAgente({ comision, experiencia });
-    if (datosAgente.error) return res.status(400).json({ error: datosAgente.error });
+    const datosAgente = validarDatosAgente({ comision, experiencia });
+    if (datosAgente.error)
+      return res.status(400).json({ error: datosAgente.error });
 
     try {
       // CAMBIO 2: validar ciudad y teléfono ANTES de tocar la BD
-      const ub = await validarCiudadYTelefono({ id_ciudad, telefono, telefono2 });
-      if (ub.error) return res.status(400).json({ error: ub.error });    // ← NUEVO
+      const ub = await validarCiudadYTelefono({
+        id_ciudad,
+        telefono,
+        telefono2,
+      });
+      if (ub.error) return res.status(400).json({ error: ub.error }); // ← NUEVO
 
-      const yaExiste = await UsuarioModel.existsByEmailOrId(correo, identificacion);
+      const yaExiste = await UsuarioModel.existsByEmailOrId(
+        correo,
+        identificacion,
+      );
       if (yaExiste) {
-        return res.status(409).json({ error: 'Ya existe una cuenta con ese correo o número de identificación.' });
+        return res
+          .status(409)
+          .json({
+            error:
+              "Ya existe una cuenta con ese correo o número de identificación.",
+          });
       }
 
       const planDb = await PlanModel.findByNombre(PLANES[plan]);
       if (!planDb) {
-        return res.status(400).json({ error: 'El plan no existe en la base de datos. Ejecuta seed_planes.sql.' });
+        return res
+          .status(400)
+          .json({
+            error:
+              "El plan no existe en la base de datos. Ejecuta seed_planes.sql.",
+          });
       }
 
       const contraseñaHash = await bcrypt.hash(password, 10);
@@ -188,9 +295,9 @@ const authController = {
         nombre,
         contraseñaHash,
         direccion,
-        id_ciudad: ub.idCiudad,               
-        telefono: ub.tel, 
-        telefono2: ub.tel2,                     
+        id_ciudad: ub.idCiudad,
+        telefono: ub.tel,
+        telefono2: ub.tel2,
         id_plan: planDb.id_plan,
         nombre_plan: planDb.nombre_plan,
         nombre_empresa: empresa,
@@ -200,10 +307,12 @@ const authController = {
       });
 
       req.session.usuario = usuario; // registro con auto-login
-      return res.status(201).json({ mensaje: 'Cuenta de agente creada correctamente', usuario });
+      return res
+        .status(201)
+        .json({ mensaje: "Cuenta de agente creada correctamente", usuario });
     } catch (error) {
-      console.error('Error en registro de agente:', error);
-      return res.status(500).json({ error: 'Error interno del servidor.' });
+      console.error("Error en registro de agente:", error);
+      return res.status(500).json({ error: "Error interno del servidor." });
     }
   },
 
@@ -215,7 +324,7 @@ const authController = {
   },
 
   logout(req, res) {
-    req.session.destroy(() => res.json({ mensaje: 'Sesión cerrada' }));
+    req.session.destroy(() => res.json({ mensaje: "Sesión cerrada" }));
   },
 };
 

@@ -7,7 +7,7 @@
 //
 // Lo usa controllers/personaController.js (rutas /api/usuarios).
 
-const pool = require('../config/db');
+const pool = require("../config/db");
 
 // ─── Consulta base ───────────────────────────────────────────────────────────
 // Trae la persona con su ubicación, sus teléfonos (como lista), su rol y los
@@ -43,9 +43,9 @@ const SELECT_PERSONA = `
 // Condición SQL de cada rol. Se usa un objeto (y no el texto que manda el
 // usuario) para que nunca se pueda inyectar SQL por el parámetro ?rol=
 const FILTRO_ROL = {
-  cliente:       'cl.numero_id IS NOT NULL',
-  agente:        'ag.numero_id IS NOT NULL',
-  administrador: 'ad.numero_id IS NOT NULL',
+  cliente: "cl.numero_id IS NOT NULL",
+  agente: "ag.numero_id IS NOT NULL",
+  administrador: "ad.numero_id IS NOT NULL",
 };
 
 // Convierte una fila de la consulta en un objeto ordenado para el frontend:
@@ -68,32 +68,35 @@ function formatear(fila) {
       id_pais: fila.id_pais,
       pais: fila.nombre_pais,
     },
-    cliente: fila.rol === 'cliente'
-      ? {
-          codigo_cliente: fila.codigo_cliente,
-          puntos: fila.puntos,
-          visualizar_publicidad: fila.visualizar_publicidad,
-          total_reservas: fila.total_reservas,
-        }
-      : null,
-    agente: fila.rol === 'agente'
-      ? {
-          nombre_empresa: fila.nombre_empresa,
-          descripcion_agente: fila.descripcion_agente,
-          comision: Number(fila.comision),   // NUMERIC llega como texto desde pg
-          experiencia: fila.experiencia,
-          id_plan: fila.id_plan,
-          plan: fila.nombre_plan,
-          total_eventos: fila.total_eventos,
-        }
-      : null,
-    administrador: fila.rol === 'administrador'
-      ? {
-          codigo_admin: fila.codigo_admin,
-          salario: Number(fila.salario),
-          horario: fila.horario,
-        }
-      : null,
+    cliente:
+      fila.rol === "cliente"
+        ? {
+            codigo_cliente: fila.codigo_cliente,
+            puntos: fila.puntos,
+            visualizar_publicidad: fila.visualizar_publicidad,
+            total_reservas: fila.total_reservas,
+          }
+        : null,
+    agente:
+      fila.rol === "agente"
+        ? {
+            nombre_empresa: fila.nombre_empresa,
+            descripcion_agente: fila.descripcion_agente,
+            comision: Number(fila.comision), // NUMERIC llega como texto desde pg
+            experiencia: fila.experiencia,
+            id_plan: fila.id_plan,
+            plan: fila.nombre_plan,
+            total_eventos: fila.total_eventos,
+          }
+        : null,
+    administrador:
+      fila.rol === "administrador"
+        ? {
+            codigo_admin: fila.codigo_admin,
+            salario: Number(fila.salario),
+            horario: fila.horario,
+          }
+        : null,
   };
 }
 
@@ -113,14 +116,22 @@ const PersonaModel = {
                          OR u.numero_id ILIKE ${n} OR ag.nombre_empresa ILIKE ${n})`);
     }
 
-    const where = condiciones.length ? `WHERE ${condiciones.join(' AND ')}` : '';
-    const result = await pool.query(`${SELECT_PERSONA} ${where} ORDER BY u.nombre ASC`, valores);
+    const where = condiciones.length
+      ? `WHERE ${condiciones.join(" AND ")}`
+      : "";
+    const result = await pool.query(
+      `${SELECT_PERSONA} ${where} ORDER BY u.nombre ASC`,
+      valores,
+    );
     return result.rows.map(formatear);
   },
 
   // Una sola persona por su número de identificación (o null si no existe)
   async obtener(numero_id) {
-    const result = await pool.query(`${SELECT_PERSONA} WHERE u.numero_id = $1`, [numero_id]);
+    const result = await pool.query(
+      `${SELECT_PERSONA} WHERE u.numero_id = $1`,
+      [numero_id],
+    );
     return result.rows[0] ? formatear(result.rows[0]) : null;
   },
 
@@ -128,7 +139,7 @@ const PersonaModel = {
   async existeCorreo(correo, excluirNumeroId) {
     const result = await pool.query(
       `SELECT 1 FROM public."USUARIO" WHERE LOWER(correo) = LOWER($1) AND numero_id <> $2 LIMIT 1`,
-      [correo, excluirNumeroId]
+      [correo, excluirNumeroId],
     );
     return result.rowCount > 0;
   },
@@ -137,11 +148,11 @@ const PersonaModel = {
   async existeCorreoOIdentificacion(correo, numero_id) {
     const result = await pool.query(
       `SELECT 1 FROM public."USUARIO" WHERE LOWER(correo) = LOWER($1) OR numero_id = $2 LIMIT 1`,
-      [correo, numero_id]
+      [correo, numero_id],
     );
     return result.rowCount > 0;
   },
- 
+
   // Sprint 3 · Tarea 6: registra un ADMINISTRADOR nuevo EN UNA TRANSACCIÓN.
   // Se insertan USUARIO, sus TELEFONOS y la fila de ADMINISTRADOR; si algo
   // falla no queda nada a medias. 'datos' ya viene validado desde el controlador
@@ -149,55 +160,68 @@ const PersonaModel = {
   async crearAdministrador(datos) {
     const client = await pool.connect();
     try {
-      await client.query('BEGIN');
- 
+      await client.query("BEGIN");
+
       // 1. La persona
       await client.query(
         `INSERT INTO public."USUARIO"
            (numero_id, correo, nombre, contraseña, direccion, fecha_nacimiento, id_ciudad)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [datos.numero_id, datos.correo, datos.nombre, datos.contrasenaHash,
-         datos.direccion, datos.fecha_nacimiento, datos.id_ciudad]
+        [
+          datos.numero_id,
+          datos.correo,
+          datos.nombre,
+          datos.contrasenaHash,
+          datos.direccion,
+          datos.fecha_nacimiento,
+          datos.id_ciudad,
+        ],
       );
- 
+
       // 2. Sus teléfonos (de 1 a 3)
       for (const telefono of datos.telefonos) {
         await client.query(
           `INSERT INTO public."TELEFONOS" (numero_id, telefono) VALUES ($1, $2)`,
-          [datos.numero_id, telefono]
+          [datos.numero_id, telefono],
         );
       }
- 
+
       // 3. Los datos propios del administrador
       await client.query(
         `INSERT INTO public."ADMINISTRADOR" (numero_id, codigo_admin, salario, horario)
          VALUES ($1, $2, $3, $4)`,
-        [datos.numero_id, `ADM-${datos.numero_id}`, datos.salario, datos.horario]
+        [
+          datos.numero_id,
+          `ADM-${datos.numero_id}`,
+          datos.salario,
+          datos.horario,
+        ],
       );
- 
-      await client.query('COMMIT');
+
+      await client.query("COMMIT");
     } catch (error) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();
     }
     return PersonaModel.obtener(datos.numero_id); // el administrador recién creado
   },
- 
+
   // ¿Esa identificación sigue siendo de un administrador? (lo usa soloAdmin)
   async esAdministrador(numero_id) {
     const result = await pool.query(
       `SELECT 1 FROM public."ADMINISTRADOR" WHERE numero_id = $1`,
-      [numero_id]
+      [numero_id],
     );
     return result.rowCount > 0;
   },
- 
+
   // Cuántos administradores hay (siempre debe quedar al menos uno)
   async contarAdministradores() {
-
-    const result = await pool.query(`SELECT COUNT(*)::int AS total FROM public."ADMINISTRADOR"`);
+    const result = await pool.query(
+      `SELECT COUNT(*)::int AS total FROM public."ADMINISTRADOR"`,
+    );
     return result.rows[0].total;
   },
 
@@ -207,48 +231,65 @@ const PersonaModel = {
   async actualizar(numero_id, rol, datos) {
     const client = await pool.connect();
     try {
-      await client.query('BEGIN');
+      await client.query("BEGIN");
 
       // 1. Datos de la persona (el numero_id NO se cambia: es la llave primaria)
       await client.query(
         `UPDATE public."USUARIO"
          SET nombre = $1, correo = $2, direccion = $3, fecha_nacimiento = $4, id_ciudad = $5
          WHERE numero_id = $6`,
-        [datos.nombre, datos.correo, datos.direccion, datos.fecha_nacimiento, datos.id_ciudad, numero_id]
+        [
+          datos.nombre,
+          datos.correo,
+          datos.direccion,
+          datos.fecha_nacimiento,
+          datos.id_ciudad,
+          numero_id,
+        ],
       );
 
       // 2. Teléfonos: se borran los anteriores y se guardan los nuevos
-      await client.query(`DELETE FROM public."TELEFONOS" WHERE numero_id = $1`, [numero_id]);
+      await client.query(
+        `DELETE FROM public."TELEFONOS" WHERE numero_id = $1`,
+        [numero_id],
+      );
       for (const telefono of datos.telefonos) {
         await client.query(
           `INSERT INTO public."TELEFONOS" (numero_id, telefono) VALUES ($1, $2)`,
-          [numero_id, telefono]
+          [numero_id, telefono],
         );
       }
 
       // 3. Campos propios del rol
-      if (rol === 'cliente') {
+      if (rol === "cliente") {
         await client.query(
           `UPDATE public."CLIENTE" SET puntos = $1, visualizar_publicidad = $2 WHERE numero_id = $3`,
-          [datos.puntos, datos.visualizar_publicidad, numero_id]
+          [datos.puntos, datos.visualizar_publicidad, numero_id],
         );
-      } else if (rol === 'agente') {
+      } else if (rol === "agente") {
         await client.query(
           `UPDATE public."AGENTE"
            SET nombre_empresa = $1, descripcion_agente = $2, comision = $3, experiencia = $4, id_plan = $5
            WHERE numero_id = $6`,
-          [datos.nombre_empresa, datos.descripcion_agente, datos.comision, datos.experiencia, datos.id_plan, numero_id]
+          [
+            datos.nombre_empresa,
+            datos.descripcion_agente,
+            datos.comision,
+            datos.experiencia,
+            datos.id_plan,
+            numero_id,
+          ],
         );
-      } else if (rol === 'administrador') {
+      } else if (rol === "administrador") {
         await client.query(
           `UPDATE public."ADMINISTRADOR" SET salario = $1, horario = $2 WHERE numero_id = $3`,
-          [datos.salario, datos.horario, numero_id]
+          [datos.salario, datos.horario, numero_id],
         );
       }
 
-      await client.query('COMMIT');
+      await client.query("COMMIT");
     } catch (error) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();
@@ -262,20 +303,71 @@ const PersonaModel = {
   async eliminar(numero_id) {
     const client = await pool.connect();
     try {
-      await client.query('BEGIN');
-      await client.query(`DELETE FROM public."CLIENTE"       WHERE numero_id = $1`, [numero_id]);
-      await client.query(`DELETE FROM public."AGENTE"        WHERE numero_id = $1`, [numero_id]);
-      await client.query(`DELETE FROM public."ADMINISTRADOR" WHERE numero_id = $1`, [numero_id]);
-      await client.query(`DELETE FROM public."TELEFONOS"     WHERE numero_id = $1`, [numero_id]);
-      const result = await client.query(`DELETE FROM public."USUARIO" WHERE numero_id = $1`, [numero_id]);
-      await client.query('COMMIT');
+      await client.query("BEGIN");
+      await client.query(
+        `DELETE FROM public."CLIENTE"       WHERE numero_id = $1`,
+        [numero_id],
+      );
+      await client.query(
+        `DELETE FROM public."AGENTE"        WHERE numero_id = $1`,
+        [numero_id],
+      );
+      await client.query(
+        `DELETE FROM public."ADMINISTRADOR" WHERE numero_id = $1`,
+        [numero_id],
+      );
+      await client.query(
+        `DELETE FROM public."TELEFONOS"     WHERE numero_id = $1`,
+        [numero_id],
+      );
+      const result = await client.query(
+        `DELETE FROM public."USUARIO" WHERE numero_id = $1`,
+        [numero_id],
+      );
+      await client.query("COMMIT");
       return result.rowCount > 0; // true si se borró, false si no existía
     } catch (error) {
-      await client.query('ROLLBACK');
+      await client.query("ROLLBACK");
       throw error;
     } finally {
       client.release();
     }
+  },
+
+  // ─── Sprint 3 · Tarea 13: «Mi perfil» ──────────────────────────────────────
+  // Hash de la contraseña (solo se usa para compararlo con bcrypt, nunca sale de aquí)
+  async obtenerHashContrasena(numero_id) {
+    const result = await pool.query(
+      `SELECT contraseña FROM public."USUARIO" WHERE numero_id = $1`,
+      [numero_id],
+    );
+    return result.rows[0]?.contraseña || null;
+  },
+
+  // Guarda la contraseña nueva (ya viene encriptada desde el controlador)
+  async actualizarContrasena(numero_id, contrasenaHash) {
+    await pool.query(
+      `UPDATE public."USUARIO" SET contraseña = $1 WHERE numero_id = $2`,
+      [contrasenaHash, numero_id],
+    );
+  },
+
+  // Números reales del agente para su perfil
+  async estadisticasAgente(numero_id) {
+    const result = await pool.query(
+      `SELECT COUNT(DISTINCT e.id_evento)::int AS eventos_registrados,
+              COUNT(DISTINCT e.id_evento) FILTER (
+                WHERE es.nombre_estado IN ('Programado', 'En Boletería', 'En Vivo'))::int AS eventos_activos,
+              COUNT(r.id_reserva) FILTER (WHERE er.nombre_estado <> 'Cancelada')::int AS reservas_recibidas,
+              COALESCE(SUM(r.numero_entradas) FILTER (WHERE er.nombre_estado <> 'Cancelada'), 0)::int AS entradas_vendidas
+       FROM public."EVENTO" e
+       JOIN public."ESTADO" es               ON es.id_estado = e.id_estado
+       LEFT JOIN public."RESERVA" r          ON r.id_evento = e.id_evento
+       LEFT JOIN public."ESTADO_RESERVA" er  ON er.id_estado_reserva = r.id_estado_reserva
+       WHERE e.id_agente = $1`,
+      [numero_id],
+    );
+    return result.rows[0];
   },
 };
 
