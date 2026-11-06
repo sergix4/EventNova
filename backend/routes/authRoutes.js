@@ -17,5 +17,7 @@ router.get("/sesion", authController.sesion);
 router.get("/perfil", conSesion, perfilController.obtener);
 router.put("/perfil", conSesion, perfilController.actualizar);
 router.put("/perfil/contrasena", conSesion, perfilController.cambiarContrasena);
+// Sprint 3 · Tarea 14: el agente cambia su plan (TIPO_PLAN)
+router.put("/perfil/plan", conSesion, perfilController.cambiarPlan);
 
 module.exports = router;

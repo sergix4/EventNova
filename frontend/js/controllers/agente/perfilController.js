@@ -11,19 +11,18 @@ import {
   cambiarContrasena,
 } from "../comun/perfilComunController.js";
 import { PerfilModel } from "../../models/perfilModel.js";
-import { PLANES } from "../../models/catalogoModel.js";
+import { PlanModel } from "../../models/planModel.js";
 import { PerfilAgenteView } from "../../views/agente/perfilAgenteView.js";
 import { abrirModal, cerrarModal } from "../../views/componentes/modal.js";
 import { mostrarToast } from "../../views/componentes/toast.js";
 
-const estado = { perfil: null, planes: PLANES, planActual: "basico" };
+const estado = { perfil: null, planes: [], planActual: null }; // planActual = id_plan
 const dibujar = () => PerfilAgenteView.mostrar(estado);
 const aviso = (mensaje) => mostrarToast(mensaje, { duracion: 2500 });
 
 function usarPerfil(perfil) {
   estado.perfil = perfil;
-  estado.planActual =
-    PLANES.find((p) => p.nombre === perfil.agente.plan)?.clave || "basico";
+  estado.planActual = perfil.agente.id_plan;
 }
 
 // Una sola ventana para los dos botones: "Editar información" pone el foco en la empresa
@@ -37,7 +36,7 @@ function editar(enfocar) {
     },
     leerExtra: (caja) => ({
       nombre_empresa: caja.querySelector("#pf-empresa").value.trim(),
-      experiencia: Number(caja.querySelector("#pf-experiencia").value),
+      experiencia: caja.querySelector("#pf-experiencia").value.trim(),
       descripcion_agente: caja.querySelector("#pf-descripcion").value.trim(),
     }),
     alGuardar: (perfil) => {
@@ -47,17 +46,26 @@ function editar(enfocar) {
   });
 }
 
-// ─── Plan (simulado hasta la tarea 14) ──────────────────────────────────────
-function cambiarPlan(clave) {
-  const plan = PLANES.find((p) => p.clave === clave);
+// ─── Plan (Tarea 14: se guarda en la BD) ────────────────────────────────────
+function cambiarPlan(idPlan) {
+  const plan = estado.planes.find((p) => p.id_plan === idPlan);
   const caja = abrirModal(PerfilAgenteView.modalPlan(plan), {
     cerrarAlHacerClicFuera: false,
   });
-  caja.querySelector("#confirmar").addEventListener("click", () => {
-    estado.planActual = clave;
-    cerrarModal();
-    dibujar();
-    aviso("Plan actualizado correctamente.");
+  const boton = caja.querySelector("#confirmar");
+  boton.addEventListener("click", async () => {
+    boton.disabled = true;
+    try {
+      const { mensaje, usuario } = await PerfilModel.cambiarPlan(idPlan);
+      usarPerfil(usuario);
+      cerrarModal();
+      dibujar();
+      aviso(mensaje);
+    } catch (error) {
+      // p. ej. bajar a un plan con menos cupo que los eventos activos
+      cerrarModal();
+      mostrarToast(error.message, { error: true, duracion: 5000 });
+    }
   });
 }
 
@@ -75,7 +83,12 @@ async function iniciar() {
   await iniciarPanel({ rol: "agente", activo: "perfil" });
 
   try {
-    usarPerfil(await PerfilModel.obtener());
+    const [perfil, planes] = await Promise.all([
+      PerfilModel.obtener(),
+      PlanModel.tarjetas(),
+    ]);
+    estado.planes = planes;
+    usarPerfil(perfil);
   } catch (error) {
     return PerfilAgenteView.mostrarError(error.message);
   }
@@ -85,11 +98,13 @@ async function iniciar() {
     const accion = e.target.closest("[data-accion]")?.dataset.accion;
     const planElegido =
       e.target.closest("[data-elegir-plan]")?.dataset.elegirPlan;
-    if (planElegido) return cambiarPlan(planElegido);
+    if (planElegido) return cambiarPlan(Number(planElegido));
     if (accion === "editar-personal") editar("pf-nombre");
     if (accion === "editar-agente") editar("pf-empresa");
     if (accion === "cambiar-plan")
-      cambiarPlan(PLANES.find((p) => p.clave !== estado.planActual).clave);
+      document
+        .getElementById("planes-disponibles")
+        .scrollIntoView({ behavior: "smooth" });
     if (accion === "cancelar-suscripcion") cancelarSuscripcion();
     if (accion === "cambiar-clave") cambiarContrasena();
   });

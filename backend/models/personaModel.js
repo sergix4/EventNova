@@ -26,7 +26,7 @@ const SELECT_PERSONA = `
          END AS rol,
          cl.codigo_cliente, cl.puntos, cl.visualizar_publicidad,
          ag.nombre_empresa, ag.descripcion_agente, ag.comision, ag.experiencia,
-         ag.id_plan, tp.nombre_plan,
+         ag.id_plan, tp.nombre_plan, tp.limite_evento,
          ad.codigo_admin, ad.salario, ad.horario,
          (SELECT COUNT(*)::int FROM public."RESERVA" r WHERE r.id_cliente = u.numero_id) AS total_reservas,
          (SELECT COUNT(*)::int FROM public."EVENTO"  e WHERE e.id_agente  = u.numero_id) AS total_eventos
@@ -86,6 +86,7 @@ function formatear(fila) {
             experiencia: fila.experiencia,
             id_plan: fila.id_plan,
             plan: fila.nombre_plan,
+            limite_eventos: fila.limite_evento, // Tarea 14: cupo del plan
             total_eventos: fila.total_eventos,
           }
         : null,

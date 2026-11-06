@@ -118,9 +118,12 @@ async function prepararDatos(actual, body) {
         tomar(body.descripcion_agente, actual.agente.descripcion_agente) || "",
       ).trim() || null;
     const comision = Number(tomar(body.comision, actual.agente.comision));
-    const experiencia = Number(
-      tomar(body.experiencia, actual.agente.experiencia),
-    );
+    // Sprint 3 · Corrección tarea 13: un campo vacío ya NO se guarda como 0
+    // (Number("") da 0). Vacío o null → NaN → la validación de abajo lo rechaza.
+    const expTexto = tomar(body.experiencia, actual.agente.experiencia);
+    const experiencia =
+      expTexto === "" || expTexto === null ? NaN : Number(expTexto);
+
     const id_plan = Number(tomar(body.id_plan, actual.agente.id_plan));
 
     if (!nombre_empresa || nombre_empresa.length > 150)
@@ -135,8 +138,20 @@ async function prepararDatos(actual, body) {
         error:
           "Los años de experiencia deben ser un número entero entre 0 y 60.",
       };
-    if (!Number.isInteger(id_plan) || !(await PlanModel.getById(id_plan)))
-      return { error: "El plan seleccionado no existe." };
+    const plan = Number.isInteger(id_plan)
+      ? await PlanModel.getById(id_plan)
+      : null;
+    if (!plan) return { error: "El plan seleccionado no existe." };
+
+    // Sprint 3 · Tarea 14: no se puede bajar a un plan con menos cupo que los
+    // eventos activos que ya tiene el agente (vale para el admin y para el agente)
+    if (plan.id_plan !== actual.agente.id_plan) {
+      const cupo = await PlanModel.cupoDeAgente(actual.numero_id);
+      if (cupo && cupo.eventos_activos > plan.limite_evento)
+        return {
+          error: `No se puede cambiar al ${plan.nombre_plan}: permite ${plan.limite_evento} eventos activos y hay ${cupo.eventos_activos}. Primero deben finalizar o cancelarse algunos.`,
+        };
+    }
 
     Object.assign(datos, {
       nombre_empresa,
@@ -207,19 +222,15 @@ const personaController = {
 
     // 1. Lo que solo existe al registrar: identificación y contraseña
     if (!NUMERO_ID_VALIDO.test(numero_id)) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "La identificación debe tener entre 5 y 20 caracteres (letras, números o guiones).",
-        });
+      return res.status(400).json({
+        error:
+          "La identificación debe tener entre 5 y 20 caracteres (letras, números o guiones).",
+      });
     }
     if (contrasena.length < MIN_CONTRASENA) {
-      return res
-        .status(400)
-        .json({
-          error: `La contraseña debe tener al menos ${MIN_CONTRASENA} caracteres.`,
-        });
+      return res.status(400).json({
+        error: `La contraseña debe tener al menos ${MIN_CONTRASENA} caracteres.`,
+      });
     }
 
     // 2. El resto se valida con la MISMA función que usa "Editar".
@@ -244,12 +255,10 @@ const personaController = {
       if (
         await PersonaModel.existeCorreoOIdentificacion(datos.correo, numero_id)
       ) {
-        return res
-          .status(409)
-          .json({
-            error:
-              "Ya existe un usuario con ese correo o número de identificación.",
-          });
+        return res.status(409).json({
+          error:
+            "Ya existe un usuario con ese correo o número de identificación.",
+        });
       }
 
       // 4. Se guarda con la contraseña encriptada (nunca en texto plano)
@@ -260,21 +269,17 @@ const personaController = {
         contrasenaHash,
       });
 
-      res
-        .status(201)
-        .json({
-          mensaje: "Administrador registrado correctamente.",
-          usuario: administrador,
-        });
+      res.status(201).json({
+        mensaje: "Administrador registrado correctamente.",
+        usuario: administrador,
+      });
     } catch (error) {
       if (error.code === "23505") {
         // UNIQUE / PK repetida (dos registros al mismo tiempo)
-        return res
-          .status(409)
-          .json({
-            error:
-              "Ya existe un usuario con ese correo o número de identificación.",
-          });
+        return res.status(409).json({
+          error:
+            "Ya existe un usuario con ese correo o número de identificación.",
+        });
       }
       console.error("Error al registrar administrador:", error);
       res.status(500).json({ error: "Error interno del servidor." });
@@ -291,11 +296,9 @@ const personaController = {
 
       // El rol y la identificación no se cambian desde aquí
       if (req.body.numero_id !== undefined && req.body.numero_id !== id) {
-        return res
-          .status(400)
-          .json({
-            error: "El número de identificación no se puede modificar.",
-          });
+        return res.status(400).json({
+          error: "El número de identificación no se puede modificar.",
+        });
       }
 
       const { error, datos } = await prepararDatos(actual, req.body || {});
@@ -360,18 +363,14 @@ const personaController = {
       }
       if (persona.rol === "administrador") {
         if (req.session.usuario.numero_id === id) {
-          return res
-            .status(409)
-            .json({
-              error: "No puedes eliminar tu propia cuenta de administrador.",
-            });
+          return res.status(409).json({
+            error: "No puedes eliminar tu propia cuenta de administrador.",
+          });
         }
         if ((await PersonaModel.contarAdministradores()) <= 1) {
-          return res
-            .status(409)
-            .json({
-              error: "Debe quedar al menos un administrador en el sistema.",
-            });
+          return res.status(409).json({
+            error: "Debe quedar al menos un administrador en el sistema.",
+          });
         }
       }
 
@@ -380,12 +379,9 @@ const personaController = {
     } catch (error) {
       if (error.code === "23503") {
         // FK violation: respaldo por si algo quedó asociado
-        return res
-          .status(409)
-          .json({
-            error:
-              "No se puede eliminar: el usuario tiene registros asociados.",
-          });
+        return res.status(409).json({
+          error: "No se puede eliminar: el usuario tiene registros asociados.",
+        });
       }
       console.error("Error al eliminar usuario:", error);
       res.status(500).json({ error: "Error interno del servidor." });

@@ -8,12 +8,6 @@ const UsuarioModel = require("../models/usuarioModel");
 const PlanModel = require("../models/planModel");
 const CiudadModel = require("../models/ciudadModel");
 
-const PLANES = {
-  basico: "Plan Básico",
-  profesional: "Plan Profesional",
-  empresa: "Plan Empresa",
-};
-
 const TELEFONO_VALIDO = /^\+?[\d\s-]{7,20}$/;
 const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -137,12 +131,9 @@ const authController = {
     const correo = (req.body.correo || "").trim().toLowerCase();
 
     if (!identificacion || !nombre || !correo || !password) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Identificación, nombre, correo y contraseña son obligatorios.",
-        });
+      return res.status(400).json({
+        error: "Identificación, nombre, correo y contraseña son obligatorios.",
+      });
     }
     if (!CORREO_VALIDO.test(correo)) {
       return res
@@ -169,12 +160,10 @@ const authController = {
         identificacion,
       );
       if (yaExiste) {
-        return res
-          .status(409)
-          .json({
-            error:
-              "Ya existe una cuenta con ese correo o número de identificación.",
-          });
+        return res.status(409).json({
+          error:
+            "Ya existe una cuenta con ese correo o número de identificación.",
+        });
       }
 
       const contraseñaHash = await bcrypt.hash(password, 10);
@@ -214,7 +203,7 @@ const authController = {
       telefono2,
       empresa,
       descripcionNegocio,
-      plan,
+      id_plan, // Sprint 3 · Tarea 14: el plan llega por su id de TIPO_PLAN
       comision,
       experiencia,
     } = req.body;
@@ -226,14 +215,12 @@ const authController = {
       !correo ||
       !password ||
       !empresa ||
-      !plan
+      !id_plan
     ) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Identificación, nombre, correo, contraseña, empresa y plan son obligatorios.",
-        });
+      return res.status(400).json({
+        error:
+          "Identificación, nombre, correo, contraseña, empresa y plan son obligatorios.",
+      });
     }
     if (!CORREO_VALIDO.test(correo)) {
       return res
@@ -245,7 +232,8 @@ const authController = {
         .status(400)
         .json({ error: "La contraseña debe tener al menos 8 caracteres." });
     }
-    if (!PLANES[plan]) {
+    const idPlan = Number(id_plan);
+    if (!Number.isInteger(idPlan) || idPlan <= 0) {
       return res
         .status(400)
         .json({ error: "El plan seleccionado no es válido." });
@@ -268,22 +256,17 @@ const authController = {
         identificacion,
       );
       if (yaExiste) {
-        return res
-          .status(409)
-          .json({
-            error:
-              "Ya existe una cuenta con ese correo o número de identificación.",
-          });
+        return res.status(409).json({
+          error:
+            "Ya existe una cuenta con ese correo o número de identificación.",
+        });
       }
 
-      const planDb = await PlanModel.findByNombre(PLANES[plan]);
+      const planDb = await PlanModel.getById(idPlan);
       if (!planDb) {
         return res
           .status(400)
-          .json({
-            error:
-              "El plan no existe en la base de datos. Ejecuta seed_planes.sql.",
-          });
+          .json({ error: "El plan seleccionado no existe." });
       }
 
       const contraseñaHash = await bcrypt.hash(password, 10);

@@ -3,208 +3,316 @@
 // Valida los campos mientras el usuario escribe, arma los datos y llama al
 // Modelo (POST /api/auth/register o /api/auth/register-agente).
 
-import { AuthModel } from '../models/authModel.js'
-import { AuthView } from '../views/authView.js'
-import { RegistroView } from '../views/registroView.js'
-import { mostrarToast } from '../views/componentes/toast.js'
-import { paginaInicioDe } from './comun/panelController.js'
-import { PLANES } from '../models/catalogoModel.js'
-import { PaisModel } from '../models/paisModel.js'
-import { DepartamentoModel } from '../models/departamentoModel.js'
-import { CiudadModel } from '../models/ciudadModel.js'
+import { AuthModel } from "../models/authModel.js";
+import { AuthView } from "../views/authView.js";
+import { RegistroView } from "../views/registroView.js";
+import { mostrarToast } from "../views/componentes/toast.js";
+import { paginaInicioDe } from "./comun/panelController.js";
+import { PlanModel } from "../models/planModel.js";
+import { PaisModel } from "../models/paisModel.js";
+import { DepartamentoModel } from "../models/departamentoModel.js";
+import { CiudadModel } from "../models/ciudadModel.js";
 
-const formulario = document.getElementById('form-registro')
-const boton = document.getElementById('boton-registro')
-const terminos = document.getElementById('terminos')
-const publicidad = document.getElementById('publicidad')
-const selPais = document.getElementById('pais')
-const selDepto = document.getElementById('departamento')
-const selCiudad = document.getElementById('ciudad')
+const formulario = document.getElementById("form-registro");
+const boton = document.getElementById("boton-registro");
+const terminos = document.getElementById("terminos");
+const publicidad = document.getElementById("publicidad");
+const selPais = document.getElementById("pais");
+const selDepto = document.getElementById("departamento");
+const selCiudad = document.getElementById("ciudad");
 
-let rol = 'cliente'
-let planSeleccionado = null
-let cargando = false
-const tocados = new Set() // campos que el usuario ya escribió
+let rol = "cliente";
+let planSeleccionado = null; // id_plan elegido (Tarea 14: los planes vienen de TIPO_PLAN)
+let planes = [];
+let cargando = false;
+const tocados = new Set(); // campos que el usuario ya escribió
 
-const CAMPOS_CLIENTE = ['identificacion', 'nombre', 'correo', 'password', 'confirmar', 'direccion', 'pais', 'departamento', 'ciudad', 'telefono']
-const CAMPOS_AGENTE = [...CAMPOS_CLIENTE, 'empresa', 'descripcionNegocio', 'ciudadOperacion', 'tipoEventos', 'experiencia', 'comision']
-const valor = (id) => document.getElementById(id).value
+const CAMPOS_CLIENTE = [
+  "identificacion",
+  "nombre",
+  "correo",
+  "password",
+  "confirmar",
+  "direccion",
+  "pais",
+  "departamento",
+  "ciudad",
+  "telefono",
+];
+const CAMPOS_AGENTE = [
+  ...CAMPOS_CLIENTE,
+  "empresa",
+  "descripcionNegocio",
+  "ciudadOperacion",
+  "tipoEventos",
+  "experiencia",
+  "comision",
+];
+const valor = (id) => document.getElementById(id).value;
 
 // ─── Reglas de validación (las mismas del prototipo) ─────────────────────────
 function validar(campo) {
-  const v = valor(campo)
-  if (!v) return ''
+  const v = valor(campo);
+  if (!v) return "";
   switch (campo) {
-    case 'correo': return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? 'valido' : 'invalido'
-    case 'password': return v.length >= 8 ? 'valido' : 'invalido'
-    case 'confirmar': return v === valor('password') ? 'valido' : 'invalido'
-    case 'identificacion': return v.length >= 6 ? 'valido' : 'invalido'
-    case 'telefono':
-    case 'telefono2': return /^\+?[\d\s-]{7,}$/.test(v) ? 'valido' : 'invalido'
-    case 'experiencia': return Number.isInteger(Number(v)) && v >= 0 && v <= 60 ? 'valido' : 'invalido'
-    case 'comision': return v >= 0 && v <= 100 ? 'valido' : 'invalido'
-    default: return v.length > 1 ? 'valido' : ''
+    case "correo":
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? "valido" : "invalido";
+    case "password":
+      return v.length >= 8 ? "valido" : "invalido";
+    case "confirmar":
+      return v === valor("password") ? "valido" : "invalido";
+    case "identificacion":
+      return v.length >= 6 ? "valido" : "invalido";
+    case "telefono":
+    case "telefono2":
+      return /^\+?[\d\s-]{7,}$/.test(v) ? "valido" : "invalido";
+    case "experiencia":
+      return Number.isInteger(Number(v)) && v >= 0 && v <= 60
+        ? "valido"
+        : "invalido";
+    case "comision":
+      return v >= 0 && v <= 100 ? "valido" : "invalido";
+    default:
+      return v.length > 1 ? "valido" : "";
   }
 }
 
 function pintarCampo(campo) {
-  const contenedor = document.querySelector(`[data-campo="${campo}"]`)
-  if (!contenedor || contenedor.querySelector('select')) return
-  AuthView.estadoCampo(contenedor, tocados.has(campo) ? validar(campo) : '')
+  const contenedor = document.querySelector(`[data-campo="${campo}"]`);
+  if (!contenedor || contenedor.querySelector("select")) return;
+  AuthView.estadoCampo(contenedor, tocados.has(campo) ? validar(campo) : "");
 }
 
 // ─── Ubicación en cascada (datos reales de la BD) ────────────────────────────
-const aOpciones = (filas, id, nombre) => filas.map(f => ({ valor: f[id], texto: f[nombre] }))
+const aOpciones = (filas, id, nombre) =>
+  filas.map((f) => ({ valor: f[id], texto: f[nombre] }));
 
 async function cargarPaises() {
   try {
-    const paises = await PaisModel.listar()
-    RegistroView.llenarSelect(selPais, aOpciones(paises, 'id_pais', 'nombre_pais'),
-      paises.length ? 'Selecciona un país' : 'No hay países registrados')
-    const colombia = paises.find(p => p.nombre_pais.toLowerCase() === 'colombia')
+    const paises = await PaisModel.listar();
+    RegistroView.llenarSelect(
+      selPais,
+      aOpciones(paises, "id_pais", "nombre_pais"),
+      paises.length ? "Selecciona un país" : "No hay países registrados",
+    );
+    const colombia = paises.find(
+      (p) => p.nombre_pais.toLowerCase() === "colombia",
+    );
     if (colombia) {
-      selPais.value = colombia.id_pais
-      RegistroView.colorSelect(selPais)
+      selPais.value = colombia.id_pais;
+      RegistroView.colorSelect(selPais);
     }
-    await cargarDepartamentos()
+    await cargarDepartamentos();
   } catch (error) {
-    AuthView.errorServidor(error.message)
+    AuthView.errorServidor(error.message);
   }
 }
 
 async function cargarDepartamentos() {
-  RegistroView.llenarSelect(selCiudad, [], 'Primero selecciona departamento', true)
+  RegistroView.llenarSelect(
+    selCiudad,
+    [],
+    "Primero selecciona departamento",
+    true,
+  );
   if (!selPais.value) {
-    return RegistroView.llenarSelect(selDepto, [], 'Primero selecciona un país', true)
+    return RegistroView.llenarSelect(
+      selDepto,
+      [],
+      "Primero selecciona un país",
+      true,
+    );
   }
   try {
-    const deptos = await DepartamentoModel.listar(selPais.value)
-    RegistroView.llenarSelect(selDepto, aOpciones(deptos, 'id_departamento', 'nombre_departamento'),
-      deptos.length ? 'Selecciona...' : 'Sin departamentos registrados', !deptos.length)
+    const deptos = await DepartamentoModel.listar(selPais.value);
+    RegistroView.llenarSelect(
+      selDepto,
+      aOpciones(deptos, "id_departamento", "nombre_departamento"),
+      deptos.length ? "Selecciona..." : "Sin departamentos registrados",
+      !deptos.length,
+    );
   } catch (error) {
-    AuthView.errorServidor(error.message)
+    AuthView.errorServidor(error.message);
   }
 }
 
 async function cargarCiudades() {
   if (!selDepto.value) {
-    return RegistroView.llenarSelect(selCiudad, [], 'Primero selecciona departamento', true)
+    return RegistroView.llenarSelect(
+      selCiudad,
+      [],
+      "Primero selecciona departamento",
+      true,
+    );
   }
   try {
-    const ciudades = await CiudadModel.listar(selDepto.value)
-    RegistroView.llenarSelect(selCiudad, aOpciones(ciudades, 'id_ciudad', 'nombre_ciudad'),
-      ciudades.length ? 'Selecciona...' : 'Sin ciudades registradas', !ciudades.length)
+    const ciudades = await CiudadModel.listar(selDepto.value);
+    RegistroView.llenarSelect(
+      selCiudad,
+      aOpciones(ciudades, "id_ciudad", "nombre_ciudad"),
+      ciudades.length ? "Selecciona..." : "Sin ciudades registradas",
+      !ciudades.length,
+    );
   } catch (error) {
-    AuthView.errorServidor(error.message)
+    AuthView.errorServidor(error.message);
   }
 }
 
-cargarPaises()
+cargarPaises();
 
-selPais.addEventListener('change', () => { RegistroView.colorSelect(selPais); cargarDepartamentos() })
-selDepto.addEventListener('change', () => { RegistroView.colorSelect(selDepto); cargarCiudades() })
-selCiudad.addEventListener('change', () => RegistroView.colorSelect(selCiudad))
-document.getElementById('tipoEventos').addEventListener('change', (e) => RegistroView.colorSelect(e.target))
-RegistroView.colorSelect(document.getElementById('tipoEventos'))
+selPais.addEventListener("change", () => {
+  RegistroView.colorSelect(selPais);
+  cargarDepartamentos();
+});
+selDepto.addEventListener("change", () => {
+  RegistroView.colorSelect(selDepto);
+  cargarCiudades();
+});
+selCiudad.addEventListener("change", () => RegistroView.colorSelect(selCiudad));
+document
+  .getElementById("tipoEventos")
+  .addEventListener("change", (e) => RegistroView.colorSelect(e.target));
+RegistroView.colorSelect(document.getElementById("tipoEventos"));
 
 // ─── Eventos del formulario ──────────────────────────────────────────────────
-AuthView.prepararMostrarClave()
+AuthView.prepararMostrarClave();
 
-formulario.addEventListener('input', (e) => {
-  const campo = e.target.id
-  if (!campo) return
-  if (e.target.value) tocados.add(campo)
-  pintarCampo(campo)
-  if (campo === 'password') { RegistroView.pintarFuerza(e.target.value); pintarCampo('confirmar') }
-  if (campo === 'nombre') actualizarResumen()
-})
+formulario.addEventListener("input", (e) => {
+  const campo = e.target.id;
+  if (!campo) return;
+  if (e.target.value) tocados.add(campo);
+  pintarCampo(campo);
+  if (campo === "password") {
+    RegistroView.pintarFuerza(e.target.value);
+    pintarCampo("confirmar");
+  }
+  if (campo === "nombre") actualizarResumen();
+});
 
-document.querySelectorAll('.opcion-rol').forEach(b => b.addEventListener('click', () => {
-  rol = b.dataset.rol
-  RegistroView.mostrarRol(rol)
-  AuthView.errorServidor('')
-}))
+document.querySelectorAll(".opcion-rol").forEach((b) =>
+  b.addEventListener("click", () => {
+    rol = b.dataset.rol;
+    RegistroView.mostrarRol(rol);
+    AuthView.errorServidor("");
+  }),
+);
 
-publicidad.addEventListener('click', () => {
-  publicidad.setAttribute('aria-checked', String(publicidad.getAttribute('aria-checked') !== 'true'))
-})
+publicidad.addEventListener("click", () => {
+  publicidad.setAttribute(
+    "aria-checked",
+    String(publicidad.getAttribute("aria-checked") !== "true"),
+  );
+});
 
-terminos.addEventListener('change', () => { boton.disabled = cargando || !terminos.checked })
+terminos.addEventListener("change", () => {
+  boton.disabled = cargando || !terminos.checked;
+});
 
-const gridPlanes = document.getElementById('grid-planes')
-function elegirPlan(clave) {
-  planSeleccionado = clave
-  RegistroView.pintarPlanes(gridPlanes, PLANES, planSeleccionado)
-  RegistroView.errorPlan(false)
-  actualizarResumen()
+const gridPlanes = document.getElementById("grid-planes");
+function elegirPlan(idPlan) {
+  planSeleccionado = idPlan;
+  RegistroView.pintarPlanes(gridPlanes, planes, planSeleccionado);
+  RegistroView.errorPlan(false);
+  actualizarResumen();
 }
-gridPlanes.addEventListener('click', (e) => {
-  const tarjeta = e.target.closest('[data-plan]')
-  if (tarjeta) elegirPlan(tarjeta.dataset.plan)
-})
-gridPlanes.addEventListener('keydown', (e) => {
-  const tarjeta = e.target.closest('[data-plan]')
-  if (tarjeta && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); elegirPlan(tarjeta.dataset.plan) }
-})
-RegistroView.pintarPlanes(gridPlanes, PLANES, null)
+gridPlanes.addEventListener("click", (e) => {
+  const tarjeta = e.target.closest("[data-plan]");
+  if (tarjeta) elegirPlan(Number(tarjeta.dataset.plan));
+});
+gridPlanes.addEventListener("keydown", (e) => {
+  const tarjeta = e.target.closest("[data-plan]");
+  if (tarjeta && (e.key === "Enter" || e.key === " ")) {
+    e.preventDefault();
+    elegirPlan(Number(tarjeta.dataset.plan));
+  }
+});
+
+// Los planes se leen de la BD (GET /api/planes)
+async function cargarPlanes() {
+  try {
+    planes = await PlanModel.tarjetas();
+    RegistroView.pintarPlanes(gridPlanes, planes, planSeleccionado);
+  } catch (error) {
+    AuthView.errorServidor(
+      "No se pudieron cargar los planes: " + error.message,
+    );
+  }
+}
+cargarPlanes();
 
 function actualizarResumen() {
-  RegistroView.pintarResumen(valor('nombre'), PLANES.find(p => p.clave === planSeleccionado))
+  RegistroView.pintarResumen(
+    valor("nombre"),
+    planes.find((p) => p.id_plan === planSeleccionado),
+  );
 }
-actualizarResumen()
+
+actualizarResumen();
 
 // ─── Envío ───────────────────────────────────────────────────────────────────
-formulario.addEventListener('submit', async (e) => {
-  e.preventDefault()
-  const campos = rol === 'agente' ? CAMPOS_AGENTE : CAMPOS_CLIENTE
-  campos.forEach(c => { tocados.add(c); pintarCampo(c) })
+formulario.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const campos = rol === "agente" ? CAMPOS_AGENTE : CAMPOS_CLIENTE;
+  campos.forEach((c) => {
+    tocados.add(c);
+    pintarCampo(c);
+  });
 
-  if (rol === 'agente' && !planSeleccionado) { RegistroView.errorPlan(true); return }
-  if (!terminos.checked) return
-  const hayErrores = campos.some(c => validar(c) === 'invalido')
-  const faltan = campos.some(c => !valor(c))
+  if (rol === "agente" && !planSeleccionado) {
+    RegistroView.errorPlan(true);
+    return;
+  }
+  if (!terminos.checked) return;
+  const hayErrores = campos.some((c) => validar(c) === "invalido");
+  const faltan = campos.some((c) => !valor(c));
   // El teléfono alternativo es opcional: solo se revisa si el usuario escribió algo
-  tocados.add('telefono2'); pintarCampo('telefono2')
-  const tel2Invalido = validar('telefono2') === 'invalido'
-  if (hayErrores || faltan || tel2Invalido) return
+  tocados.add("telefono2");
+  pintarCampo("telefono2");
+  const tel2Invalido = validar("telefono2") === "invalido";
+  if (hayErrores || faltan || tel2Invalido) return;
 
-  AuthView.errorServidor('')
-  cargando = true
-  AuthView.cargando(boton, true, 'Creando cuenta…')
+  AuthView.errorServidor("");
+  cargando = true;
+  AuthView.cargando(boton, true, "Creando cuenta…");
 
   const datos = {
-    identificacion: valor('identificacion'),
-    nombre: valor('nombre'),
-    correo: valor('correo'),
-    password: valor('password'),
-    direccion: valor('direccion'),
-    id_ciudad: Number(valor('ciudad')),
-    telefono: valor('telefono'),
-    telefono2: valor('telefono2'),
-    publicidad: publicidad.getAttribute('aria-checked') === 'true',
-  }
+    identificacion: valor("identificacion"),
+    nombre: valor("nombre"),
+    correo: valor("correo"),
+    password: valor("password"),
+    direccion: valor("direccion"),
+    id_ciudad: Number(valor("ciudad")),
+    telefono: valor("telefono"),
+    telefono2: valor("telefono2"),
+    publicidad: publicidad.getAttribute("aria-checked") === "true",
+  };
 
   try {
-    if (rol === 'cliente') {
-      const { usuario } = await AuthModel.registrarCliente(datos)
-      window.location.href = paginaInicioDe(usuario.rol)
+    if (rol === "cliente") {
+      const { usuario } = await AuthModel.registrarCliente(datos);
+      window.location.href = paginaInicioDe(usuario.rol);
     } else {
       const { usuario } = await AuthModel.registrarAgente({
         ...datos,
-        empresa: valor('empresa'),
-        descripcionNegocio: valor('descripcionNegocio'),
-        plan: planSeleccionado,
-        experiencia: Number(valor('experiencia')),
-        comision: Number(valor('comision')),
-      })
-      const plan = PLANES.find(p => p.clave === planSeleccionado)
-      mostrarToast('Cuenta de Agente creada correctamente.', { detalle: `Plan ${plan.nombre} seleccionado correctamente.`, duracion: 0 })
-      setTimeout(() => { window.location.href = paginaInicioDe(usuario.rol) }, 1500)
+        empresa: valor("empresa"),
+        descripcionNegocio: valor("descripcionNegocio"),
+        id_plan: planSeleccionado,
+        experiencia: Number(valor("experiencia")),
+        comision: Number(valor("comision")),
+      });
+      const plan = planes.find((p) => p.id_plan === planSeleccionado);
+      mostrarToast("Cuenta de Agente creada correctamente.", {
+        detalle: `Plan ${plan.nombre} seleccionado correctamente.`,
+        duracion: 0,
+      });
+      setTimeout(() => {
+        window.location.href = paginaInicioDe(usuario.rol);
+      }, 1500);
     }
   } catch (error) {
-    AuthView.errorServidor(error.message)
-    cargando = false
-    AuthView.cargando(boton, false)
-    boton.disabled = !terminos.checked
+    AuthView.errorServidor(error.message);
+    cargando = false;
+    AuthView.cargando(boton, false);
+    boton.disabled = !terminos.checked;
   }
-})
+});

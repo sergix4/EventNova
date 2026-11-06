@@ -111,11 +111,9 @@ const perfilController = {
       if (!actual) return;
 
       if (body.numero_id !== undefined && body.numero_id !== actual.numero_id) {
-        return res
-          .status(400)
-          .json({
-            error: "El número de identificación no se puede modificar.",
-          });
+        return res.status(400).json({
+          error: "El número de identificación no se puede modificar.",
+        });
       }
 
       // Mismas validaciones que usa el administrador en /api/usuarios/:id
@@ -154,6 +152,46 @@ const perfilController = {
     }
   },
 
+  // PUT /api/auth/perfil/plan   body: { id_plan }   (solo agentes)
+  // Sprint 3 · Tarea 14: el agente cambia su propio plan. Las validaciones
+  // (que el plan exista y que no baje a uno con menos cupo que sus eventos
+  // activos) son las de prepararDatos(), las mismas que usa el administrador.
+  async cambiarPlan(req, res) {
+    if (req.session.usuario.rol !== "agente") {
+      return res
+        .status(403)
+        .json({ error: "Solo los agentes tienen un plan." });
+    }
+    const idPlan = Number(req.body?.id_plan);
+
+    try {
+      const actual = await usuarioDeLaSesion(req, res);
+      if (!actual) return;
+
+      if (idPlan === actual.agente.id_plan) {
+        return res.status(400).json({ error: "Ese ya es tu plan actual." });
+      }
+
+      const { error, datos } = await prepararDatos(actual, { id_plan: idPlan });
+      if (error) return res.status(400).json({ error });
+
+      const persona = await PersonaModel.actualizar(
+        actual.numero_id,
+        actual.rol,
+        datos,
+      );
+      refrescarSesion(req.session.usuario, persona);
+
+      res.json({
+        mensaje: `Tu plan ahora es ${persona.agente.plan}.`,
+        usuario: await armarPerfil(req, persona),
+      });
+    } catch (error) {
+      console.error("Error al cambiar el plan:", error);
+      res.status(500).json({ error: "Error interno del servidor." });
+    }
+  },
+
   // PUT /api/auth/perfil/contrasena   body: { actual, nueva }
   async cambiarContrasena(req, res) {
     const actual = String(req.body?.actual || "");
@@ -165,11 +203,9 @@ const perfilController = {
         .json({ error: "Escribe tu contraseña actual y la nueva." });
     }
     if (nueva.length < MIN_CONTRASENA) {
-      return res
-        .status(400)
-        .json({
-          error: `La nueva contraseña debe tener al menos ${MIN_CONTRASENA} caracteres.`,
-        });
+      return res.status(400).json({
+        error: `La nueva contraseña debe tener al menos ${MIN_CONTRASENA} caracteres.`,
+      });
     }
     if (nueva === actual) {
       return res

@@ -66,7 +66,7 @@ export const FormPerfilView = {
  
           <p class="form-perfil__seccion">Teléfonos <span class="campo__opcional">(de 1 a 3)</span></p>
           <div class="form-perfil__grid form-perfil__grid--3">
-            ${campo("pf-tel-0", "Principal", tel(0), { requerido: true })}
+            ${campo("pf-tel-0", "Teléfono 1", tel(0), { requerido: true })}
             ${campo("pf-tel-1", "Teléfono 2", tel(1))}
             ${campo("pf-tel-2", "Teléfono 3", tel(2))}
           </div>
