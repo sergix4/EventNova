@@ -4,20 +4,29 @@
 //   - Dibuja la barra lateral correcta.
 //   - Conecta "Cerrar sesión", el menú en celulares y la campana del cliente.
 
-import { AuthModel } from '../../models/authModel.js'
-import { barraCliente, barraAgente, barraAdmin, panelNotificaciones } from '../../views/componentes/panel.js'
-import { iniciales } from '../../utils/formato.js'
+import { AuthModel } from "../../models/authModel.js";
+import {
+  barraCliente,
+  barraAgente,
+  barraAdmin,
+  panelNotificaciones,
+} from "../../views/componentes/panel.js";
+import { iniciales } from "../../utils/formato.js";
 
-const BARRAS = { cliente: barraCliente, agente: barraAgente, administrador: barraAdmin }
+const BARRAS = {
+  cliente: barraCliente,
+  agente: barraAgente,
+  administrador: barraAdmin,
+};
 
 const PAGINA_INICIO_POR_ROL = {
-  cliente: '/pages/cliente/inicio.html',
-  agente: '/pages/agente/mis-eventos.html',
-  administrador: '/pages/admin/dashboard.html',
-}
+  cliente: "/pages/cliente/inicio.html",
+  agente: "/pages/agente/mis-eventos.html",
+  administrador: "/pages/admin/dashboard.html",
+};
 
 export function paginaInicioDe(rol) {
-  return PAGINA_INICIO_POR_ROL[rol] || '/'
+  return PAGINA_INICIO_POR_ROL[rol] || "/";
 }
 
 /**
@@ -28,74 +37,108 @@ export function paginaInicioDe(rol) {
  *   requiereSesion  si es true y no hay sesión del rol indicado, redirige al login
  */
 export async function iniciarPanel({ rol, activo, requiereSesion = true }) {
-  const usuario = await AuthModel.obtenerSesion()
+  const usuario = await AuthModel.obtenerSesion();
 
   if (requiereSesion && (!usuario || usuario.rol !== rol)) {
     // Sin sesión (o con otro rol): se manda al login
-    window.location.replace('/pages/login.html')
-    return new Promise(() => {}) // detiene la ejecución del controlador de la página
+    window.location.replace("/pages/login.html");
+    return new Promise(() => {}); // detiene la ejecución del controlador de la página
   }
 
-  const usuarioDelRol = usuario && usuario.rol === rol ? usuario : null
-  const barra = document.getElementById('barra-lateral')
-  barra.innerHTML = BARRAS[rol](activo, usuarioDelRol)
+  const usuarioDelRol = usuario && usuario.rol === rol ? usuario : null;
+  dibujarBarra(rol, activo, usuarioDelRol);
 
-  conectarCerrarSesion()
-  conectarMenuMovil()
+  conectarCerrarSesion();
+  conectarMenuMovil();
 
-  const avatar = document.getElementById('avatar-cabecera')
-  if (avatar) avatar.textContent = iniciales(usuarioDelRol?.nombre, 'Cliente')
+  return usuarioDelRol;
+}
 
-  return usuarioDelRol
+/**
+ * Dibuja la barra lateral y el avatar de la cabecera con los datos del usuario.
+ * Tarea 13: «Mi perfil» la vuelve a llamar después de guardar, para que el
+ * nombre nuevo se vea sin recargar la página.
+ */
+export function dibujarBarra(rol, activo, usuario) {
+  document.getElementById("barra-lateral").innerHTML = BARRAS[rol](
+    activo,
+    usuario,
+  );
+  const avatar = document.getElementById("avatar-cabecera");
+  if (avatar) avatar.textContent = iniciales(usuario?.nombre, "Cliente");
 }
 
 /** Todos los botones con data-accion="cerrar-sesion" cierran la sesión. */
 export function conectarCerrarSesion() {
-  document.addEventListener('click', async (e) => {
-    if (!e.target.closest('[data-accion="cerrar-sesion"]')) return
-    await AuthModel.cerrarSesion()
-    window.location.href = '/'
-  })
+  document.addEventListener("click", async (e) => {
+    if (!e.target.closest('[data-accion="cerrar-sesion"]')) return;
+    await AuthModel.cerrarSesion();
+    window.location.href = "/";
+  });
 }
 
 function conectarMenuMovil() {
-  document.querySelectorAll('[data-accion="abrir-menu"]').forEach(boton =>
-    boton.addEventListener('click', () => document.body.classList.add('panel--menu-abierto')))
-  document.querySelector('.panel__velo')?.addEventListener('click', () =>
-    document.body.classList.remove('panel--menu-abierto'))
+  document
+    .querySelectorAll('[data-accion="abrir-menu"]')
+    .forEach((boton) =>
+      boton.addEventListener("click", () =>
+        document.body.classList.add("panel--menu-abierto"),
+      ),
+    );
+  document
+    .querySelector(".panel__velo")
+    ?.addEventListener("click", () =>
+      document.body.classList.remove("panel--menu-abierto"),
+    );
 }
 
 // ─── Campana de notificaciones del cliente ──────────────────────────────────
 const NOTIFICACIONES = [
-  { emoji: '✅', texto: 'Tu reserva para Festival de Música Urbana fue confirmada.', tiempo: 'Hace 2 horas' },
-  { emoji: '⏳', texto: 'Tu reserva para Noche de Comedia Stand-Up está pendiente.', tiempo: 'Hace 5 horas' },
-  { emoji: '📢', texto: 'Un evento que reservaste tiene una actualización.', tiempo: 'Ayer' },
-]
+  {
+    emoji: "✅",
+    texto: "Tu reserva para Festival de Música Urbana fue confirmada.",
+    tiempo: "Hace 2 horas",
+  },
+  {
+    emoji: "⏳",
+    texto: "Tu reserva para Noche de Comedia Stand-Up está pendiente.",
+    tiempo: "Hace 5 horas",
+  },
+  {
+    emoji: "📢",
+    texto: "Un evento que reservaste tiene una actualización.",
+    tiempo: "Ayer",
+  },
+];
 
 export function iniciarNotificaciones() {
-  const contenedor = document.querySelector('.notificaciones')
-  if (!contenedor) return
-  const boton = contenedor.querySelector('[data-accion="notificaciones"]')
-  const punto = contenedor.querySelector('.notificaciones__punto')
-  const panel = contenedor.querySelector('.notificaciones__panel')
-  if (!panel) return
-  let leidas = false
+  const contenedor = document.querySelector(".notificaciones");
+  if (!contenedor) return;
+  const boton = contenedor.querySelector('[data-accion="notificaciones"]');
+  const punto = contenedor.querySelector(".notificaciones__punto");
+  const panel = contenedor.querySelector(".notificaciones__panel");
+  if (!panel) return;
+  let leidas = false;
 
-  const dibujar = () => { panel.innerHTML = panelNotificaciones(NOTIFICACIONES, leidas) }
-  dibujar()
+  const dibujar = () => {
+    panel.innerHTML = panelNotificaciones(NOTIFICACIONES, leidas);
+  };
+  dibujar();
 
-  boton.addEventListener('click', (e) => {
-    e.stopPropagation()
-    panel.hidden = !panel.hidden
-  })
-  panel.addEventListener('click', (e) => {
-    e.stopPropagation()
+  boton.addEventListener("click", (e) => {
+    e.stopPropagation();
+    panel.hidden = !panel.hidden;
+  });
+  panel.addEventListener("click", (e) => {
+    e.stopPropagation();
     if (e.target.closest('[data-accion="marcar-leidas"]')) {
-      leidas = true
-      punto?.remove()
-      dibujar()
-      panel.hidden = true
+      leidas = true;
+      punto?.remove();
+      dibujar();
+      panel.hidden = true;
     }
-  })
-  document.addEventListener('click', () => { panel.hidden = true })
+  });
+  document.addEventListener("click", () => {
+    panel.hidden = true;
+  });
 }
