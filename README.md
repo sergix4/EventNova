@@ -138,29 +138,31 @@ el mismo servidor entrega las páginas HTML y responde la API.
 
 ## API disponible
 
-| Método         | Ruta                              | Descripción                                                           |
-| -------------- | --------------------------------- | --------------------------------------------------------------------- |
-| GET            | `/api/status`                     | Estado del servidor                                                   |
-| POST           | `/api/auth/login`                 | Iniciar sesión                                                        |
-| POST           | `/api/auth/register`              | Registrar cliente                                                     |
-| POST           | `/api/auth/register-agente`       | Registrar agente (con plan)                                           |
-| GET            | `/api/auth/sesion`                | Usuario con sesión activa (o `null`)                                  |
-| POST           | `/api/auth/logout`                | Cerrar sesión                                                         |
-| GET/POST       | `/api/paises`                     | Listar / crear países                                                 |
-| GET/PUT/DELETE | `/api/paises/:id`                 | Consultar / editar / eliminar un país                                 |
-| GET/POST       | `/api/departamentos`              | Listar (opcional `?id_pais=`) / crear departamentos                   |
-| GET/PUT/DELETE | `/api/departamentos/:id`          | Consultar / editar / eliminar un departamento                         |
-| GET/POST       | `/api/ciudades`                   | Listar (obligatorio `?id_departamento=`) / crear ciudades             |
-| GET/PUT/DELETE | `/api/ciudades/:id`               | Consultar / editar / eliminar una ciudad                              |
-| GET/POST       | `/api/reservas`                   | Listar (según el rol de la sesión) / crear reserva (cliente)          |
-| GET            | `/api/reservas/estados`           | Estados de la reserva                                                 |
-| GET            | `/api/reservas/cupos/:idEvento`   | Entradas disponibles de un evento                                     |
-| GET/PUT/DELETE | `/api/reservas/:id`               | Consultar / modificar entradas (si está Reservada) / eliminar (admin) |
-| PATCH          | `/api/reservas/:id/estado`        | Confirmar o cancelar una reserva                                      |
-| GET            | `/api/usuarios`                   | Listar usuarios (admin; opcional `?rol=` cliente, agente o administrador y `?buscar=`) |
-| GET/PUT/DELETE | `/api/usuarios/:id`               | Consultar / editar (persona, teléfonos y datos del rol) / eliminar (admin) |
-| POST           | `/api/usuarios/administradores`   | Registrar un administrador (solo otro administrador con sesión) |
-| GET            | `/api/planes`                     | Listar los planes de agente (tabla TIPO_PLAN) |
+| Método         | Ruta                            | Descripción                                                                            |
+| -------------- | ------------------------------- | -------------------------------------------------------------------------------------- |
+| GET            | `/api/status`                   | Estado del servidor                                                                    |
+| POST           | `/api/auth/login`               | Iniciar sesión                                                                         |
+| POST           | `/api/auth/register`            | Registrar cliente                                                                      |
+| POST           | `/api/auth/register-agente`     | Registrar agente (con plan)                                                            |
+| GET            | `/api/auth/sesion`              | Usuario con sesión activa (o `null`)                                                   |
+| POST           | `/api/auth/logout`              | Cerrar sesión                                                                          |
+| GET/PUT        | `/api/auth/perfil`              | «Mi perfil»: consultar / editar los datos propios (cualquier rol con sesión)           |
+| PUT            | `/api/auth/perfil/contrasena`   | Cambiar la contraseña propia (pide la actual)                                          |
+| GET/POST       | `/api/paises`                   | Listar / crear países                                                                  |
+| GET/PUT/DELETE | `/api/paises/:id`               | Consultar / editar / eliminar un país                                                  |
+| GET/POST       | `/api/departamentos`            | Listar (opcional `?id_pais=`) / crear departamentos                                    |
+| GET/PUT/DELETE | `/api/departamentos/:id`        | Consultar / editar / eliminar un departamento                                          |
+| GET/POST       | `/api/ciudades`                 | Listar (obligatorio `?id_departamento=`) / crear ciudades                              |
+| GET/PUT/DELETE | `/api/ciudades/:id`             | Consultar / editar / eliminar una ciudad                                               |
+| GET/POST       | `/api/reservas`                 | Listar (según el rol de la sesión) / crear reserva (cliente)                           |
+| GET            | `/api/reservas/estados`         | Estados de la reserva                                                                  |
+| GET            | `/api/reservas/cupos/:idEvento` | Entradas disponibles de un evento                                                      |
+| GET/PUT/DELETE | `/api/reservas/:id`             | Consultar / modificar entradas (si está Reservada) / eliminar (admin)                  |
+| PATCH          | `/api/reservas/:id/estado`      | Confirmar o cancelar una reserva                                                       |
+| GET            | `/api/usuarios`                 | Listar usuarios (admin; opcional `?rol=` cliente, agente o administrador y `?buscar=`) |
+| GET/PUT/DELETE | `/api/usuarios/:id`             | Consultar / editar (persona, teléfonos y datos del rol) / eliminar (admin)             |
+| POST           | `/api/usuarios/administradores` | Registrar un administrador (solo otro administrador con sesión)                        |
+| GET            | `/api/planes`                   | Listar los planes de agente (tabla TIPO_PLAN)                                          |
 
 ## Estado actual
 
@@ -185,7 +187,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Reportes comerciales con datos reales (`/api/reportes/comerciales?anio=2026`, solo administrador): ingresos por agente y por cliente con su promedio general, ingresos totales por mes, número de reservas por evento y por mes, y eventos creados por agente y ciudad (activos, finalizados y cancelados).
 - ✅ Reporte de cobertura y eventos con datos reales (`/api/reportes/cobertura?anio=2026` o `?anio=todos`, solo administrador): listado de eventos (código, nombre, estado, fecha) por país, departamento y ciudad de realización, filtros encadenados con el conteo de eventos de cada nivel, gráficas por país y departamento, ranking de ciudades y resumen de cobertura.
 - ✅ Reporte de reservas y operación con datos reales (`/api/reportes/operacion?anio=2026` o `?anio=todos`, solo administrador): historial de reservas por cliente (selector, buscador y ficha del cliente), reservas canceladas con causa, fecha y **quién canceló** (`RESERVA.cancelada_por`), cancelaciones **parciales** de entradas (tabla `CANCELACION_ENTRADAS`), eventos cancelados con su causa y reservas afectadas, resumen operativo y actividad reciente (`migracion_08.sql`).
-- 🟡 «Mi perfil» del administrador (`perfilAdmin()` en `frontend/js/models/reporteModel.js`) todavía usa **datos de ejemplo** (tarea 13).
+- ✅ «Mi perfil» conectado a la BD (`/api/auth/perfil`) para cliente, agente y administrador: cada usuario edita sus propios datos (nombre, correo, fecha de nacimiento, dirección, 1 a 3 teléfonos, país → departamento → ciudad y los campos de su rol que le corresponden), cambia su contraseña pidiendo la actual, el cliente activa o desactiva la publicidad y el agente ve sus eventos y reservas reales. Puntos, comisión, plan, salario y horario solo los cambia el administrador desde Usuarios. El perfil del admin ya no usa datos de ejemplo.
 
 ## Convenciones
 
