@@ -3,7 +3,7 @@
 // Sprint 3 · Tarea 13: los datos personales, de agente y sus números (eventos
 // y reservas) salen de la BD (GET /api/auth/perfil). "Editar perfil",
 // "Editar información" y "Cambiar contraseña" guardan en la BD.
-// El cambio de plan y la facturación siguen simulados hasta la tarea 14.
+
 
 import { iniciarPanel } from "../comun/panelController.js";
 import {

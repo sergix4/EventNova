@@ -302,7 +302,7 @@ formulario.addEventListener("submit", async (e) => {
       });
       const plan = planes.find((p) => p.id_plan === planSeleccionado);
       mostrarToast("Cuenta de Agente creada correctamente.", {
-        detalle: `Plan ${plan.nombre} seleccionado correctamente.`,
+        detalle: `${plan.nombre} seleccionado correctamente.`,
         duracion: 0,
       });
       setTimeout(() => {

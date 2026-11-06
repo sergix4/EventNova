@@ -3,7 +3,7 @@
 // planes disponibles, facturación y seguridad.
 // Sprint 3 · Tarea 13: los datos personales y de agente salen de la BD; la
 // ventana de edición y la de contraseña son las compartidas (componentes/formPerfil.js).
-// El plan, los planes y la facturación siguen con la lista fija PLANES (tarea 14).
+
 
 import { icono } from "../componentes/iconos.js";
 import {
@@ -37,11 +37,11 @@ function botonEditar(accion, texto) {
 export const PerfilAgenteView = {
   /**
    * @param perfil      perfil de GET /api/auth/perfil (rol agente)
-   * @param planes      lista fija PLANES (tarea 14 la pasará a la BD)
-   * @param planActual  clave del plan del agente ('basico' | 'profesional' | 'empresa')
+   * @param planes      planes de la BD (PlanModel.tarjetas() → GET /api/planes)
+   * @param planActual  id_plan del agente
    */
   mostrar({ perfil, planes, planActual }) {
-    const plan = planes.find((p) => p.clave === planActual);
+    const plan = planes.find((p) => p.id_plan === planActual);
     const agente = perfil.agente;
     const est = agente.estadisticas || {};
     const u = perfil.ubicacion;
@@ -77,7 +77,7 @@ export const PerfilAgenteView = {
         ${fila("Eventos activos", num(est.eventos_activos ?? 0))}
         ${fila("Reservas recibidas", `${num(est.reservas_recibidas ?? 0)} (${num(est.entradas_vendidas ?? 0)} entradas)`)}
         ${fila("Agente desde", fechaLarga(perfil.fecha_registro))}
-        <p class="campo__ayuda" style="margin-top:8px">La comisión y el plan los gestiona el administrador.</p>`,
+        <p class="campo__ayuda" style="margin-top:8px">La comisión la gestiona el administrador.</p>`,
         botonEditar("editar-agente", "Editar información"),
       )}
  
@@ -116,7 +116,7 @@ export const PerfilAgenteView = {
         <div class="planes-perfil">
           ${planes
             .map((p) => {
-              const actual = p.clave === planActual;
+              const actual = p.id_plan === planActual;
               return `
               <div class="plan-perfil${actual ? " plan-perfil--actual" : ""}">
                 ${p.recomendado ? `<span class="plan-perfil__recomendado">${icono("estrella", 14, { relleno: "currentColor", grosor: 0 })}Recomendado</span>` : ""}
@@ -127,7 +127,7 @@ export const PerfilAgenteView = {
                 ${
                   actual
                     ? '<button type="button" class="plan-perfil__boton plan-perfil__boton--actual" disabled>Plan actual</button>'
-                    : `<button type="button" class="plan-perfil__boton" data-elegir-plan="${p.clave}">Elegir plan</button>`
+                    : `<button type="button" class="plan-perfil__boton" data-elegir-plan="${p.id_plan}">Elegir plan</button>`
                 }
               </div>`;
             })
@@ -182,7 +182,7 @@ export const PerfilAgenteView = {
       )}`;
   },
 
-  // ─── Ventanas del plan (simuladas hasta la tarea 14) ──────────────────────
+  // ─── Ventanas del plan ──────────────────────
   modalPlan(plan) {
     return `
       <div class="confirmacion">
