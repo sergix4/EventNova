@@ -26,10 +26,9 @@ function filaAlternar(id, etiqueta, descripcion, activo) {
 
 export const PerfilClienteView = {
   /**
-   * @param p             perfil de GET /api/auth/perfil
-   * @param preferencias  { correo, reservas } (solo en pantalla; la de publicidad sí está en la BD)
+   * @param p  perfil de GET /api/auth/perfil
    */
-  mostrar(p, preferencias) {
+  mostrar(p) {
     document.getElementById("perfil").innerHTML = `
       <section class="tarjeta tarjeta-perfil">
         <div class="tarjeta-perfil__avatar">
@@ -68,8 +67,6 @@ export const PerfilClienteView = {
       <section class="tarjeta seccion-perfil">
         <div class="seccion-perfil__cabecera"><h2 class="titulo-acento titulo-acento--coral">Preferencias</h2></div>
         ${filaAlternar("publicidad", "Publicidad personalizada", "Recibe sugerencias de eventos según tus intereses.", p.cliente.visualizar_publicidad)}
-        ${filaAlternar("correo", "Notificaciones por correo", "Recibe confirmaciones y actualizaciones de tus reservas.", preferencias.correo)}
-        ${filaAlternar("reservas", "Notificaciones de reservas", "Alertas cuando el estado de tu reserva cambie.", preferencias.reservas)}
       </section>
  
       <section class="tarjeta seccion-perfil">

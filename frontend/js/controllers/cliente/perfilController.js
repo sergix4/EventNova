@@ -15,11 +15,9 @@ import { PerfilModel } from "../../models/perfilModel.js";
 import { PerfilClienteView } from "../../views/cliente/perfilClienteView.js";
 import { mostrarToast } from "../../views/componentes/toast.js";
 
-// Estas dos todavía no tienen columna en la BD: solo cambian en pantalla
-const preferencias = { correo: true, reservas: true };
 let perfil = null;
 
-const dibujar = () => PerfilClienteView.mostrar(perfil, preferencias);
+const dibujar = () => PerfilClienteView.mostrar(perfil);
 
 // "Publicidad personalizada" = CLIENTE.visualizar_publicidad
 async function cambiarPublicidad(boton) {
@@ -56,13 +54,9 @@ async function iniciar() {
   dibujar();
 
   document.getElementById("perfil").addEventListener("click", (e) => {
-    const interruptor = e.target.closest("[data-preferencia]");
-    if (interruptor) {
-      const clave = interruptor.dataset.preferencia;
-      if (clave === "publicidad") return cambiarPublicidad(interruptor);
-      preferencias[clave] = !preferencias[clave];
-      return PerfilClienteView.marcarPreferencia(clave, preferencias[clave]);
-    }
+    // El único interruptor que queda es "Publicidad personalizada" (está en la BD)
+    const interruptor = e.target.closest('[data-preferencia="publicidad"]');
+    if (interruptor) return cambiarPublicidad(interruptor);
 
     const accion = e.target.closest("[data-accion]")?.dataset.accion;
     if (accion === "editar") {
