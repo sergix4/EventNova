@@ -11,11 +11,9 @@ import {
 import { PerfilModel } from "../../models/perfilModel.js";
 import { PerfilAdminView } from "../../views/admin/perfilAdminView.js";
 
-// Los interruptores de notificaciones todavía no tienen columna en la BD
-const preferencias = { sistema: true, reportes: true, actividad: false };
 let perfil = null;
 
-const dibujar = () => PerfilAdminView.mostrar({ perfil, preferencias });
+const dibujar = () => PerfilAdminView.mostrar({ perfil });
 
 function editar(enfocar = "pf-nombre") {
   editarPerfil(perfil, {
@@ -50,12 +48,6 @@ async function iniciar() {
     if (boton && ACCIONES[boton.dataset.accion])
       return ACCIONES[boton.dataset.accion]();
 
-    const interruptor = e.target.closest("[data-preferencia]");
-    if (interruptor) {
-      preferencias[interruptor.dataset.preferencia] =
-        !preferencias[interruptor.dataset.preferencia];
-      PerfilAdminView.marcarPreferencias(preferencias);
-    }
   });
 }
 

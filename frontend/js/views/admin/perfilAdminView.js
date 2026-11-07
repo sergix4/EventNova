@@ -14,26 +14,7 @@ import {
   fechaHora,
 } from "../../utils/formato.js";
 
-const PREFERENCIAS = [
-  {
-    id: "sistema",
-    icono: "campana",
-    titulo: "Recibir notificaciones del sistema",
-    sub: "Alertas generales de la plataforma",
-  },
-  {
-    id: "reportes",
-    icono: "actividad",
-    titulo: "Recibir alertas de reportes",
-    sub: "Notificaciones sobre reportes y estadísticas",
-  },
-  {
-    id: "actividad",
-    icono: "campana",
-    titulo: "Recibir alertas de actividad",
-    sub: "Actividad de usuarios, eventos y reservas",
-  },
-];
+
 
 function tarjeta(titulo, subtitulo, cuerpo, accion = "") {
   return `
@@ -62,10 +43,9 @@ function opcionSeguridad(accion, ic, titulo, sub, color, fondo, boton) {
 
 export const PerfilAdminView = {
   /**
-   * @param perfil        perfil de GET /api/auth/perfil (rol administrador)
-   * @param preferencias  interruptores (solo en pantalla; no tienen columna en la BD)
-   */
-  mostrar({ perfil, preferencias }) {
+      * @param perfil  perfil de GET /api/auth/perfil (rol administrador)
+      */
+     mostrar({ perfil }) {
     const admin = perfil.administrador;
     const contenido = document.getElementById("contenido");
     contenido.classList.add("panel__contenido--medio");
@@ -149,43 +129,9 @@ export const PerfilAdminView = {
         </div>`,
       )}
  
-      ${tarjeta(
-        "Preferencias",
-        "Configura las notificaciones y el idioma del panel",
-        `
-        <div class="opciones-admin opciones-admin--holgadas" id="preferencias">
-          ${PREFERENCIAS.map(
-            (p) => `
-          <div class="opcion-admin">
-            <div class="opcion-admin__izq">
-              <div class="opcion-admin__icono opcion-admin__icono--chico" data-icono-pref="${p.id}">${icono(p.icono, 16)}</div>
-              <div><strong id="etq-${p.id}">${p.titulo}</strong><small>${p.sub}</small></div>
-            </div>
-            <button type="button" class="interruptor" role="switch" aria-checked="${preferencias[p.id]}" aria-labelledby="etq-${p.id}" data-preferencia="${p.id}"></button>
-          </div>`,
-          ).join("")}
-          <div class="opcion-admin opcion-admin--fija">
-            <div class="opcion-admin__izq">
-              <div class="opcion-admin__icono opcion-admin__icono--chico" style="--fondo-icono:#eef2ff;--color-icono:#4f46e5">${icono("globo", 16)}</div>
-              <div><strong>Idioma del panel</strong><small>Selecciona el idioma de la interfaz</small></div>
-            </div>
-            <div class="envoltura-select"><select class="selector selector--cabecera" id="idioma" aria-label="Idioma del panel"><option>Español</option><option>English</option><option>Português</option></select></div>
-          </div>
-        </div>`,
-      )}
-      <div class="espacio-final"></div>`;
-    this.marcarPreferencias(preferencias);
-  },
 
-  marcarPreferencias(preferencias) {
-    Object.entries(preferencias).forEach(([id, activo]) => {
-      document
-        .querySelector(`[data-preferencia="${id}"]`)
-        .setAttribute("aria-checked", String(activo));
-      const caja = document.querySelector(`[data-icono-pref="${id}"]`);
-      caja.style.setProperty("--fondo-icono", activo ? "#eef2ff" : "#f3f4f6");
-      caja.style.setProperty("--color-icono", activo ? "#4f46e5" : "#9ca3af");
-    });
+      <div class="espacio-final"></div>`;
+
   },
 
   mostrarError(mensaje) {
