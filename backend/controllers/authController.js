@@ -316,7 +316,10 @@ const authController = {
   },
 
   logout(req, res) {
-    req.session.destroy(() => res.json({ mensaje: "Sesión cerrada" }));
+    req.session.destroy(() => {
+      res.clearCookie("eventnova.sid"); // Tarea 16: también se borra la cookie del navegador
+      res.json({ mensaje: "Sesión cerrada" });
+    });
   },
 };
 

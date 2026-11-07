@@ -117,7 +117,11 @@ async function prepararDatos(actual, body) {
       String(
         tomar(body.descripcion_agente, actual.agente.descripcion_agente) || "",
       ).trim() || null;
-    const comision = Number(tomar(body.comision, actual.agente.comision));
+    // Tarea 16: vacío NO cuenta como 0 (Number("") da 0)
+    const comTexto = tomar(body.comision, actual.agente.comision);
+    const comision =
+      comTexto === "" || comTexto === null ? NaN : Number(comTexto);
+
     // Sprint 3 · Corrección tarea 13: un campo vacío ya NO se guarda como 0
     // (Number("") da 0). Vacío o null → NaN → la validación de abajo lo rechaza.
     const expTexto = tomar(body.experiencia, actual.agente.experiencia);
@@ -130,6 +134,10 @@ async function prepararDatos(actual, body) {
       return {
         error:
           "El nombre de la empresa es obligatorio (máximo 150 caracteres).",
+      };
+    if (descripcion && descripcion.length > 500)
+      return {
+        error: "La descripción del negocio no puede superar 500 caracteres.",
       };
     if (Number.isNaN(comision) || comision < 0 || comision > 100)
       return { error: "La comisión debe ser un porcentaje entre 0 y 100." };
@@ -163,12 +171,18 @@ async function prepararDatos(actual, body) {
   }
 
   if (actual.rol === "administrador") {
-    const salario = Number(tomar(body.salario, actual.administrador.salario));
+    const salTexto = tomar(body.salario, actual.administrador.salario);
+    const salario =
+      salTexto === "" || salTexto === null ? NaN : Number(salTexto);
+
     const horario = String(
       tomar(body.horario, actual.administrador.horario) || "",
     ).trim();
-    if (Number.isNaN(salario) || salario < 0)
-      return { error: "El salario debe ser un número mayor o igual a 0." };
+    if (Number.isNaN(salario) || salario < 0 || salario > 9999999999)
+      return {
+        error: "El salario debe ser un número entre 0 y 9.999.999.999.",
+      };
+
     if (!horario || horario.length > 100)
       return { error: "El horario es obligatorio (máximo 100 caracteres)." };
     Object.assign(datos, { salario, horario });
