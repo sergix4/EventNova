@@ -12,6 +12,11 @@ import { mostrarToast } from "../../views/componentes/toast.js";
 // Reglas de negocio (las mismas que valida el backend en eventoController.js)
 const DURACION_MINIMA_MS = 60 * 60 * 1000; // 1 hora
 const ANTICIPACION_MINIMA_MS = 24 * 60 * 60 * 1000; // 24 horas
+// Tarea 16: topes (los mismos de eventoController.js en el backend)
+const CAPACIDAD_MAXIMA = 100000;
+const PRECIO_MAXIMO = 99999999;
+const TIPOS_IMAGEN = ["image/png", "image/jpeg", "image/webp", "image/gif"];
+
 // A qué estados se puede pasar a mano desde cada estado (En Vivo y Finalizado son automáticos)
 const TRANSICIONES_MANUALES = {
   Programado: ["En Boletería", "Cancelado"],
@@ -231,12 +236,17 @@ export async function montarFormulario(
   if (zona && input) {
     const leer = (archivo) => {
       if (!archivo) return;
-      if (archivo.size > 2 * 1024 * 1024) {
-        mostrarToast("La imagen no puede pesar más de 2 MB.", {
-          tipo: "error",
+      if (!TIPOS_IMAGEN.includes(archivo.type)) {
+        mostrarToast("Solo se permiten imágenes PNG, JPG, WEBP o GIF.", {
+          error: true,
         });
         return;
       }
+      if (archivo.size > 2 * 1024 * 1024) {
+        mostrarToast("La imagen no puede pesar más de 2 MB.", { error: true });
+        return;
+      }
+
       const lector = new FileReader();
       lector.onload = (ev) => {
         imagenDataUrl = ev.target.result;
@@ -307,17 +317,19 @@ export async function montarFormulario(
         errores[c] = "Este campo es obligatorio.";
     });
 
+    const capacidadNum = Number(valores.capacidad);
     if (
       valores.capacidad &&
-      (!Number.isInteger(Number(valores.capacidad)) ||
-        Number(valores.capacidad) < 1)
+      (!Number.isInteger(capacidadNum) ||
+        capacidadNum < 1 ||
+        capacidadNum > CAPACIDAD_MAXIMA)
     ) {
-      errores.capacidad = "La capacidad debe ser un entero mayor a 0.";
+      errores.capacidad = "La capacidad debe ser un entero entre 1 y 100.000.";
     }
 
     const precioNum = limpiarPrecio(valores.precio);
-    if (Number.isNaN(precioNum) || precioNum < 0) {
-      errores.precio = "Ingresa un precio válido.";
+    if (Number.isNaN(precioNum) || precioNum < 0 || precioNum > PRECIO_MAXIMO) {
+      errores.precio = "Ingresa un precio válido (máximo $ 99.999.999).";
     }
 
     const fechaInicioISO =
