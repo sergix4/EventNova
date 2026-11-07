@@ -7,9 +7,14 @@ const bcrypt = require("bcryptjs");
 const UsuarioModel = require("../models/usuarioModel");
 const PlanModel = require("../models/planModel");
 const CiudadModel = require("../models/ciudadModel");
+const { texto } = require("../utils/texto");
 
 const TELEFONO_VALIDO = /^\+?[\d\s-]{7,20}$/;
 const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Tarea 16: las mismas reglas que usa personaController (CRUD de administradores)
+const NUMERO_ID_VALIDO = /^[A-Za-z0-9-]{5,20}$/;
+const MIN_CONTRASENA = 8;
+const MAX_CONTRASENA = 72; // bcrypt solo tiene en cuenta los primeros 72 caracteres
 
 // Valida ciudad (obligatoria y existente) y teléfonos. Devuelve { error } o { idCiudad, tel, tel2 }
 async function validarCiudadYTelefono({ id_ciudad, telefono, telefono2 }) {
@@ -19,12 +24,12 @@ async function validarCiudadYTelefono({ id_ciudad, telefono, telefono2 }) {
   if (!(await CiudadModel.getById(idCiudad)))
     return { error: "La ciudad seleccionada no existe." };
 
-  const tel = (telefono || "").trim();
+  const tel = texto(telefono);
   if (!TELEFONO_VALIDO.test(tel))
     return { error: "Ingresa un teléfono válido." };
 
   // Teléfono alternativo: es opcional, pero si viene debe ser válido y distinto al principal
-  const tel2 = (telefono2 || "").trim();
+  const tel2 = texto(telefono2);
   if (tel2 && !TELEFONO_VALIDO.test(tel2))
     return { error: "El teléfono alternativo no es válido." };
   if (tel2 && tel2 === tel)
@@ -62,10 +67,56 @@ function validarDatosAgente({ comision, experiencia }) {
   return { com, exp };
 }
 
+// Tarea 16: valida los datos comunes del registro (cliente y agente).
+// Devuelve { error } o { datos } ya limpios. Los largos son los de develop.sql.
+function validarDatosRegistro(body) {
+  const identificacion = texto(body.identificacion);
+  const nombre = texto(body.nombre);
+  const correo = texto(body.correo).toLowerCase();
+  const password = typeof body.password === "string" ? body.password : "";
+  const direccion = texto(body.direccion) || null;
+
+  if (!identificacion || !nombre || !correo || !password)
+    return {
+      error: "Identificación, nombre, correo y contraseña son obligatorios.",
+    };
+  if (!NUMERO_ID_VALIDO.test(identificacion))
+    return {
+      error:
+        "La identificación debe tener entre 5 y 20 caracteres (letras, números o guiones).",
+    };
+  if (nombre.length > 100)
+    return { error: "El nombre no puede superar 100 caracteres." };
+  if (!CORREO_VALIDO.test(correo) || correo.length > 150)
+    return { error: "El correo no tiene un formato válido." };
+  if (password.length < MIN_CONTRASENA || password.length > MAX_CONTRASENA)
+    return {
+      error: `La contraseña debe tener entre ${MIN_CONTRASENA} y ${MAX_CONTRASENA} caracteres.`,
+    };
+  if (direccion && direccion.length > 255)
+    return { error: "La dirección no puede superar 255 caracteres." };
+
+  return { datos: { identificacion, nombre, correo, password, direccion } };
+}
+
+// Tarea 16: crea una sesión NUEVA (con otro id de cookie) y guarda el usuario.
+// Así, si alguien le "plantó" una cookie al usuario antes del login, esa
+// cookie vieja no queda con la sesión iniciada (ataque de fijación de sesión).
+function iniciarSesion(req, usuario) {
+  return new Promise((resolve, reject) => {
+    req.session.regenerate((err) => {
+      if (err) return reject(err);
+      req.session.usuario = usuario;
+      resolve();
+    });
+  });
+}
+
 const authController = {
   async login(req, res) {
-    const { contraseña } = req.body;
-    const correo = (req.body.correo || "").trim().toLowerCase();
+    const contraseña =
+      typeof req.body.contraseña === "string" ? req.body.contraseña : "";
+    const correo = texto(req.body.correo).toLowerCase();
 
     if (!correo || !contraseña) {
       return res
@@ -91,7 +142,8 @@ const authController = {
       }
 
       // Nunca guardar la contraseña en la sesión
-      req.session.usuario = {
+      // Tarea 16: se crea una sesión nueva al iniciar sesión
+      await iniciarSesion(req, {
         numero_id: usuario.numero_id,
         correo: usuario.correo,
         nombre: usuario.nombre,
@@ -103,7 +155,7 @@ const authController = {
         rol: usuario.rol,
         agente: usuario.agente,
         inicio_sesion: new Date().toISOString(), // Tarea 13: «Sesión iniciada» en Mi perfil
-      };
+      });
 
       return res.json({
         mensaje: "Inicio de sesión exitoso",
@@ -116,48 +168,20 @@ const authController = {
   },
 
   async register(req, res) {
-    // CAMBIO 1: ahora también leemos id_ciudad, telefono y publicidad del body
-
-    const {
-      identificacion,
-      nombre,
-      password,
-      direccion,
-      id_ciudad,
-      telefono,
-      telefono2,
-      publicidad,
-    } = req.body;
-    const correo = (req.body.correo || "").trim().toLowerCase();
-
-    if (!identificacion || !nombre || !correo || !password) {
-      return res.status(400).json({
-        error: "Identificación, nombre, correo y contraseña son obligatorios.",
-      });
-    }
-    if (!CORREO_VALIDO.test(correo)) {
-      return res
-        .status(400)
-        .json({ error: "El correo no tiene un formato válido." });
-    }
-    if (password.length < 8) {
-      return res
-        .status(400)
-        .json({ error: "La contraseña debe tener al menos 8 caracteres." });
-    }
+    // Tarea 16: validación común (tipos, formatos y largos máximos)
+    const validacion = validarDatosRegistro(req.body);
+    if (validacion.error)
+      return res.status(400).json({ error: validacion.error });
+    const datos = validacion.datos;
 
     try {
-      // CAMBIO 2: validar ciudad y teléfono ANTES de tocar la BD
-      const ub = await validarCiudadYTelefono({
-        id_ciudad,
-        telefono,
-        telefono2,
-      });
+      // Ciudad y teléfono ANTES de tocar la BD
+      const ub = await validarCiudadYTelefono(req.body);
       if (ub.error) return res.status(400).json({ error: ub.error });
 
       const yaExiste = await UsuarioModel.existsByEmailOrId(
-        correo,
-        identificacion,
+        datos.correo,
+        datos.identificacion,
       );
       if (yaExiste) {
         return res.status(409).json({
@@ -166,94 +190,74 @@ const authController = {
         });
       }
 
-      const contraseñaHash = await bcrypt.hash(password, 10);
+      const contraseñaHash = await bcrypt.hash(datos.password, 10);
 
-      // CAMBIO 3: pasar los datos nuevos al Modelo
       const usuario = await UsuarioModel.createCliente({
-        numero_id: identificacion,
-        correo,
-        nombre,
+        numero_id: datos.identificacion,
+        correo: datos.correo,
+        nombre: datos.nombre,
         contraseñaHash,
-        direccion,
+        direccion: datos.direccion,
         id_ciudad: ub.idCiudad,
         telefono: ub.tel,
         telefono2: ub.tel2,
-        visualizar_publicidad: publicidad !== false,
+        visualizar_publicidad: req.body.publicidad !== false,
       });
 
-      req.session.usuario = usuario; // registro con auto-login
+      await iniciarSesion(req, usuario); // registro con auto-login (sesión nueva)
       return res
         .status(201)
         .json({ mensaje: "Cuenta creada correctamente", usuario });
     } catch (error) {
+      if (error.code === "23505") {
+        // dos registros iguales al mismo tiempo (correo o identificación repetidos)
+        return res.status(409).json({
+          error:
+            "Ya existe una cuenta con ese correo o número de identificación.",
+        });
+      }
       console.error("Error en registro:", error);
       return res.status(500).json({ error: "Error interno del servidor." });
     }
   },
 
   async registerAgente(req, res) {
-    // CAMBIO 1: ahora también leemos id_ciudad y telefono (SIN publicidad)
-    const {
-      identificacion,
-      nombre,
-      password,
-      direccion,
-      id_ciudad,
-      telefono,
-      telefono2,
-      empresa,
-      descripcionNegocio,
-      id_plan, // Sprint 3 · Tarea 14: el plan llega por su id de TIPO_PLAN
-      comision,
-      experiencia,
-    } = req.body;
-    const correo = (req.body.correo || "").trim().toLowerCase();
+    // Tarea 16: misma validación común que el cliente + los datos del agente
+    const validacion = validarDatosRegistro(req.body);
+    if (validacion.error)
+      return res.status(400).json({ error: validacion.error });
+    const datos = validacion.datos;
 
-    if (
-      !identificacion ||
-      !nombre ||
-      !correo ||
-      !password ||
-      !empresa ||
-      !id_plan
-    ) {
+    const empresa = texto(req.body.empresa);
+    const descripcion = texto(req.body.descripcionNegocio) || null;
+    if (!empresa || empresa.length > 150) {
       return res.status(400).json({
         error:
-          "Identificación, nombre, correo, contraseña, empresa y plan son obligatorios.",
+          "El nombre de la empresa es obligatorio (máximo 150 caracteres).",
       });
     }
-    if (!CORREO_VALIDO.test(correo)) {
-      return res
-        .status(400)
-        .json({ error: "El correo no tiene un formato válido." });
+    if (descripcion && descripcion.length > 500) {
+      return res.status(400).json({
+        error: "La descripción del negocio no puede superar 500 caracteres.",
+      });
     }
-    if (password.length < 8) {
-      return res
-        .status(400)
-        .json({ error: "La contraseña debe tener al menos 8 caracteres." });
-    }
-    const idPlan = Number(id_plan);
+    const idPlan = Number(req.body.id_plan); // Tarea 14: el plan llega por su id de TIPO_PLAN
     if (!Number.isInteger(idPlan) || idPlan <= 0) {
       return res
         .status(400)
-        .json({ error: "El plan seleccionado no es válido." });
+        .json({ error: "Debes seleccionar un plan válido." });
     }
-    const datosAgente = validarDatosAgente({ comision, experiencia });
+    const datosAgente = validarDatosAgente(req.body);
     if (datosAgente.error)
       return res.status(400).json({ error: datosAgente.error });
 
     try {
-      // CAMBIO 2: validar ciudad y teléfono ANTES de tocar la BD
-      const ub = await validarCiudadYTelefono({
-        id_ciudad,
-        telefono,
-        telefono2,
-      });
-      if (ub.error) return res.status(400).json({ error: ub.error }); // ← NUEVO
+      const ub = await validarCiudadYTelefono(req.body);
+      if (ub.error) return res.status(400).json({ error: ub.error });
 
       const yaExiste = await UsuarioModel.existsByEmailOrId(
-        correo,
-        identificacion,
+        datos.correo,
+        datos.identificacion,
       );
       if (yaExiste) {
         return res.status(409).json({
@@ -269,31 +273,36 @@ const authController = {
           .json({ error: "El plan seleccionado no existe." });
       }
 
-      const contraseñaHash = await bcrypt.hash(password, 10);
+      const contraseñaHash = await bcrypt.hash(datos.password, 10);
 
-      // CAMBIO 3: pasar los datos nuevos al Modelo
       const usuario = await UsuarioModel.createAgente({
-        numero_id: identificacion,
-        correo,
-        nombre,
+        numero_id: datos.identificacion,
+        correo: datos.correo,
+        nombre: datos.nombre,
         contraseñaHash,
-        direccion,
+        direccion: datos.direccion,
         id_ciudad: ub.idCiudad,
         telefono: ub.tel,
         telefono2: ub.tel2,
         id_plan: planDb.id_plan,
         nombre_plan: planDb.nombre_plan,
         nombre_empresa: empresa,
-        descripcion_agente: descripcionNegocio,
+        descripcion_agente: descripcion,
         comision: datosAgente.com,
         experiencia: datosAgente.exp,
       });
 
-      req.session.usuario = usuario; // registro con auto-login
+      await iniciarSesion(req, usuario); // registro con auto-login (sesión nueva)
       return res
         .status(201)
         .json({ mensaje: "Cuenta de agente creada correctamente", usuario });
     } catch (error) {
+      if (error.code === "23505") {
+        return res.status(409).json({
+          error:
+            "Ya existe una cuenta con ese correo o número de identificación.",
+        });
+      }
       console.error("Error en registro de agente:", error);
       return res.status(500).json({ error: "Error interno del servidor." });
     }
