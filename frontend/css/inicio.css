@@ -53,16 +53,7 @@
 .boton--hero { padding: 14px 24px; }
 .boton--primario.boton--hero { box-shadow: var(--sombra-md); }
 
-.prueba-social { display: flex; align-items: center; gap: 24px; padding-top: 8px; }
-.prueba-social__avatares { display: flex; }
-.prueba-social__avatares span {
-  width: 36px; height: 36px; border-radius: 50%; border: 2px solid #fff; margin-left: -8px;
-  background: var(--color); color: #fff; font-size: 12px; line-height: 16px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-}
-.prueba-social__avatares span:first-child { margin-left: 0; }
-.prueba-social__estrellas { display: flex; gap: 4px; color: #f59e0b; }
-.prueba-social__texto { font-size: 12px; line-height: 16px; color: var(--gris-500); margin-top: 2px; }
+
 
 .hero__visual { 
   position: relative; 

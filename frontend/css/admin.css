@@ -64,13 +64,12 @@
 .tendencia--sube { background: var(--verde-suave); color: var(--verde); }
 .tendencia--igual { background: var(--gris-100); color: var(--gris-500); }
 
-.calificaciones-admin__cabecera { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-.calificaciones-admin__icono { width: 36px; height: 36px; border-radius: var(--radio); background: #fffbeb; display: flex; align-items: center; justify-content: center; }
+
+
 .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .cuadro-cifra { border-radius: var(--radio); padding: 16px; display: flex; flex-direction: column; justify-content: center; }
 .cuadro-cifra strong { font-size: 30px; line-height: 36px; font-weight: 800; letter-spacing: -0.02em; color: var(--gris-900); }
 .cuadro-cifra small { display: block; font-size: 12px; line-height: 16px; font-weight: 500; color: var(--gris-500); margin-top: 4px; }
-.cuadro-cifra .estrellas { margin-top: 4px; }
 .ranking__titulo { font-size: 12px; line-height: 16px; font-weight: 600; color: var(--gris-500); text-transform: uppercase; letter-spacing: 0.04em; margin: 24px 0 12px; }
 .ranking { display: flex; flex-direction: column; gap: 8px; }
 .ranking > div { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: var(--radio); transition: background var(--transicion); }
@@ -252,7 +251,6 @@
 .tabla--mini td { color: var(--gris-600); }
 .tarjeta-grafica__cabecera .leyenda { flex-wrap: nowrap; flex-shrink: 0; }
 .kpi-admin__tendencia--sube { }
-.calificaciones-admin__icono { color: #f59e0b; }
 .celda-icono { display: flex; align-items: center; gap: 10px; }
 .celda-icono strong { font-size: 14px; line-height: 20px; font-weight: 600; color: var(--gris-800); }
 .texto-negrita { font-weight: 700; color: var(--gris-900) !important; }

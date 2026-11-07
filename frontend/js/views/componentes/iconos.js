@@ -88,12 +88,4 @@ export function icono(nombre, tamano = 16, opciones = {}) {
   return `<svg class="${clase}" width="${tamano}" height="${tamano}" viewBox="0 0 24 24" fill="${relleno}" stroke="currentColor" stroke-width="${grosor}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${trazo}</svg>`
 }
 
-/** Fila de 5 estrellas (llenas hasta "valor"). */
-export function estrellas(valor, tamano = 14, colorVacia = '#e5e7eb') {
-  let html = '<span class="estrellas">'
-  for (let i = 1; i <= 5; i++) {
-    const llena = i <= Math.round(valor)
-    html += `<svg width="${tamano}" height="${tamano}" viewBox="0 0 24 24" fill="${llena ? '#f59e0b' : 'none'}" stroke="${llena ? '#f59e0b' : colorVacia}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${TRAZOS.estrella}</svg>`
-  }
-  return html + '</span>'
-}
+

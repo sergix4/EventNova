@@ -437,8 +437,7 @@ main:focus { outline: none; }
 .vacio__titulo { font-weight: 600; color: var(--gris-700); margin-bottom: 4px; }
 .vacio__texto { font-size: 14px; line-height: 20px; color: var(--gris-400); margin-bottom: 16px; }
 
-/* Fila de estrellas de calificación */
-.estrellas { display: inline-flex; align-items: center; gap: 2px; }
+
 .tarjeta--relleno { padding: 24px; }
 .titulo-acento--coral { --acento: var(--coral); }
 .campo--holgado { gap: 8px; }
