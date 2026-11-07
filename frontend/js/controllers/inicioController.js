@@ -46,7 +46,6 @@ function iniciarMenuMovil() {
 }
 
 function iniciar() {
-  InicioView.mostrarEstrellas(document.getElementById('estrellas-hero'))
   iniciarMenuMovil()
   cargarEventos()
 }

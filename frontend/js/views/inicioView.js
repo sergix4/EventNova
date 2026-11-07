@@ -48,8 +48,4 @@ export const InicioView = {
     contenedor.setAttribute('aria-busy', 'false')
   },
 
-  /** Estrellas de la prueba social */
-  mostrarEstrellas(contenedor) {
-    contenedor.innerHTML = icono('estrella', 16).repeat(5)
-  },
 }
