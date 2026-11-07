@@ -74,3 +74,26 @@ export function fechaHora(iso) {
         timeStyle: "short",
       });
 }
+
+/** Tarea 15: tiempo transcurrido para la campana → "Hace 5 min", "Ayer", "3 nov 2026" */
+export function haceCuanto(fecha) {
+  const d = fecha instanceof Date ? fecha : new Date(fecha);
+  if (Number.isNaN(d.getTime())) return "";
+  const minutos = Math.floor((Date.now() - d.getTime()) / 60000);
+  if (minutos < 1) return "Justo ahora";
+  if (minutos < 60) return `Hace ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `Hace ${horas} h`;
+  const dias = Math.floor(horas / 24);
+  if (dias === 1) return "Ayer";
+  if (dias < 7) return `Hace ${dias} días`;
+  return capitalizarMes(
+    d
+      .toLocaleDateString("es-CO", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
+      .replace(".", ""),
+  );
+}

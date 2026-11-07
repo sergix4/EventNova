@@ -5,19 +5,23 @@
 //   - Conecta "Cerrar sesión", el menú en celulares y la campana del cliente.
 
 import { AuthModel } from "../../models/authModel.js";
+import { ReservaModel } from "../../models/reservaModel.js";
 import {
   barraCliente,
   barraAgente,
   barraAdmin,
   panelNotificaciones,
 } from "../../views/componentes/panel.js";
-import { iniciales } from "../../utils/formato.js";
+import { iniciales, haceCuanto } from "../../utils/formato.js";
 
 const BARRAS = {
   cliente: barraCliente,
   agente: barraAgente,
   administrador: barraAdmin,
 };
+
+// Usuario con sesión (lo guarda iniciarPanel; la campana lo usa para su clave)
+let usuarioActual = null;
 
 const PAGINA_INICIO_POR_ROL = {
   cliente: "/pages/cliente/inicio.html",
@@ -46,6 +50,7 @@ export async function iniciarPanel({ rol, activo, requiereSesion = true }) {
   }
 
   const usuarioDelRol = usuario && usuario.rol === rol ? usuario : null;
+  usuarioActual = usuarioDelRol;
   dibujarBarra(rol, activo, usuarioDelRol);
 
   conectarCerrarSesion();
@@ -92,38 +97,54 @@ function conectarMenuMovil() {
     );
 }
 
-// ─── Campana de notificaciones del cliente ──────────────────────────────────
-const NOTIFICACIONES = [
-  {
-    emoji: "✅",
-    texto: "Tu reserva para Festival de Música Urbana fue confirmada.",
-    tiempo: "Hace 2 horas",
-  },
-  {
-    emoji: "⏳",
-    texto: "Tu reserva para Noche de Comedia Stand-Up está pendiente.",
-    tiempo: "Hace 5 horas",
-  },
-  {
-    emoji: "📢",
-    texto: "Un evento que reservaste tiene una actualización.",
-    tiempo: "Ayer",
-  },
-];
+// ─── Campana de notificaciones del cliente (Sprint 3 · Tarea 15) ───────────
+// Las notificaciones salen de las reservas REALES del cliente (GET /api/reservas).
+// "Marcar todas como leídas" guarda en el navegador (localStorage) la fecha de
+// la más reciente; así el punto rojo no vuelve a salir al cambiar de página.
 
-export function iniciarNotificaciones() {
+const claveLeidas = () =>
+  `eventnova:notificaciones-leidas:${usuarioActual?.numero_id || "anonimo"}`;
+
+function leerUltimaLeida() {
+  try {
+    return Number(localStorage.getItem(claveLeidas())) || 0;
+  } catch {
+    return 0; // navegador sin localStorage: todas quedan como no leídas
+  }
+}
+
+function guardarUltimaLeida(ms) {
+  try {
+    localStorage.setItem(claveLeidas(), String(ms));
+  } catch {
+    /* si no se puede guardar, solo dura mientras esté abierta la página */
+  }
+}
+
+export async function iniciarNotificaciones() {
   const contenedor = document.querySelector(".notificaciones");
   if (!contenedor) return;
   const boton = contenedor.querySelector('[data-accion="notificaciones"]');
   const punto = contenedor.querySelector(".notificaciones__punto");
   const panel = contenedor.querySelector(".notificaciones__panel");
-  if (!panel) return;
-  let leidas = false;
+  if (!boton || !panel) return;
+
+  let avisos = [];
+  let error = "";
+  let ultimaLeida = leerUltimaLeida();
 
   const dibujar = () => {
-    panel.innerHTML = panelNotificaciones(NOTIFICACIONES, leidas);
+    const lista = avisos.map((a) => ({
+      ...a,
+      tiempo: haceCuanto(a.fecha),
+      leida: a.fecha.getTime() <= ultimaLeida,
+    }));
+    panel.innerHTML = panelNotificaciones(lista, error);
+    // El punto solo aparece si hay alguna notificación sin leer
+    if (punto) punto.hidden = !lista.some((n) => !n.leida);
   };
-  dibujar();
+
+  if (punto) punto.hidden = true; // no se muestra hasta saber si hay algo nuevo
 
   boton.addEventListener("click", (e) => {
     e.stopPropagation();
@@ -132,13 +153,22 @@ export function iniciarNotificaciones() {
   panel.addEventListener("click", (e) => {
     e.stopPropagation();
     if (e.target.closest('[data-accion="marcar-leidas"]')) {
-      leidas = true;
-      punto?.remove();
+      ultimaLeida = Math.max(
+        ...avisos.map((a) => a.fecha.getTime()),
+        ultimaLeida,
+      );
+      guardarUltimaLeida(ultimaLeida);
       dibujar();
-      panel.hidden = true;
     }
   });
   document.addEventListener("click", () => {
     panel.hidden = true;
   });
+
+  try {
+    avisos = await ReservaModel.notificacionesCliente();
+  } catch (err) {
+    error = err.message;
+  }
+  dibujar();
 }

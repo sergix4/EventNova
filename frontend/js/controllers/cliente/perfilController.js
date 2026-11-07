@@ -3,7 +3,10 @@
 // Sprint 3 · Tarea 13: los datos salen de la BD (GET /api/auth/perfil) y
 // "Editar", "Publicidad personalizada" y "Cambiar contraseña" guardan en la BD.
 
-import { iniciarPanel } from "../comun/panelController.js";
+import {
+  iniciarPanel,
+  iniciarNotificaciones,
+} from "../comun/panelController.js";
 import {
   editarPerfil,
   cambiarContrasena,
@@ -43,6 +46,7 @@ async function cambiarPublicidad(boton) {
 
 async function iniciar() {
   await iniciarPanel({ rol: "cliente", activo: "perfil" });
+  iniciarNotificaciones();
 
   try {
     perfil = await PerfilModel.obtener();

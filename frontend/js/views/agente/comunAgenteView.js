@@ -1,56 +1,79 @@
 // js/views/agente/comunAgenteView.js
 // Piezas de VISTA compartidas por las pantallas del agente.
 
-import { icono } from '../componentes/iconos.js'
-import { esc } from '../../utils/formato.js'
+import { icono } from "../componentes/iconos.js";
+import { esc } from "../../utils/formato.js";
 
 const CLASE_EVENTO = {
-  'Programado': 'ev-programado',
-  'En boletería': 'ev-boleteria', 'En Boletería': 'ev-boleteria',
-  'En vivo': 'ev-vivo', 'En Vivo': 'ev-vivo',
-  'Finalizado': 'ev-finalizado', 'Cancelado': 'ev-cancelado',
-}
-// 'Reservada' es el nombre real en la tabla ESTADO_RESERVA; 'Pendiente' queda por los datos de ejemplo
-const CLASE_RESERVA = { 'Reservada': 'res-pendiente', 'Pendiente': 'res-pendiente', 'Confirmada': 'res-confirmada', 'Cancelada': 'res-cancelada' }
+  Programado: "ev-programado",
+  "En boletería": "ev-boleteria",
+  "En Boletería": "ev-boleteria",
+  "En vivo": "ev-vivo",
+  "En Vivo": "ev-vivo",
+  Finalizado: "ev-finalizado",
+  Cancelado: "ev-cancelado",
+};
+// Nombres reales de la tabla ESTADO_RESERVA
+const CLASE_RESERVA = {
+  Reservada: "res-pendiente",
+  Confirmada: "res-confirmada",
+  Cancelada: "res-cancelada",
+};
 
 export function insigniaEvento(estado) {
-  return `<span class="insignia ${CLASE_EVENTO[estado] || 'ev-programado'}"><span class="insignia__punto"></span>${esc(estado)}</span>`
+  return `<span class="insignia ${CLASE_EVENTO[estado] || "ev-programado"}"><span class="insignia__punto"></span>${esc(estado)}</span>`;
 }
 export function insigniaReserva(estado) {
-  return `<span class="insignia ${CLASE_RESERVA[estado] || 'res-pendiente'}"><span class="insignia__punto"></span>${esc(estado)}</span>`
+  return `<span class="insignia ${CLASE_RESERVA[estado] || "res-pendiente"}"><span class="insignia__punto"></span>${esc(estado)}</span>`;
 }
 export function insigniaPago(estado) {
-  return `<span class="insignia pago--${estado.toLowerCase()}"><span class="insignia__punto"></span>${esc(estado)}</span>`
+  return `<span class="insignia pago--${estado.toLowerCase()}"><span class="insignia__punto"></span>${esc(estado)}</span>`;
 }
 
 /** Tarjeta KPI con ícono arriba e indicador de tendencia (Mis eventos) */
-export function kpiTendencia({ etiqueta, valor, icono: ic, color, fondo, tendencia, sube }) {
+export function kpiTendencia({
+  etiqueta,
+  valor,
+  icono: ic,
+  color,
+  fondo,
+  tendencia,
+  sube,
+}) {
   return `
     <article class="kpi" style="--color-icono:${color};--fondo-icono:${fondo}">
       <div class="kpi__superior">
         <div class="kpi__icono">${icono(ic, 20)}</div>
-        <span class="kpi__tendencia">${sube ? '↑' : '·'} ${esc(tendencia)}</span>
+        <span class="kpi__tendencia">${sube ? "↑" : "·"} ${esc(tendencia)}</span>
       </div>
       <div>
         <p class="kpi__valor">${esc(valor)}</p>
         <p class="kpi__etiqueta kpi__etiqueta--sm">${esc(etiqueta)}</p>
       </div>
-    </article>`
+    </article>`;
 }
 
 /** Tarjeta KPI horizontal (ícono a la izquierda) */
-export function kpiFila({ etiqueta, valor, icono: ic, color, fondo, medio = false, grande = true }) {
+export function kpiFila({
+  etiqueta,
+  valor,
+  icono: ic,
+  color,
+  fondo,
+  medio = false,
+  grande = true,
+}) {
   return `
     <article class="kpi kpi--fila" style="--color-icono:${color};--fondo-icono:${fondo}">
-      <div class="kpi__icono${grande ? ' kpi__icono--grande' : ''}">${icono(ic, 20)}</div>
+      <div class="kpi__icono${grande ? " kpi__icono--grande" : ""}">${icono(ic, 20)}</div>
       <div>
-        <p class="kpi__valor${medio ? ' kpi__valor--medio' : ''}">${esc(valor)}</p>
+        <p class="kpi__valor${medio ? " kpi__valor--medio" : ""}">${esc(valor)}</p>
         <p class="kpi__etiqueta">${esc(etiqueta)}</p>
       </div>
-    </article>`
+    </article>`;
 }
 
 /** Fila vacía de una tabla */
 export function filaVacia(columnas, texto) {
-  return `<tr><td colspan="${columnas}" class="tabla__vacia">${texto}</td></tr>`
+  return `<tr><td colspan="${columnas}" class="tabla__vacia">${texto}</td></tr>`;
 }
