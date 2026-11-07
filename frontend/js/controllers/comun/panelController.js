@@ -105,17 +105,23 @@ function conectarMenuMovil() {
 const claveLeidas = () =>
   `eventnova:notificaciones-leidas:${usuarioActual?.numero_id || "anonimo"}`;
 
-function leerUltimaLeida() {
+// Cada aviso se identifica por su reserva y su texto: si la reserva cambia de
+// estado (pendiente → confirmada), el texto cambia y el aviso vuelve a salir como nuevo.
+const idAviso = (a) => `${a.id_reserva}|${a.texto}`;
+
+function leerLeidas() {
   try {
-    return Number(localStorage.getItem(claveLeidas())) || 0;
+    const guardado = JSON.parse(localStorage.getItem(claveLeidas()) || "[]");
+    return new Set(Array.isArray(guardado) ? guardado : []);
   } catch {
-    return 0; // navegador sin localStorage: todas quedan como no leídas
+    return new Set(); // navegador sin localStorage: todas quedan como no leídas
   }
 }
 
-function guardarUltimaLeida(ms) {
+function guardarLeidas(leidas) {
   try {
-    localStorage.setItem(claveLeidas(), String(ms));
+    // Solo se guardan las últimas 50 para que no crezca sin límite
+    localStorage.setItem(claveLeidas(), JSON.stringify([...leidas].slice(-50)));
   } catch {
     /* si no se puede guardar, solo dura mientras esté abierta la página */
   }
@@ -131,13 +137,13 @@ export async function iniciarNotificaciones() {
 
   let avisos = [];
   let error = "";
-  let ultimaLeida = leerUltimaLeida();
+  const leidas = leerLeidas();
 
   const dibujar = () => {
     const lista = avisos.map((a) => ({
       ...a,
       tiempo: haceCuanto(a.fecha),
-      leida: a.fecha.getTime() <= ultimaLeida,
+      leida: leidas.has(idAviso(a)),
     }));
     panel.innerHTML = panelNotificaciones(lista, error);
     // El punto solo aparece si hay alguna notificación sin leer
@@ -153,11 +159,8 @@ export async function iniciarNotificaciones() {
   panel.addEventListener("click", (e) => {
     e.stopPropagation();
     if (e.target.closest('[data-accion="marcar-leidas"]')) {
-      ultimaLeida = Math.max(
-        ...avisos.map((a) => a.fecha.getTime()),
-        ultimaLeida,
-      );
-      guardarUltimaLeida(ultimaLeida);
+      avisos.forEach((a) => leidas.add(idAviso(a)));
+      guardarLeidas(leidas);
       dibujar();
     }
   });

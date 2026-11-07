@@ -1,6 +1,6 @@
 // js/models/planModel.js
 // MODELO de planes de los agentes: lee la tabla TIPO_PLAN (vía /api/planes).
-// Sprint 3 · Tarea 14: reemplaza la lista fija PLANES de catalogoModel.js.
+// Sprint 3 · Tarea 14: los planes del agente salen de la tabla TIPO_PLAN.
 
 import { peticion } from "./api.js";
 
