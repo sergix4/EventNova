@@ -7,6 +7,8 @@ import { icono } from "../componentes/iconos.js";
 import { paginacion } from "../componentes/paginacion.js";
 import { tarjetaEstadistica, insigniaReserva } from "./comunClienteView.js";
 import { esc } from "../../utils/formato.js";
+import { mostrarToast } from "../componentes/toast.js";
+
 import { selectorEntradas } from "../componentes/selectorEntradas.js";
 
 const valor = (total) =>
@@ -250,15 +252,8 @@ export const MisReservasView = {
       </div>`;
   },
 
-  /** Muestra el error que devolvió el backend dentro de la ventana de cancelación */
+  /** Tarea 16: el error del backend al cancelar sale en el toast rojo */
   mostrarErrorCancelacion(mensaje) {
-    const caja = document.getElementById("error-cancelacion");
-    if (caja) caja.innerHTML = `${icono("alerta", 14)}${esc(mensaje)}`;
-  },
-
-  /** Muestra el error que devolvió el backend dentro de la ventana de cancelación */
-  mostrarErrorCancelacion(mensaje) {
-    const caja = document.getElementById("error-cancelacion");
-    if (caja) caja.innerHTML = `${icono("alerta", 14)}${esc(mensaje)}`;
+    if (mensaje) mostrarToast(mensaje, { error: true });
   },
 };
