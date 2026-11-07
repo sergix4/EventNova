@@ -113,7 +113,7 @@ function eliminar(evento) {
       } catch (err) {
         cerrarModal();
         mostrarToast(err.message || "No se pudo eliminar el evento.", {
-          tipo: "error",
+          error: true,
           duracion: 3500,
         });
       }
@@ -125,7 +125,7 @@ function editar(evento) {
   if (!evento) return;
   if (NO_EDITABLES.includes(evento.estado)) {
     mostrarToast(`No se puede editar un evento que está ${evento.estado}.`, {
-      tipo: "error",
+      error: true,
       duracion: 3000,
     });
     return;
@@ -191,7 +191,7 @@ async function iniciar() {
     ]);
   } catch (err) {
     mostrarToast(err.message || "Error al cargar tus eventos.", {
-      tipo: "error",
+      error: true,
     });
     eventos = [];
   }

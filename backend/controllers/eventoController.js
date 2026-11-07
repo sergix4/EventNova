@@ -4,11 +4,27 @@
 const EventoModel = require("../models/eventoModel");
 const CiudadModel = require("../models/ciudadModel");
 const PlanModel = require("../models/planModel");
+const ReservaModel = require("../models/reservaModel");
+const { texto } = require("../utils/texto");
 
 // ─── Reglas de negocio de fechas ────────────────────────────────────────────
 const DURACION_MINIMA_HORAS = 1; // un evento dura mínimo 1 hora
 const ANTICIPACION_MINIMA_HORAS = 24; // se registra con mínimo 24 horas de anticipación
 const UNA_HORA_MS = 60 * 60 * 1000;
+
+// ─── Tarea 16: largos y topes (los mismos del formulario y de develop.sql) ──
+const MAX_NOMBRE = 150; // VARCHAR(150)
+const MAX_TEATRO = 150; // VARCHAR(150)
+const MAX_DIRECCION = 255; // VARCHAR(255)
+const MAX_DESCRIPCION = 2000;
+const MAX_OBSERVACIONES = 1000;
+const MAX_CAUSA = 300; // igual que la causa de cancelación de una reserva
+const CAPACIDAD_MAXIMA = 100000;
+const PRECIO_MAXIMO = 99999999; // NUMERIC(10, 2) no admite más
+// La imagen llega como data URL: "data:image/png;base64,iVBOR..."
+const IMAGEN_VALIDA =
+  /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/]+=*$/;
+const MAX_IMAGEN = 2900000; // ~2 MB de archivo convertidos a base64
 
 // ─── Reglas de cambio de estado ─────────────────────────────────────────────
 // A qué estados puede pasar el agente/admin A MANO desde cada estado.
@@ -29,20 +45,44 @@ const ESTADOS_NO_EDITABLES = ["En Vivo", "Finalizado", "Cancelado"];
 // mínimo 24 h (al crear siempre; al editar, solo si se cambió la fecha de inicio).
 // Devuelve { error } o { datos } listos para enviar al Modelo.
 function validarDatosEvento(body, { validarAnticipacion = true } = {}) {
-  const nombre_evento = (body.nombre_evento || "").trim();
-  const descripcion_evento = (body.descripcion_evento || "").trim() || null;
-  const teatro = (body.teatro || "").trim();
-  const direccion_evento = (body.direccion_evento || "").trim() || null;
+  const nombre_evento = texto(body.nombre_evento);
+  const descripcion_evento = texto(body.descripcion_evento) || null;
+  const teatro = texto(body.teatro);
+  const direccion_evento = texto(body.direccion_evento) || null;
   const id_ciudad = Number(body.id_ciudad);
-  const fecha_inicio = (body.fecha_inicio || "").trim();
-  const fecha_fin = (body.fecha_fin || "").trim();
+  const fecha_inicio = texto(body.fecha_inicio);
+  const fecha_fin = texto(body.fecha_fin);
   const capacidad = Number(body.capacidad);
   const precio_base = Number(body.precio_base);
-  const observaciones = (body.observaciones || "").trim() || null;
-  const imagen_evento = (body.imagen_evento || "").trim() || null;
+  const observaciones = texto(body.observaciones) || null;
+  const imagen_evento = texto(body.imagen_evento) || null;
 
+  // Tarea 16: obligatorios y largos máximos (el formulario exige lo mismo)
   if (!nombre_evento) return { error: "El nombre del evento es obligatorio." };
+  if (nombre_evento.length > MAX_NOMBRE)
+    return {
+      error: `El nombre del evento no puede superar ${MAX_NOMBRE} caracteres.`,
+    };
+  if (!descripcion_evento)
+    return { error: "La descripción del evento es obligatoria." };
+  if (descripcion_evento.length > MAX_DESCRIPCION)
+    return {
+      error: `La descripción no puede superar ${MAX_DESCRIPCION} caracteres.`,
+    };
   if (!teatro) return { error: "El teatro o lugar del evento es obligatorio." };
+  if (teatro.length > MAX_TEATRO)
+    return { error: `El teatro no puede superar ${MAX_TEATRO} caracteres.` };
+  if (!direccion_evento)
+    return { error: "La dirección del evento es obligatoria." };
+  if (direccion_evento.length > MAX_DIRECCION)
+    return {
+      error: `La dirección no puede superar ${MAX_DIRECCION} caracteres.`,
+    };
+  if (observaciones && observaciones.length > MAX_OBSERVACIONES)
+    return {
+      error: `Las observaciones no pueden superar ${MAX_OBSERVACIONES} caracteres.`,
+    };
+
   if (!Number.isInteger(id_ciudad) || id_ciudad <= 0) {
     return { error: "Debes seleccionar una ciudad válida." };
   }
@@ -80,16 +120,36 @@ function validarDatosEvento(body, { validarAnticipacion = true } = {}) {
     }
   }
 
-  if (!Number.isInteger(capacidad) || capacidad <= 0) {
-    return { error: "La capacidad debe ser un número entero mayor a 0." };
+  if (
+    !Number.isInteger(capacidad) ||
+    capacidad <= 0 ||
+    capacidad > CAPACIDAD_MAXIMA
+  ) {
+    return {
+      error: `La capacidad debe ser un número entero entre 1 y ${CAPACIDAD_MAXIMA.toLocaleString("es-CO")}.`,
+    };
   }
   if (
     body.precio_base === "" ||
     body.precio_base === undefined ||
+    body.precio_base === null ||
     Number.isNaN(precio_base) ||
-    precio_base < 0
+    precio_base < 0 ||
+    precio_base > PRECIO_MAXIMO
   ) {
-    return { error: "El precio base debe ser un número mayor o igual a 0." };
+    return {
+      error: `El precio base debe ser un número entre 0 y ${PRECIO_MAXIMO.toLocaleString("es-CO")}.`,
+    };
+  }
+  // La imagen es opcional, pero si viene debe ser PNG, JPG, WEBP o GIF en base64.
+  // Así nadie puede guardar un texto raro que luego se pinte dentro de <img src="...">
+  if (
+    imagen_evento &&
+    (imagen_evento.length > MAX_IMAGEN || !IMAGEN_VALIDA.test(imagen_evento))
+  ) {
+    return {
+      error: "La imagen debe ser PNG, JPG, WEBP o GIF y pesar máximo 2 MB.",
+    };
   }
 
   return {
@@ -260,9 +320,7 @@ const eventoController = {
     const usuario = req.session.usuario;
     // Si es agente, el evento queda a su nombre. Si es admin, debe indicar id_agente en el body.
     const idAgente =
-      usuario.rol === "agente"
-        ? usuario.numero_id
-        : (req.body.id_agente || "").trim();
+      usuario.rol === "agente" ? usuario.numero_id : texto(req.body.id_agente);
 
     if (!idAgente) {
       return res
@@ -346,7 +404,18 @@ const eventoController = {
           .json({ error: "La ciudad seleccionada no existe." });
       }
 
+      // Tarea 16: la capacidad no puede quedar por debajo de las entradas ya reservadas
+      const disponibles = await ReservaModel.cuposDisponibles(id);
+      const reservadas =
+        Number(actual.capacidad) - Number(disponibles ?? actual.capacidad);
+      if (datos.capacidad < reservadas) {
+        return res.status(409).json({
+          error: `El evento ya tiene ${reservadas} entradas reservadas; la capacidad no puede ser menor a ese número.`,
+        });
+      }
+
       const actualizado = await EventoModel.update(id, datos);
+
       res.json(actualizado);
     } catch (err) {
       console.error("Error al actualizar evento:", err);
@@ -358,10 +427,15 @@ const eventoController = {
   async cambiarEstado(req, res) {
     const { id } = req.params;
     const idEstado = Number(req.body.id_estado);
-    const causaCancelacion = (req.body.causa_cancelacion || "").trim() || null;
+    const causaCancelacion = texto(req.body.causa_cancelacion) || null;
 
     if (!Number.isInteger(idEstado) || idEstado <= 0) {
       return res.status(400).json({ error: "Debes indicar un estado válido." });
+    }
+    if (causaCancelacion && causaCancelacion.length > MAX_CAUSA) {
+      return res
+        .status(400)
+        .json({ error: `La causa no puede superar ${MAX_CAUSA} caracteres.` });
     }
 
     try {

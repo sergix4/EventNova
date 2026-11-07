@@ -61,11 +61,13 @@ function validar(campo) {
       return v.length >= 8 ? "valido" : "invalido";
     case "confirmar":
       return v === valor("password") ? "valido" : "invalido";
+    // Tarea 16: las mismas reglas que valida el backend (authController.js)
     case "identificacion":
-      return v.length >= 6 ? "valido" : "invalido";
+      return /^[A-Za-z0-9-]{5,20}$/.test(v.trim()) ? "valido" : "invalido";
     case "telefono":
     case "telefono2":
-      return /^\+?[\d\s-]{7,}$/.test(v) ? "valido" : "invalido";
+      return /^\+?[\d\s-]{7,20}$/.test(v.trim()) ? "valido" : "invalido";
+
     case "experiencia":
       return Number.isInteger(Number(v)) && v >= 0 && v <= 60
         ? "valido"
@@ -269,7 +271,10 @@ formulario.addEventListener("submit", async (e) => {
   tocados.add("telefono2");
   pintarCampo("telefono2");
   const tel2Invalido = validar("telefono2") === "invalido";
-  if (hayErrores || faltan || tel2Invalido) return;
+  if (hayErrores || faltan || tel2Invalido) {
+    mostrarToast("Revisa los campos marcados en rojo.", { error: true });
+    return;
+  }
 
   AuthView.errorServidor("");
   cargando = true;
@@ -290,7 +295,11 @@ formulario.addEventListener("submit", async (e) => {
   try {
     if (rol === "cliente") {
       const { usuario } = await AuthModel.registrarCliente(datos);
-      window.location.href = paginaInicioDe(usuario.rol);
+      // Tarea 16: mismo aviso de éxito que ya tenía el registro de agente
+      mostrarToast("Cuenta creada correctamente.", { duracion: 0 });
+      setTimeout(() => {
+        window.location.href = paginaInicioDe(usuario.rol);
+      }, 1500);
     } else {
       const { usuario } = await AuthModel.registrarAgente({
         ...datos,

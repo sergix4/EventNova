@@ -16,7 +16,6 @@ import { UsuariosView } from "../../views/admin/usuariosView.js";
 import { abrirModal, cerrarModal } from "../../views/componentes/modal.js";
 import { mostrarToast } from "../../views/componentes/toast.js";
 import { paginacion, paginar } from "../../views/componentes/paginacion.js";
-import { esc } from "../../utils/formato.js";
 
 const POR_PAGINA = 8;
 const PLURAL = {
@@ -217,7 +216,7 @@ async function editar(id) {
   try {
     if (persona.rol === "agente") planes ??= await PlanModel.listar();
   } catch (error) {
-    return mostrarToast(esc(error.message), { error: true, duracion: 4000 });
+    return mostrarToast(error.message, { error: true, duracion: 4000 });
   }
 
   const caja = abrirModal(UsuariosView.formulario(persona, planes || []), {
@@ -299,7 +298,7 @@ async function registrar() {
     try {
       await PersonaModel.crearAdministrador(datos);
       cerrarModal();
-      mostrarToast(`${esc(datos.nombre)} ya es administrador de EventNova.`, {
+      mostrarToast(`${datos.nombre} ya es administrador de EventNova.`, {
         duracion: 3000,
       });
       await cargarUsuarios();
@@ -323,14 +322,14 @@ function eliminar(id) {
       cerrarModal();
       try {
         await PersonaModel.eliminar(id);
-        mostrarToast(`${esc(persona.nombre)} fue eliminado correctamente.`, {
+        mostrarToast(`${persona.nombre} fue eliminado correctamente.`, {
           duracion: 2500,
         });
         await cargarUsuarios();
       } catch (error) {
         // 409: "No se puede eliminar: el cliente tiene 10 reserva(s) asociada(s)."
         mostrarToast("No se pudo eliminar", {
-          detalle: esc(error.message),
+          detalle: error.message,
           error: true,
           duracion: 5000,
           cerrable: true,

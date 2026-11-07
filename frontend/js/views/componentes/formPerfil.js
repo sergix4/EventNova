@@ -5,6 +5,7 @@
 
 import { icono } from "./iconos.js";
 import { esc } from "../../utils/formato.js";
+import { mostrarToast } from "./toast.js";
 
 function campo(
   id,
