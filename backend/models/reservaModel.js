@@ -10,7 +10,7 @@ const pool = require("../config/db");
 const SELECT_BASE = `
   SELECT r.id_reserva, r.codigo_reserva, r.fecha_hora_reserva,
          r.numero_entradas, r.valor_total, r.observaciones,
-         r.causa_cancelacion,
+         r.causa_cancelacion, r.fecha_cancelacion, r.cancelada_por,
          r.id_estado_reserva, er.nombre_estado AS estado_reserva,
          r.id_evento, e.codigo_evento, e.nombre_evento, e.teatro,
          e.fecha_inicio, e.fecha_fin, e.precio_base, e.imagen_evento,
@@ -67,7 +67,12 @@ async function entradasOcupadas(client, id_evento, excluirReserva = null) {
 }
 
 // Revisa que el evento exista, se pueda reservar y tenga cupos
-async function validarCupos(client, id_evento, numero_entradas, excluirReserva = null) {
+async function validarCupos(
+  client,
+  id_evento,
+  numero_entradas,
+  excluirReserva = null,
+) {
   const evento = await bloquearEvento(client, id_evento);
   if (!evento) {
     throw errorReserva("EVENTO_NO_EXISTE", "El evento no existe.");
@@ -278,7 +283,12 @@ const ReservaModel = {
   // Cambia el estado (Reservada -> Confirmada / Cancelada).
   // La causa y quién canceló (Cliente, Agente o Administrador) solo se
   // guardan cuando el nuevo estado es "Cancelada".
-  async cambiarEstado(id, id_estado_reserva, causa_cancelacion = null, cancelada_por = null) {
+  async cambiarEstado(
+    id,
+    id_estado_reserva,
+    causa_cancelacion = null,
+    cancelada_por = null,
+  ) {
     const result = await pool.query(
       `UPDATE public."RESERVA" r
        SET id_estado_reserva = er.id_estado_reserva,
@@ -327,7 +337,7 @@ const ReservaModel = {
     if (result.rowCount === 0) return undefined;
     return this.getById(id);
   },
-  
+
   // Cupos que le quedan a un evento (lo usará la vista de detalle al reservar)
   async cuposDisponibles(id_evento) {
     const result = await pool.query(
