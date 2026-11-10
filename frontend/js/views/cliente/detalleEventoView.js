@@ -32,7 +32,7 @@ function filaInfo(nombreIcono, etiqueta, valor) {
 
 export const DetalleEventoView = {
   /** Dibuja toda la página (se llama de nuevo cuando cambia el estado) */
-     mostrar(evento, { cantidad, estadoReserva, meGusta, reserva, agregando }) {
+     mostrar(evento, { cantidad, estadoReserva, reserva, agregando }) {
     const disponibles = evento.capacidad - evento.vendidas
     const porcentaje = Math.round((evento.vendidas / evento.capacidad) * 100)
     const total = evento.precio * cantidad
@@ -42,8 +42,7 @@ export const DetalleEventoView = {
         <img src="${esc(evento.imagen)}" alt="${esc(evento.nombre)}">
         <a href="/pages/cliente/explorar.html" class="portada-evento__volver">${icono('flechaIzquierda', 16)}Volver</a>
         <div class="portada-evento__acciones">
-          <button type="button" class="portada-evento__accion" aria-label="Compartir">${icono('compartir', 16)}</button>
-          <button type="button" class="portada-evento__accion" data-accion="me-gusta" aria-pressed="${meGusta}" aria-label="Me gusta">${icono('corazon', 16)}</button>
+          <button type="button" class="portada-evento__accion" data-accion="compartir" aria-label="Copiar enlace del evento" title="Copiar enlace">${icono('compartir', 16)}</button>
         </div>
         <div class="portada-evento__info">
           <div class="portada-evento__etiquetas">
@@ -93,7 +92,7 @@ export const DetalleEventoView = {
               <div>
                 <p class="tarjeta-reserva__etiqueta">Precio por entrada</p>
                 <p class="tarjeta-reserva__valor">${pesos(evento.precio)}</p>
-                <p class="tarjeta-reserva__nota">COP — impuestos incluidos</p>
+                <p class="tarjeta-reserva__nota">COP · precio por entrada</p>
               </div>
               ${insigniaEvento(evento.estado, { borde: false, grande: true })}
             </div>

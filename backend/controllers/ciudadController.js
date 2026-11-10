@@ -116,11 +116,11 @@ const ciudadController = {
       res.json({ mensaje: "Ciudad eliminada correctamente." });
     } catch (error) {
       if (error.code === "23503") {
-        // FK violation: hay usuarios que viven en esa ciudad
+        // FK violation: hay usuarios que viven en esa ciudad o eventos que se hacen ahí
         return res
           .status(409)
           .json({
-            error: "No se puede eliminar: la ciudad tiene usuarios asociados.",
+            error: "No se puede eliminar: la ciudad tiene usuarios o eventos asociados.",
           });
       }
       console.error("Error al eliminar ciudad:", error);

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Términos, privacidad y ayuda · EventNova</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="/css/base.css">
+  <link rel="stylesheet" href="/css/auth.css">
+  <style>
+    .legal { max-width: 760px; text-align: left; }
+    .legal h2 { margin: 28px 0 8px; font-size: 18px; color: var(--gris-800, #1f2937); scroll-margin-top: 24px; }
+    .legal p, .legal li { font-size: 14px; line-height: 22px; color: var(--gris-600, #4b5563); }
+    .legal ul { padding-left: 20px; margin: 6px 0; }
+    .legal__nav { display: flex; gap: 16px; flex-wrap: wrap; margin: 8px 0 4px; font-size: 14px; }
+  </style>
+</head>
+<body class="auth">
+  <main class="auth__principal">
+    <article class="tarjeta auth__tarjeta legal">
+      <h1 class="auth__titulo">Términos, privacidad y ayuda</h1>
+      <p class="auth__subtitulo">EventNova es un proyecto académico del curso Bases de Datos y Programación en Ambiente Web (UCEVA, 2026).</p>
+      <nav class="legal__nav" aria-label="Secciones">
+        <a href="#terminos">Términos y condiciones</a>
+        <a href="#privacidad">Política de privacidad</a>
+        <a href="#ayuda">Ayuda</a>
+      </nav>
+
+      <h2 id="terminos">Términos y condiciones</h2>
+      <ul>
+        <li>EventNova permite consultar eventos y reservar entradas. Una reserva queda <strong>Reservada</strong> hasta que el agente organizador la <strong>confirma</strong>.</li>
+        <li>Cada cliente puede tener máximo 10 entradas por evento y solo se reserva cuando el evento está <strong>En Boletería</strong>.</li>
+        <li>Las reservas se pueden cancelar (total o parcialmente) mientras el evento no haya empezado. Si el agente no confirma una reserva antes de que termine el evento, el sistema la cancela.</li>
+        <li>Si un evento se cancela, todas sus reservas se cancelan automáticamente.</li>
+        <li>El pago que se muestra al reservar es <strong>simulado</strong>: no se realiza ningún cobro real.</li>
+      </ul>
+
+      <h2 id="privacidad">Política de privacidad</h2>
+      <ul>
+        <li>Se guardan los datos necesarios para usar la plataforma: identificación, nombre, correo, dirección, ciudad y teléfonos, más los datos propios de cada perfil (cliente, agente o administrador).</li>
+        <li>Las contraseñas se guardan cifradas (bcrypt); nadie, ni siquiera el administrador, puede verlas.</li>
+        <li>Los datos solo se usan dentro de EventNova y no se comparten con terceros.</li>
+        <li>Cada usuario puede consultar y corregir sus datos desde <strong>Mi perfil</strong>.</li>
+      </ul>
+
+      <h2 id="ayuda">Ayuda</h2>
+      <ul>
+        <li><strong>¿Cómo reservo?</strong> Inicia sesión como cliente, abre un evento En Boletería, elige el número de entradas y pulsa «Reservar y pagar».</li>
+        <li><strong>¿Dónde veo mis reservas?</strong> En «Mis reservas», con su estado actual (Reservada, Confirmada o Cancelada).</li>
+        <li><strong>Soy organizador de eventos.</strong> Regístrate como agente: podrás registrar eventos y confirmar o cancelar sus reservas.</li>
+        <li><strong>¿Quieres cambiar tu contraseña?</strong> Hazlo en «Mi perfil» → «Cambiar contraseña» (te pedirá la actual). EventNova todavía no envía correos de recuperación.</li>
+      </ul>
+
+      <p style="margin-top:28px"><a href="/" class="boton boton--coral boton--bloque boton--grande">Volver al inicio</a></p>
+    </article>
+  </main>
+</body>
+</html>
