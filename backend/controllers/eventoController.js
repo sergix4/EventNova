@@ -180,6 +180,14 @@ function tienePermisoSobreEvento(usuario, evento) {
   );
 }
 
+// La cédula del agente (id_agente) es un dato personal: solo la ven el propio
+// agente y el administrador. A los demás (clientes y visitantes) se les quita.
+function sinCedulaAjena(evento, usuario) {
+  if (tienePermisoSobreEvento(usuario, evento)) return evento;
+  const { id_agente, ...publico } = evento;
+  return publico;
+}
+
 const eventoController = {
   // GET /api/eventos?id_estado=...&id_ciudad=...&id_agente=...&mis_eventos=1
   async listar(req, res) {
@@ -196,7 +204,8 @@ const eventoController = {
         if (Number.isInteger(idCiudad) && idCiudad > 0)
           filtros.id_ciudad = idCiudad;
       }
-      if (req.query.id_agente) {
+      // Filtrar por cualquier agente solo lo puede hacer el administrador
+      if (req.query.id_agente && req.session.usuario?.rol === "administrador") {
         filtros.id_agente = String(req.query.id_agente).trim();
       }
 
@@ -209,7 +218,7 @@ const eventoController = {
       }
 
       const eventos = await EventoModel.getAll(filtros);
-      res.json(eventos);
+      res.json(eventos.map((e) => sinCedulaAjena(e, req.session.usuario)));
     } catch (error) {
       console.error("Error al listar eventos:", error);
       res.status(500).json({ error: "Error interno del servidor." });
@@ -259,7 +268,7 @@ const eventoController = {
 
     try {
       const eventos = await EventoModel.getCatalogo(filtros);
-      res.json(eventos);
+      res.json(eventos.map((e) => sinCedulaAjena(e, req.session.usuario)));
     } catch (error) {
       console.error("Error al consultar el catálogo de eventos:", error);
       res.status(500).json({ error: "Error interno del servidor." });
@@ -305,7 +314,7 @@ const eventoController = {
       const evento = await EventoModel.getById(req.params.id);
       if (!evento)
         return res.status(404).json({ error: "Evento no encontrado." });
-      res.json(evento);
+      res.json(sinCedulaAjena(evento, req.session.usuario));
     } catch (error) {
       console.error("Error al obtener evento:", error);
       res.status(500).json({ error: "Error interno del servidor." });

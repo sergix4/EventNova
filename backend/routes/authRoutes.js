@@ -6,8 +6,9 @@ const router = express.Router();
 const authController = require("../controllers/authController");
 const perfilController = require("../controllers/perfilController");
 const { conSesion } = require("../middlewares/authMiddleware");
+const limiteLogin = require("../middlewares/limiteLogin");
 
-router.post("/login", authController.login);
+router.post("/login", limiteLogin, authController.login);
 router.post("/register", authController.register);
 router.post("/register-agente", authController.registerAgente);
 router.post("/logout", authController.logout);

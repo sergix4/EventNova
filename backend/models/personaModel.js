@@ -218,6 +218,18 @@ const PersonaModel = {
     return result.rowCount > 0;
   },
 
+  // ¿La persona sigue existiendo con ese rol? (lo usa authMiddleware para que la
+  // sesión de un usuario eliminado por el administrador deje de servir)
+  async tieneRol(numero_id, rol) {
+    const tabla = { cliente: "CLIENTE", agente: "AGENTE", administrador: "ADMINISTRADOR" }[rol];
+    if (!tabla) return false;
+    const result = await pool.query(
+      `SELECT 1 FROM public."${tabla}" WHERE numero_id = $1`,
+      [numero_id],
+    );
+    return result.rowCount > 0;
+  },
+
   // Cuántos administradores hay (siempre debe quedar al menos uno)
   async contarAdministradores() {
     const result = await pool.query(
