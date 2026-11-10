@@ -43,8 +43,6 @@ const CAMPOS_AGENTE = [
   ...CAMPOS_CLIENTE,
   "empresa",
   "descripcionNegocio",
-  "ciudadOperacion",
-  "tipoEventos",
   "experiencia",
   "comision",
 ];
@@ -171,10 +169,7 @@ selDepto.addEventListener("change", () => {
   cargarCiudades();
 });
 selCiudad.addEventListener("change", () => RegistroView.colorSelect(selCiudad));
-document
-  .getElementById("tipoEventos")
-  .addEventListener("change", (e) => RegistroView.colorSelect(e.target));
-RegistroView.colorSelect(document.getElementById("tipoEventos"));
+
 
 // ─── Eventos del formulario ──────────────────────────────────────────────────
 AuthView.prepararMostrarClave();

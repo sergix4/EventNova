@@ -2,6 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Crear cuenta · EventNova</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -1073,128 +1074,6 @@
                     ></textarea>
                   </div>
                 </div>
-                <div class="campo" data-campo="ciudadOperacion">
-                  <label class="campo__etiqueta" for="ciudadOperacion"
-                    >Ciudad principal de operación
-                    <span class="campo__requerido">*</span></label
-                  >
-                  <div class="campo-icono">
-                    <span class="campo-icono__icono"
-                      ><svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"
-                        />
-                        <circle cx="12" cy="10" r="3" /></svg
-                    ></span>
-                    <input
-                      type="text"
-                      id="ciudadOperacion"
-                      name="ciudadOperacion"
-                      placeholder="Ej. Bogotá"
-                    />
-                    <span
-                      class="campo-icono__estado campo-icono__estado--valido"
-                      ><svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                      >
-                        <polyline points="20 6 9 17 4 12" /></svg></span
-                    ><span
-                      class="campo-icono__estado campo-icono__estado--invalido"
-                      ><svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                      >
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" x2="12" y1="8" y2="12" />
-                        <line x1="12" x2="12.01" y1="16" y2="16" /></svg
-                    ></span>
-                  </div>
-                </div>
-                <div class="campo" data-campo="tipoEventos">
-                  <label class="campo__etiqueta" for="tipoEventos"
-                    >Tipo de eventos que organiza
-                    <span class="campo__requerido">*</span></label
-                  >
-                  <div class="campo-icono">
-                    <span class="campo-icono__icono"
-                      ><svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M12 2H2v10l9.29 9.29a1 1 0 0 0 1.41 0l6.58-6.58a1 1 0 0 0 0-1.41z"
-                        />
-                        <circle cx="7" cy="7" r="1" /></svg
-                    ></span>
-                    <select id="tipoEventos" name="tipoEventos">
-                      <option value="" disabled selected>
-                        Selecciona una categoría
-                      </option>
-                      <option value="Conciertos y música">
-                        Conciertos y música
-                      </option>
-                      <option value="Teatro y artes escénicas">
-                        Teatro y artes escénicas
-                      </option>
-                      <option value="Festivales">Festivales</option>
-                      <option value="Gastronomía">Gastronomía</option>
-                      <option value="Deportes">Deportes</option>
-                      <option value="Conferencias y foros">
-                        Conferencias y foros
-                      </option>
-                      <option value="Entretenimiento familiar">
-                        Entretenimiento familiar
-                      </option>
-                      <option value="Otro">Otro</option>
-                    </select>
-                    <span class="campo-icono__extra" aria-hidden="true"
-                      ><svg
-                        width="16"
-                        height="16"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="m6 9 6 6 6-6" /></svg
-                    ></span>
-                  </div>
-                </div>
                 <div class="campo" data-campo="experiencia">
                   <label class="campo__etiqueta" for="experiencia"
                     >Años de experiencia
@@ -1418,8 +1297,8 @@
                     <polyline points="20 6 9 17 4 12" /></svg
                 ></span>
                 <span
-                  >Acepto los <a href="#">términos y condiciones</a> y la
-                  <a href="#">política de privacidad</a> de EventNova.</span
+                  >Acepto los <a href="/pages/legal.html#terminos" target="_blank">términos y condiciones</a> y la
+                  <a href="/pages/legal.html#privacidad" target="_blank">política de privacidad</a> de EventNova.</span
                 >
               </label>
               <p
@@ -1467,8 +1346,8 @@
       <div class="auth__pie-fila">
         <p>© 2025 EventNova. Todos los derechos reservados.</p>
         <nav aria-label="Enlaces legales">
-          <a href="#">Términos</a><a href="#">Privacidad</a
-          ><a href="#">Ayuda</a>
+          <a href="/pages/legal.html#terminos">Términos</a><a href="/pages/legal.html#privacidad">Privacidad</a
+          ><a href="/pages/legal.html#ayuda">Ayuda</a>
         </nav>
       </div>
     </footer>

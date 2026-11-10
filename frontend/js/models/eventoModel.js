@@ -5,9 +5,8 @@
 import { peticion } from "./api.js";
 import { capitalizarMes } from "../utils/formato.js";
 
-const img = (id, w = 600, h = 380) =>
-  `https://images.unsplash.com/photo-${id}?w=${w}&h=${h}&fit=crop&auto=format`;
-const IMAGEN_DEFECTO = img("1501386761578-eac5c94b800a");
+// Imagen local para los eventos sin imagen (funciona aunque no haya internet)
+const IMAGEN_DEFECTO = "/img/evento-defecto.svg";
 
 // Equivalencia del estado del evento con el texto que muestra la página de inicio
 const ESTADO_EN_INICIO = {

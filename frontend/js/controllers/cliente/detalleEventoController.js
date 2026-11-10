@@ -15,7 +15,7 @@ import { conectarSelectorEntradas } from '../comun/selectorEntradasController.js
 
 // reserva = la reserva activa del cliente en este evento (null si no tiene)
 // agregando = true mientras elige cuántas entradas SUMAR a esa reserva
-const estado = { cantidad: 1, estadoReserva: 'ninguna', meGusta: false, reserva: null, agregando: false }
+const estado = { cantidad: 1, estadoReserva: 'ninguna', reserva: null, agregando: false }
 const MAX_ENTRADAS = 10
 let evento = null
 
@@ -88,6 +88,16 @@ function abrirPago() {
 }
 
 // Misma ventana de "Mis reservas": elige cuántas entradas cancelar y el motivo
+// "Compartir": copia el enlace del evento para pegarlo en WhatsApp, correo, etc.
+async function compartir() {
+  try {
+    await navigator.clipboard.writeText(window.location.href)
+    mostrarToast('Enlace del evento copiado.', { duracion: 2500 })
+  } catch {
+    mostrarToast('No se pudo copiar el enlace.', { detalle: window.location.href, error: true, duracion: 5000 })
+  }
+}
+
 function cancelarReserva() {
   const r = estado.reserva
   if (!r) return
@@ -147,7 +157,7 @@ async function iniciar() {
     if (accion === 'mas') estado.cantidad = Math.min(MAX_ENTRADAS - yaTiene, disponibles, estado.cantidad + 1)
     if (accion === 'agregar-entradas') { estado.agregando = true; estado.cantidad = 1 }
     if (accion === 'cancelar-agregar') estado.agregando = false
-    if (accion === 'me-gusta') estado.meGusta = !estado.meGusta
+    if (accion === 'compartir') return compartir()
     if (accion === 'cancelar-reserva') return cancelarReserva()
     if (accion === 'volver-a-reservar') {
       estado.estadoReserva = 'ninguna'

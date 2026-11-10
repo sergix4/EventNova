@@ -8,8 +8,8 @@ import { peticion } from "./api.js";
 import { capitalizarMes } from "../utils/formato.js";
 
 // Imagen que se muestra cuando el evento no tiene imagen guardada
-const IMAGEN_DEFECTO =
-  "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=120&h=80&fit=crop&auto=format";
+// (archivo local: funciona aunque no haya internet)
+const IMAGEN_DEFECTO = "/img/evento-defecto.svg";
 
 // Estados del EVENTO en los que el cliente ya no puede cancelar su reserva
 const EVENTO_NO_CANCELABLE = ["En Vivo", "Finalizado"];
