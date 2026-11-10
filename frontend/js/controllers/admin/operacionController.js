@@ -10,7 +10,9 @@
 import { iniciarAdmin, periodoActual } from './comunAdminController.js'
 import { ReporteModel } from '../../models/reporteModel.js'
 import { OperacionView, ESTADOS_RESERVA, QUIENES } from '../../views/admin/operacionView.js'
-import { abrirModal } from '../../views/componentes/modal.js'
+import { abrirModal, cerrarModal } from '../../views/componentes/modal.js'
+import { mostrarToast } from '../../views/componentes/toast.js'
+import { ReservaModel } from '../../models/reservaModel.js'
 import { paginar } from '../../views/componentes/paginacion.js'
 
 const POR_PAGINA_HISTORIAL = 8
@@ -119,13 +121,31 @@ function conectar() {
     const verReserva = e.target.closest('[data-reserva]')
     if (verReserva) {
       const r = datos.reservas.find(x => String(x.id_reserva) === verReserva.dataset.reserva)
-      if (r) abrirModal(OperacionView.modalReserva(r, datos.parciales.filter(p => p.codigo === r.codigo)), { clase: 'modal--lg' })
+      if (r) {
+        const caja = abrirModal(OperacionView.modalReserva(r, datos.parciales.filter(p => p.codigo === r.codigo)), { clase: 'modal--lg' })
+        caja.querySelector('[data-eliminar-reserva]').addEventListener('click', () => eliminarReserva(r))
+      }
       return
     }
     const verEvento = e.target.closest('[data-evento]')
     if (verEvento) {
       const ev = datos.eventosCancelados.find(x => x.codigo === verEvento.dataset.evento)
       if (ev) abrirModal(OperacionView.modalEvento(ev), { clase: 'modal--lg' })
+    }
+  })
+}
+
+// ── Eliminar reserva (CRUD de reservas · solo el administrador) ────────────
+function eliminarReserva(r) {
+  const caja = abrirModal(OperacionView.confirmarEliminarReserva(r), { clase: 'modal--sm' })
+  caja.querySelector('#confirmar-eliminar').addEventListener('click', async () => {
+    cerrarModal()
+    try {
+      await ReservaModel.eliminar(r.id_reserva) // DELETE /api/reservas/:id
+      mostrarToast(`La reserva ${r.codigo} fue eliminada.`, { duracion: 2500 })
+      await cargar() // los reportes se recalculan sin esa reserva
+    } catch (error) {
+      mostrarToast('No se pudo eliminar', { detalle: error.message, error: true, duracion: 5000, cerrable: true })
     }
   })
 }

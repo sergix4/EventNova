@@ -154,11 +154,12 @@ const PersonaModel = {
     return result.rowCount > 0;
   },
 
-  // Sprint 3 · Tarea 6: registra un ADMINISTRADOR nuevo EN UNA TRANSACCIÓN.
-  // Se insertan USUARIO, sus TELEFONOS y la fila de ADMINISTRADOR; si algo
-  // falla no queda nada a medias. 'datos' ya viene validado desde el controlador
-  // y la contraseña ya viene encriptada (contrasenaHash).
-  async crearAdministrador(datos) {
+  // Sprint 3 · Tarea 6 (+ auditoría final): registra una persona nueva del rol
+  // indicado ('cliente' | 'agente' | 'administrador') EN UNA TRANSACCIÓN.
+  // Se insertan USUARIO, sus TELEFONOS y la fila de CLIENTE, AGENTE o
+  // ADMINISTRADOR; si algo falla no queda nada a medias. 'datos' ya viene
+  // validado desde el controlador y la contraseña ya viene encriptada (contrasenaHash).
+  async crear(rol, datos) {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -187,17 +188,26 @@ const PersonaModel = {
         );
       }
 
-      // 3. Los datos propios del administrador
-      await client.query(
-        `INSERT INTO public."ADMINISTRADOR" (numero_id, codigo_admin, salario, horario)
-         VALUES ($1, $2, $3, $4)`,
-        [
-          datos.numero_id,
-          `ADM-${datos.numero_id}`,
-          datos.salario,
-          datos.horario,
-        ],
-      );
+      // 3. Los datos propios del rol
+      if (rol === "cliente") {
+        await client.query(
+          `INSERT INTO public."CLIENTE" (numero_id, codigo_cliente, puntos, visualizar_publicidad)
+           VALUES ($1, $2, $3, $4)`,
+          [datos.numero_id, `CLI-${datos.numero_id}`, datos.puntos, datos.visualizar_publicidad],
+        );
+      } else if (rol === "agente") {
+        await client.query(
+          `INSERT INTO public."AGENTE" (numero_id, id_plan, nombre_empresa, descripcion_agente, comision, experiencia)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [datos.numero_id, datos.id_plan, datos.nombre_empresa, datos.descripcion_agente, datos.comision, datos.experiencia],
+        );
+      } else {
+        await client.query(
+          `INSERT INTO public."ADMINISTRADOR" (numero_id, codigo_admin, salario, horario)
+           VALUES ($1, $2, $3, $4)`,
+          [datos.numero_id, `ADM-${datos.numero_id}`, datos.salario, datos.horario],
+        );
+      }
 
       await client.query("COMMIT");
     } catch (error) {
@@ -206,7 +216,7 @@ const PersonaModel = {
     } finally {
       client.release();
     }
-    return PersonaModel.obtener(datos.numero_id); // el administrador recién creado
+    return PersonaModel.obtener(datos.numero_id); // la persona recién creada
   },
 
   // ¿Esa identificación sigue siendo de un administrador? (lo usa soloAdmin)

@@ -438,7 +438,28 @@ export const OperacionView = {
           <p>Cancelada el ${fechaHora(r.fecha_cancelacion)} · por: <strong>${esc(r.cancelada_por || 'Sin registro')}</strong></p>
         </div></div>` : ''}
       </div>
-      <div class="modal__pie"><button type="button" class="boton boton--primario boton--seminegrita boton--bloque" data-cerrar-modal>Cerrar</button></div>`
+      <div class="modal__pie">
+        <button type="button" class="boton boton--rojo-contorno" data-eliminar-reserva>${icono('papelera', 15)}Eliminar reserva</button>
+        <button type="button" class="boton boton--primario boton--seminegrita" data-cerrar-modal>Cerrar</button>
+      </div>`
+  },
+
+  /** Confirmación antes de ELIMINAR una reserva (CRUD de reservas · solo administrador) */
+  confirmarEliminarReserva(r) {
+    return `
+      <div class="confirmacion">
+        <div class="confirmacion__fila">
+          <div class="confirmacion__icono" style="background:#fef2f2;color:#dc2626">${icono('papelera', 20)}</div>
+          <div>
+            <h3 class="modal__titulo">¿Eliminar la reserva ${esc(r.codigo)}?</h3>
+            <p class="confirmacion__texto">Se borrará de la base de datos la reserva de <strong>${esc(r.cliente)}</strong> para <strong>${esc(r.evento)}</strong> (${plural(r.entradas, 'entrada')}, ${cop(r.valor)}). Dejará de aparecer en todos los reportes. Esta acción no se puede deshacer.</p>
+          </div>
+        </div>
+        <div class="confirmacion__acciones">
+          <button type="button" class="boton boton--neutro" data-cerrar-modal>Cancelar</button>
+          <button type="button" class="boton boton--peligro boton--seminegrita" id="confirmar-eliminar">Eliminar</button>
+        </div>
+      </div>`
   },
 
   modalEvento(e) {

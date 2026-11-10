@@ -17,9 +17,11 @@ export const PersonaModel = {
   obtener(numeroId) {
     return peticion(`/usuarios/${encodeURIComponent(numeroId)}`)
   },
-    /** Tarea 6: registra un administrador nuevo (persona + contraseña + salario y horario) */
-  crearAdministrador(datos) {
-    return peticion('/usuarios/administradores', { metodo: 'POST', datos })
+  /** Registra una persona nueva del rol indicado ('cliente' | 'agente' | 'administrador')
+   *  (Tarea 6: administradores · auditoría final: también clientes y agentes) */
+  crear(rol, datos) {
+    const ruta = { cliente: 'clientes', agente: 'agentes', administrador: 'administradores' }[rol]
+    return peticion(`/usuarios/${ruta}`, { metodo: 'POST', datos })
   },
   /** datos: solo los campos que se quieren cambiar (lo demás se conserva) */
   actualizar(numeroId, datos) {
