@@ -181,7 +181,7 @@ CREATE TABLE public."RESERVA" (
     id_estado_reserva  INTEGER NOT NULL,               -- Reservada, Confirmada, Cancelada
     causa_cancelacion  TEXT,                           -- se llena cuando la reserva se cancela
     fecha_cancelacion  TIMESTAMP,                      -- la llena el trigger tg_reserva_fecha_cancelacion
-    cancelada_por      VARCHAR(15),                    -- quién la canceló: Cliente, Agente o Administrador
+    cancelada_por      VARCHAR(15),                    -- quién la canceló: Cliente, Agente, Administrador o Sistema
     id_cliente         VARCHAR(20) NOT NULL,           -- cliente que hizo la reserva
     id_evento          INTEGER NOT NULL,               -- evento reservado
 
@@ -191,7 +191,7 @@ CREATE TABLE public."RESERVA" (
     CONSTRAINT fk_reserva_estado   FOREIGN KEY (id_estado_reserva) REFERENCES public."ESTADO_RESERVA" (id_estado_reserva),
     CONSTRAINT ck_reserva_entradas CHECK (numero_entradas > 0),
     CONSTRAINT ck_reserva_valor    CHECK (valor_total >= 0),
-    CONSTRAINT ck_reserva_cancelada_por CHECK (cancelada_por IN ('Cliente', 'Agente', 'Administrador'))
+    CONSTRAINT ck_reserva_cancelada_por CHECK (cancelada_por IN ('Cliente', 'Agente', 'Administrador', 'Sistema'))
 );
 
 -- Índices: mis reservas del cliente, reservas de un evento, filtro por estado

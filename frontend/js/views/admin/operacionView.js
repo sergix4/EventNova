@@ -18,7 +18,7 @@ import { fechaCorta, hora12, insigniaEstado } from './coberturaView.js'
 const COLORES_RESERVA = { Reservada: ['#fffbeb', '#d97706'], Confirmada: ['#ecfdf5', '#059669'], Cancelada: ['#fef2f2', '#dc2626'] }
 export const ESTADOS_RESERVA = Object.keys(COLORES_RESERVA)
 // Quién canceló (RESERVA.cancelada_por / CANCELACION_ENTRADAS.cancelada_por)
-const COLORES_QUIEN = { Cliente: ['#eef2ff', '#4f46e5'], Agente: ['#fff7f5', '#f4845f'], Administrador: ['#f5f3ff', '#7c3aed'], 'Sin registro': ['#f3f4f6', '#6b7280'] }
+const COLORES_QUIEN = { Cliente: ['#eef2ff', '#4f46e5'], Agente: ['#fff7f5', '#f4845f'], Administrador: ['#f5f3ff', '#7c3aed'], Sistema: ['#ecfeff', '#0891b2'], 'Sin registro': ['#f3f4f6', '#6b7280'] }
 export const QUIENES = Object.keys(COLORES_QUIEN)
 const COLORES_CAUSA = ['#4f46e5', '#f4845f', '#d97706', '#dc2626', '#059669', '#6b7280']
 const TIPOS_ACTIVIDAD = {

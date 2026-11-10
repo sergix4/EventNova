@@ -261,6 +261,8 @@ const EventoModel = {
   // Estados AUTOMÁTICOS según la hora actual de Colombia:
   //   1. Ya pasó la hora de fin             -> "Finalizado"
   //   2. Ya empezó pero no ha terminado     -> "En Vivo"
+  //   3. Reservas que siguen "Reservada" en un evento Finalizado -> "Cancelada"
+  //      (el agente nunca las confirmó; así no quedan en el limbo ni cuentan como ingreso)
   // Los eventos "Cancelado" nunca se tocan.
   async actualizarEstadosAutomaticos() {
     await pool.query(`
@@ -280,6 +282,19 @@ const EventoModel = {
         AND actual.nombre_estado IN ('Programado', 'En Boletería')
         AND e.fecha_inicio <= (NOW() AT TIME ZONE 'America/Bogota')
         AND e.fecha_fin > (NOW() AT TIME ZONE 'America/Bogota');
+
+      UPDATE public."RESERVA" r
+      SET id_estado_reserva = cancelada.id_estado_reserva,
+          causa_cancelacion = 'El agente no confirmó la reserva antes de que terminara el evento.',
+          cancelada_por = 'Sistema'
+      FROM public."ESTADO_RESERVA" cancelada, public."ESTADO_RESERVA" actual,
+           public."EVENTO" e, public."ESTADO" es
+      WHERE cancelada.nombre_estado = 'Cancelada'
+        AND actual.id_estado_reserva = r.id_estado_reserva
+        AND actual.nombre_estado = 'Reservada'
+        AND e.id_evento = r.id_evento
+        AND es.id_estado = e.id_estado
+        AND es.nombre_estado = 'Finalizado';
     `);
   },
 

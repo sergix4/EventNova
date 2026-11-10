@@ -414,6 +414,14 @@ const eventoController = {
         });
       }
 
+      // El precio queda congelado cuando ya hay entradas reservadas: si cambiara,
+      // el valor de esas reservas se recalcularía con el precio nuevo
+      if (reservadas > 0 && datos.precio_base !== Number(actual.precio_base)) {
+        return res.status(409).json({
+          error: `No puedes cambiar el precio: el evento ya tiene ${reservadas} entradas reservadas.`,
+        });
+      }
+
       const actualizado = await EventoModel.update(id, datos);
 
       res.json(actualizado);
