@@ -17,6 +17,7 @@ const FECHA_VALIDA = /^\d{4}-\d{2}-\d{2}$/;
 const MAX_TELEFONOS = 3;
 const NUMERO_ID_VALIDO = /^[A-Za-z0-9-]{5,20}$/;
 const MIN_CONTRASENA = 8;
+const MAX_CONTRASENA = 72; // bcrypt solo tiene en cuenta los primeros 72 caracteres
 
 // "Si el campo no viene en el body, se conserva el valor actual".
 // Así el frontend puede mandar solo lo que cambió.
@@ -241,9 +242,9 @@ const personaController = {
           "La identificación debe tener entre 5 y 20 caracteres (letras, números o guiones).",
       });
     }
-    if (contrasena.length < MIN_CONTRASENA) {
+    if (contrasena.length < MIN_CONTRASENA || contrasena.length > MAX_CONTRASENA) {
       return res.status(400).json({
-        error: `La contraseña debe tener al menos ${MIN_CONTRASENA} caracteres.`,
+        error: `La contraseña debe tener entre ${MIN_CONTRASENA} y ${MAX_CONTRASENA} caracteres.`,
       });
     }
 

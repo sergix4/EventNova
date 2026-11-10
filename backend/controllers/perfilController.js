@@ -15,6 +15,7 @@ const PersonaModel = require("../models/personaModel");
 const { prepararDatos } = require("./personaController");
 
 const MIN_CONTRASENA = 8;
+const MAX_CONTRASENA = 72; // bcrypt solo tiene en cuenta los primeros 72 caracteres
 
 // Campos que cualquier usuario puede cambiar de sí mismo
 const CAMPOS_COMUNES = [
@@ -202,9 +203,9 @@ const perfilController = {
         .status(400)
         .json({ error: "Escribe tu contraseña actual y la nueva." });
     }
-    if (nueva.length < MIN_CONTRASENA) {
+    if (nueva.length < MIN_CONTRASENA || nueva.length > MAX_CONTRASENA) {
       return res.status(400).json({
-        error: `La nueva contraseña debe tener al menos ${MIN_CONTRASENA} caracteres.`,
+        error: `La nueva contraseña debe tener entre ${MIN_CONTRASENA} y ${MAX_CONTRASENA} caracteres.`,
       });
     }
     if (nueva === actual) {

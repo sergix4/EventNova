@@ -36,6 +36,14 @@ require("./config/db"); // fuerza a que db.js se ejecute y pruebe la conexión
 
 const app = express();
 app.disable("x-powered-by"); // Tarea 16: no anunciar en cada respuesta que el servidor usa Express
+
+// Auditoría final: cabeceras de seguridad básicas en todas las respuestas
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff"); // el navegador no "adivina" tipos de archivo
+  res.setHeader("X-Frame-Options", "DENY"); // nadie puede meter EventNova dentro de un <iframe>
+  res.setHeader("Referrer-Policy", "same-origin"); // no enviar la URL a otros sitios
+  next();
+});
 const PORT = process.env.PORT || 3000;
 const CARPETA_FRONTEND = path.join(__dirname, "..", "frontend");
 
