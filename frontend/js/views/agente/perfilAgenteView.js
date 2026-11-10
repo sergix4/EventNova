@@ -1,6 +1,6 @@
 // js/views/agente/perfilAgenteView.js
 // VISTA del perfil del agente: datos personales, datos de agente, plan,
-// planes disponibles, facturación y seguridad.
+// planes disponibles y seguridad.
 // Sprint 3 · Tarea 13: los datos personales y de agente salen de la BD; la
 // ventana de edición y la de contraseña son las compartidas (componentes/formPerfil.js).
 
@@ -22,9 +22,9 @@ const ini = (nombre) =>
     .join("")
     .slice(0, 2);
 
-function seccion(titulo, cuerpo, accion = "") {
+function seccion(titulo, cuerpo, accion = "", id = "") {
   return `
-    <section class="tarjeta tarjeta--recortada">
+    <section class="tarjeta tarjeta--recortada"${id ? ` id="${id}"` : ""}>
       <div class="tarjeta__cabecera" style="flex-wrap:nowrap"><h2 class="tarjeta__titulo">${titulo}</h2>${accion}</div>
       <div class="tarjeta__cuerpo">${cuerpo}</div>
     </section>`;
@@ -88,7 +88,6 @@ export const PerfilAgenteView = {
             <h2 class="plan-activo__nombre">${esc(plan.nombre)}</h2>
             <div class="plan-activo__estado">
               <span class="plan-activo__pildora"><span class="insignia__punto"></span>Activo</span>
-              <span class="plan-activo__cobro">Próximo cobro: 30 de septiembre de 2026</span>
             </div>
           </div>
           <div class="plan-activo__precio"><strong>${esc(plan.precioCorto)}</strong><span>por mes</span></div>
@@ -105,7 +104,6 @@ export const PerfilAgenteView = {
             .join("")}
         </ul>
         <div class="plan-activo__acciones">
-          <button type="button" class="boton-blanco">Administrar plan</button>
           <button type="button" class="boton-vidrio" data-accion="cambiar-plan">Cambiar plan</button>
         </div>
       </section>
@@ -133,20 +131,8 @@ export const PerfilAgenteView = {
             })
             .join("")}
         </div>`,
-      )}
- 
-      ${seccion(
-        "Información de facturación",
-        `
-        ${fila("Plan actual", plan.nombre)}
-        ${fila("Precio mensual", plan.precio + " por mes")}
-        ${fila("Método de pago", "Tarjeta Visa •••• 4821")}
-        ${fila("Próxima fecha de cobro", "30 de septiembre de 2026")}
-        ${fila("Estado de suscripción", "Activo")}
-        <div class="acciones-facturacion">
-          <button type="button" class="boton boton--secundario">${icono("tarjetaCredito", 18)}Actualizar método de pago</button>
-          <button type="button" class="boton boton--rojo-contorno" data-accion="cancelar-suscripcion">Cancelar suscripción</button>
-        </div>`,
+        "",
+        "planes-disponibles",
       )}
  
       <section class="tarjeta tarjeta--recortada">
@@ -154,10 +140,6 @@ export const PerfilAgenteView = {
         <div class="lista-seguridad">
           <button type="button" class="opcion-lista" data-accion="cambiar-clave">
             <span class="opcion-lista__izq"><span class="opcion-lista__icono" style="--fondo-icono:#eef2ff;--color-icono:#4f46e5">${icono("llave", 16)}</span><span><strong>Cambiar contraseña</strong><small>Actualiza tu contraseña de acceso</small></span></span>
-            ${icono("derecha", 16)}
-          </button>
-          <button type="button" class="opcion-lista">
-            <span class="opcion-lista__izq"><span class="opcion-lista__icono" style="--fondo-icono:#fffbeb;--color-icono:#d97706">${icono("monitor", 16)}</span><span><strong>Cerrar sesiones activas</strong><small>Cierra sesión en todos los dispositivos</small></span></span>
             ${icono("derecha", 16)}
           </button>
           <button type="button" class="opcion-lista opcion-lista--peligro" data-accion="cerrar-sesion">
@@ -198,19 +180,7 @@ export const PerfilAgenteView = {
       </div>`;
   },
 
-  modalCancelarSuscripcion() {
-    return `
-      <div class="confirmacion">
-        <div class="confirmacion__fila">
-          <div class="confirmacion__icono" style="background:#fef2f2;color:#dc2626">${icono("advertencia", 22)}</div>
-          <div><h3 class="modal__titulo">Cancelar suscripción</h3><p class="confirmacion__texto">¿Estás seguro de que deseas cancelar tu suscripción a EventNova? Perderás el acceso a las funciones de tu plan al final del período de facturación.</p></div>
-        </div>
-        <div class="pila" style="gap:8px">
-          <button type="button" class="boton boton--primario boton--bloque" data-cerrar-modal>Continuar con mi plan</button>
-          <button type="button" class="boton boton--rojo-contorno boton--bloque" id="confirmar">Cancelar suscripción</button>
-        </div>
-      </div>`;
-  },
+
 
   mostrarError(mensaje) {
     document.getElementById("contenido").innerHTML =

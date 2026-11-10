@@ -99,7 +99,7 @@ export const ReservasAgenteView = {
             <div class="acciones-iconos" style="gap:6px">
               <button type="button" class="boton-accion" data-ver="${r.id}">${icono("ojo", 15)}Ver detalle</button>
               <button type="button" class="boton-accion boton-accion--ambar" data-actualizar="${r.id}"
-                ${r.siguientesEstados.length === 0 ? 'disabled title="Una reserva cancelada ya no se puede cambiar"' : ""}>${icono("actualizar", 15)}Actualizar estado</button>
+                ${r.siguientesEstados.length === 0 ? `disabled title="${r.estado === "Cancelada" ? "Una reserva cancelada ya no se puede cambiar" : "El evento ya empezó o terminó"}"` : ""}>${icono("actualizar", 15)}Actualizar estado</button>
             </div>
           </td>
         </tr>`,
