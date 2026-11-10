@@ -42,6 +42,12 @@ const NOMBRE_ROL = {
   agente: "Agente",
   administrador: "Administrador",
 };
+// Texto bajo el título de la ventana "Registrar …"
+const SUBTITULO_NUEVO = {
+  cliente: "Podrá iniciar sesión, ver eventos y hacer reservas",
+  agente: "Podrá registrar eventos y administrar sus reservas",
+  administrador: "Tendrá acceso completo al panel de administración",
+};
 
 /** "2026-01-05 09:00" → "05 ene 2026" */
 function fechaCorta(texto) {
@@ -189,9 +195,10 @@ export const UsuariosView = {
         : lista.map(FILA[rol]).join("");
   },
 
-  /** El botón "Registrar administrador" solo se ve en esa pestaña */
-  botonRegistrar(visible) {
-    document.getElementById("boton-registrar-admin").hidden = !visible;
+  /** El botón de registrar cambia según la pestaña: "Registrar cliente", "Registrar agente"… */
+  botonRegistrar(rol) {
+    document.getElementById("texto-registrar").textContent =
+      `Registrar ${NOMBRE_ROL[rol].toLowerCase()}`;
   },
 
   cargandoTabla(rol) {
@@ -321,7 +328,7 @@ export const UsuariosView = {
         <div class="modal__cabecera">
           ${
             p.nuevo
-              ? `<div><h3 class="modal__titulo">Registrar administrador</h3><p class="modal__subtitulo">Tendrá acceso completo al panel de administración</p></div>`
+              ? `<div><h3 class="modal__titulo">Registrar ${NOMBRE_ROL[p.rol].toLowerCase()}</h3><p class="modal__subtitulo">${SUBTITULO_NUEVO[p.rol]}</p></div>`
               : `<div><h3 class="modal__titulo">Editar ${NOMBRE_ROL[p.rol].toLowerCase()}</h3><p class="modal__subtitulo">${esc(p.nombre)} · ${esc(p.numero_id)}</p></div>`
           }
           <button type="button" class="boton-icono boton-icono--sin-borde" data-cerrar-modal aria-label="Cerrar">${icono("cerrar", 18)}</button>
@@ -379,7 +386,7 @@ export const UsuariosView = {
         </div>
         <div class="modal__pie">
           <button type="button" class="boton boton--neutro" data-cerrar-modal>Cancelar</button>
-          <button type="submit" class="boton boton--primario boton--seminegrita" id="guardar-usuario">${p.nuevo ? "Registrar administrador" : "Guardar cambios"}</button>
+          <button type="submit" class="boton boton--primario boton--seminegrita" id="guardar-usuario">${p.nuevo ? `Registrar ${NOMBRE_ROL[p.rol].toLowerCase()}` : "Guardar cambios"}</button>
         </div>
       </form>`;
   },

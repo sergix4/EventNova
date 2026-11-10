@@ -14,7 +14,10 @@ router.use(soloAdmin);
 router.param('id', validarNumeroId);
 
 router.get('/', personaController.listar);          // ?rol=cliente|agente|administrador&buscar=
-router.post('/administradores', personaController.crearAdministrador); // Tarea 6: registrar administrador
+// Registrar personas desde el panel (Tarea 6: administradores · auditoría final: clientes y agentes)
+router.post('/clientes', (req, res) => personaController.crearPersona(req, res, 'cliente'));
+router.post('/agentes', (req, res) => personaController.crearPersona(req, res, 'agente'));
+router.post('/administradores', (req, res) => personaController.crearPersona(req, res, 'administrador'));
 router.get('/:id', personaController.obtener);
 router.put('/:id', personaController.actualizar);
 router.delete('/:id', personaController.eliminar);

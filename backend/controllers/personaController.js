@@ -228,9 +228,11 @@ const personaController = {
     }
   },
 
-  // POST /api/usuarios/administradores   (Sprint 3 · Tarea 6)
+  // POST /api/usuarios/clientes | /agentes | /administradores
+  // (Sprint 3 · Tarea 6 para administradores; auditoría final: también clientes y agentes)
   // Solo un administrador con sesión llega aquí (soloAdmin en las rutas).
-  async crearAdministrador(req, res) {
+  // rol = 'cliente' | 'agente' | 'administrador' (lo pone la ruta)
+  async crearPersona(req, res, rol) {
     const body = req.body || {};
     const numero_id = String(body.numero_id || "").trim();
     const contrasena = String(body.password || "");
@@ -249,16 +251,19 @@ const personaController = {
     }
 
     // 2. El resto se valida con la MISMA función que usa "Editar".
-    //    Se le pasa un administrador "vacío" para que todos los campos
+    //    Se le pasa una persona "vacía" del rol para que todos los campos
     //    tengan que venir en el body (no hay valores actuales que conservar).
     const vacio = {
-      rol: "administrador",
+      rol,
+      numero_id: "",
       nombre: "",
       correo: "",
       direccion: null,
       fecha_nacimiento: null,
       telefonos: [],
       ubicacion: { id_ciudad: null },
+      cliente: { puntos: 0, visualizar_publicidad: true },
+      agente: { nombre_empresa: "", descripcion_agente: null, comision: "", experiencia: "", id_plan: undefined },
       administrador: { salario: undefined, horario: "" },
     };
 
@@ -278,15 +283,16 @@ const personaController = {
 
       // 4. Se guarda con la contraseña encriptada (nunca en texto plano)
       const contrasenaHash = await bcrypt.hash(contrasena, 10);
-      const administrador = await PersonaModel.crearAdministrador({
+      const persona = await PersonaModel.crear(rol, {
         ...datos,
         numero_id,
         contrasenaHash,
       });
 
+      const NOMBRE = { cliente: "Cliente", agente: "Agente", administrador: "Administrador" };
       res.status(201).json({
-        mensaje: "Administrador registrado correctamente.",
-        usuario: administrador,
+        mensaje: `${NOMBRE[rol]} registrado correctamente.`,
+        usuario: persona,
       });
     } catch (error) {
       if (error.code === "23505") {
@@ -296,7 +302,7 @@ const personaController = {
             "Ya existe un usuario con ese correo o número de identificación.",
         });
       }
-      console.error("Error al registrar administrador:", error);
+      console.error(`Error al registrar ${rol}:`, error);
       res.status(500).json({ error: "Error interno del servidor." });
     }
   },

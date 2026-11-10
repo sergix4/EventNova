@@ -82,7 +82,7 @@ function cambiarPestana(nuevoRol) {
   document.getElementById("buscar-usuario").value = "";
   UsuariosView.pestanaActiva(rol);
   UsuariosView.cabecera(rol);
-  UsuariosView.botonRegistrar(rol === "administrador");
+  UsuariosView.botonRegistrar(rol);
   cargarUsuarios();
 }
 
@@ -258,13 +258,14 @@ async function editar(id) {
   });
 }
 
-// ─── Registrar administrador (Tarea 6) ──────────────────────────────────────
-// Reutiliza el mismo formulario de "Editar" con una persona vacía marcada
-// como nueva: así aparecen los campos de identificación y contraseña.
+// ─── Registrar cliente, agente o administrador ───────────────────────────────
+// (Tarea 6: administradores · auditoría final: también clientes y agentes)
+// Reutiliza el mismo formulario de "Editar" con una persona vacía del rol de la
+// pestaña activa, marcada como nueva: así aparecen identificación y contraseña.
 async function registrar() {
   const nuevo = {
     nuevo: true,
-    rol: "administrador",
+    rol, // el de la pestaña activa
     numero_id: "",
     nombre: "",
     correo: "",
@@ -272,10 +273,18 @@ async function registrar() {
     fecha_nacimiento: "",
     telefonos: [],
     ubicacion: {},
+    cliente: { puntos: 0, visualizar_publicidad: true },
+    agente: { nombre_empresa: "", id_plan: null, comision: "", experiencia: "", descripcion_agente: "" },
     administrador: { salario: "", horario: "Lunes a viernes 8:00 - 17:00" },
   };
+  try {
+    if (rol === "agente") planes ??= await PlanModel.listar();
+  } catch (error) {
+    return mostrarToast(error.message, { error: true, duracion: 4000 });
+  }
+  const textoBoton = `Registrar ${NOMBRE_ROL[rol].toLowerCase()}`;
 
-  const caja = abrirModal(UsuariosView.formulario(nuevo), {
+  const caja = abrirModal(UsuariosView.formulario(nuevo, planes || []), {
     clase: "modal--xl",
     cerrarAlHacerClicFuera: false,
   });
@@ -296,15 +305,15 @@ async function registrar() {
     delete datos.confirmar; // el backend solo necesita la contraseña
     UsuariosView.guardando(true);
     try {
-      await PersonaModel.crearAdministrador(datos);
+      await PersonaModel.crear(nuevo.rol, datos);
       cerrarModal();
-      mostrarToast(`${datos.nombre} ya es administrador de EventNova.`, {
+      mostrarToast(`${NOMBRE_ROL[nuevo.rol]} ${datos.nombre} registrado correctamente.`, {
         duracion: 3000,
       });
       await cargarUsuarios();
     } catch (error) {
       UsuariosView.errorFormulario(error.message); // p. ej. 409 "Ya existe un usuario con ese correo…"
-      UsuariosView.guardando(false, "Registrar administrador");
+      UsuariosView.guardando(false, textoBoton);
     }
   });
 }
