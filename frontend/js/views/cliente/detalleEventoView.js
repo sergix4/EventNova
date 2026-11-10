@@ -62,11 +62,11 @@ export const DetalleEventoView = {
 
       <div class="detalle">
         <div class="detalle__principal">
-          ${estadoReserva !== 'ninguna' ? this.aviso(estadoReserva) : ''}
+          ${estadoReserva !== 'ninguna' ? this.aviso(estadoReserva, evento.estado) : ''}
 
           <section class="tarjeta tarjeta--relleno">
             <h2 class="titulo-acento">Sobre el evento</h2>
-            <div class="detalle__texto">${evento.parrafos.map(p => `<p>${p}</p>`).join('')}</div>
+            <div class="detalle__texto">${evento.parrafos.map(p => `<p>${esc(p)}</p>`).join('')}</div>
           </section>
 
           <section class="tarjeta tarjeta--relleno">
@@ -111,8 +111,10 @@ export const DetalleEventoView = {
       <div class="espacio-final"></div>`
   },
 
-  aviso(estado) {
+  aviso(estado, estadoEvento) {
     const a = AVISOS[estado]
+    // Igual que en el backend: no se cancela si el evento ya empezó o terminó
+    const cancelable = estado !== 'cancelada' && !['En Vivo', 'Finalizado'].includes(estadoEvento)
     return `
       <div class="aviso-reserva aviso-reserva--${estado}" role="status">
         <div class="aviso-reserva__icono" style="color:${a.color}">${icono(a.icono, 20, { grosor: estado === 'confirmada' ? 2.5 : 2 })}</div>
@@ -120,7 +122,7 @@ export const DetalleEventoView = {
           <p class="aviso-reserva__titulo">${a.titulo}<span class="aviso-reserva__pildora" style="background:${a.pildora[0]};color:${a.pildora[1]}">${a.pildora[2]}</span></p>
           <p class="aviso-reserva__texto">${a.texto}</p>
         </div>
-        ${estado !== 'cancelada' ? '<button type="button" class="aviso-reserva__cancelar" data-accion="cancelar-reserva">Cancelar</button>' : ''}
+        ${cancelable ? '<button type="button" class="aviso-reserva__cancelar" data-accion="cancelar-reserva">Cancelar</button>' : ''}
       </div>`
   },
 

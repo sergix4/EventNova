@@ -21,6 +21,9 @@ const MAX_OBSERVACIONES = 500;
 const MAX_CAUSA = 300;
 // Estados del EVENTO en los que ya no se puede confirmar una reserva (Tarea 8)
 const EVENTO_CERRADO = ["Finalizado", "Cancelado"];
+// Una reserva ya no se puede cancelar cuando el evento empezó o terminó
+// (si no, se alterarían los ingresos de meses pasados en los reportes)
+const EVENTO_SIN_CANCELACION = ["En Vivo", "Finalizado"];
 
 // Rol de la sesión -> texto que se guarda en RESERVA.cancelada_por (Tarea 10)
 function quienCancela(usuario) {
@@ -304,6 +307,13 @@ const reservaController = {
       }
 
       if (destino.nombre_estado === "Cancelada") {
+        if (EVENTO_SIN_CANCELACION.includes(actual.estado_evento)) {
+          return res
+            .status(409)
+            .json({
+              error: `No se puede cancelar: el evento está ${actual.estado_evento}.`,
+            });
+        }
         if (usuario.rol === "cliente") {
           causa = causa || "Cancelada por el cliente.";
         } else if (!causa) {

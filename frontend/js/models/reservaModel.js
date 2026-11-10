@@ -69,9 +69,13 @@ function siguientesEstados(fila) {
   const eventoCerrado = ["Finalizado", "Cancelado"].includes(
     fila.estado_evento,
   );
+  const opciones = [];
   if (fila.estado_reserva === "Reservada" && !eventoCerrado)
-    return ["Confirmada", "Cancelada"];
-  return ["Cancelada"];
+    opciones.push("Confirmada");
+  // Igual que en el backend: si el evento ya empezó o terminó no se cancela
+  if (!EVENTO_NO_CANCELABLE.includes(fila.estado_evento))
+    opciones.push("Cancelada");
+  return opciones;
 }
 
 // al objeto que usan las Vistas

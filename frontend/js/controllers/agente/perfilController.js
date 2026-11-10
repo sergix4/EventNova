@@ -69,15 +69,7 @@ function cambiarPlan(idPlan) {
   });
 }
 
-function cancelarSuscripcion() {
-  const caja = abrirModal(PerfilAgenteView.modalCancelarSuscripcion(), {
-    cerrarAlHacerClicFuera: false,
-  });
-  caja.querySelector("#confirmar").addEventListener("click", () => {
-    cerrarModal();
-    aviso("Tu suscripción será cancelada al final del período.");
-  });
-}
+
 
 async function iniciar() {
   await iniciarPanel({ rol: "agente", activo: "perfil" });
@@ -94,6 +86,10 @@ async function iniciar() {
   }
   dibujar();
 
+  // Viene del botón "Ver planes" de Registrar evento (…/perfil.html#planes-disponibles)
+  if (location.hash === "#planes-disponibles")
+    document.getElementById("planes-disponibles")?.scrollIntoView({ behavior: "smooth" });
+
   document.getElementById("contenido").addEventListener("click", (e) => {
     const accion = e.target.closest("[data-accion]")?.dataset.accion;
     const planElegido =
@@ -105,7 +101,6 @@ async function iniciar() {
       document
         .getElementById("planes-disponibles")
         .scrollIntoView({ behavior: "smooth" });
-    if (accion === "cancelar-suscripcion") cancelarSuscripcion();
     if (accion === "cambiar-clave") cambiarContrasena();
   });
 }
