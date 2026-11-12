@@ -6,6 +6,16 @@
 
 const API_URL = '/api'
 
+// M2: si la sesión se vence o la cuenta es suspendida con la página abierta,
+// se manda al login (una sola vez, aunque fallen varias peticiones a la vez).
+let redirigiendo = false
+function irAlLogin(aviso) {
+  if (redirigiendo || window.location.pathname === '/pages/login.html') return
+  redirigiendo = true
+  try { sessionStorage.setItem('eventnova-aviso', aviso) } catch {}
+  window.location.replace('/pages/login.html')
+}
+
 /**
  * Hace una petición a la API y devuelve el JSON de la respuesta.
  * Si el servidor responde con error, lanza un Error con el mensaje del backend.
@@ -27,6 +37,10 @@ export async function peticion(ruta, { metodo = 'GET', datos } = {}) {
 
   const json = await respuesta.json().catch(() => ({}))
   if (!respuesta.ok) {
+    // M2: 401 = sin sesión o cuenta suspendida (el login fallido no cuenta)
+    if (respuesta.status === 401 && ruta !== '/auth/login') {
+      irAlLogin(json.codigo === 'CUENTA_SUSPENDIDA' ? 'suspendida' : 'sesion')
+    }
     const error = new Error(json.error || 'Ocurrió un error inesperado')
     error.status = respuesta.status
     throw error

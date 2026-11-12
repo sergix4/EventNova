@@ -16,6 +16,17 @@ const CORREO_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 AuthView.prepararMostrarClave()
 
+// M2: aviso cuando se llega aquí porque la cuenta fue suspendida o la sesión venció
+const AVISOS = {
+  suspendida: 'Tu cuenta fue suspendida. Comunícate con el administrador de EventNova.',
+  sesion: 'Tu sesión terminó. Inicia sesión de nuevo para continuar.',
+}
+try {
+  const aviso = sessionStorage.getItem('eventnova-aviso')
+  sessionStorage.removeItem('eventnova-aviso')
+  if (AVISOS[aviso]) AuthView.errorServidor(AVISOS[aviso])
+} catch {}
+
 // Si ya hay una sesión abierta, se envía directo al panel
 AuthModel.obtenerSesion().then(usuario => {
   if (usuario) window.location.replace(paginaInicioDe(usuario.rol))

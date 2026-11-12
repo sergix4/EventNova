@@ -32,7 +32,7 @@ export const MisReservasView = {
       tarjetaEstadistica({
         etiqueta: "Confirmadas",
         valor: reservas.filter((r) => r.estado === "Confirmada").length,
-        sub: "Reservas aprobadas",
+        sub: "Reservas pagadas",
         icono: "check",
         color: "#16a34a",
         fondo: "#f0fdf4",
@@ -187,7 +187,7 @@ export const MisReservasView = {
     if (r.estado === "Cancelada" && r.causaCancelacion)
       aviso = `<div class="alerta alerta--roja">${icono("alerta", 14)}<div><p class="alerta__titulo alerta__titulo--rojo">Causa de cancelación</p><p>${esc(r.causaCancelacion)}</p></div></div>`;
     if (r.estado === "Confirmada")
-      aviso = `<div class="alerta alerta--verde">${icono("check", 14, { grosor: 2.5 })}<p>Tu reserva fue confirmada por el agente. Presenta el código <strong>${esc(r.codigo)}</strong> el día del evento.</p></div>`;
+      aviso = `<div class="alerta alerta--verde">${icono("check", 14, { grosor: 2.5 })}<p>Tu reserva está pagada y confirmada. Presenta el código <strong>${esc(r.codigo)}</strong> el día del evento.</p></div>`;
     if (r.estado === "Reservada")
       aviso = `<div class="alerta alerta--ambar">${icono("reloj", 14)}<p>Pendiente de confirmación por el agente. Te avisaremos en la campana de notificaciones cuando sea aprobada.</p></div>`;
 
@@ -220,16 +220,36 @@ export const MisReservasView = {
         </div>
         <div class="cajon__acciones">
           <a href="${urlEvento(r)}" class="boton boton--coral boton--bloque">${icono("ticket", 16)}Ver evento</a>
+          ${r.editable ? `<button type="button" class="boton boton--neutro boton--bloque" data-editar-obs="${r.id}">${icono("editar", 16)}Editar observaciones</button>` : ""}
           ${r.cancelable ? `<button type="button" class="boton-cancelar-reserva" data-cancelar="${r.id}">Cancelar reserva</button>` : ""}
         </div>
       </aside>`;
+  },
+
+  // ─── M4: ventana para editar las observaciones ───────────────────────────────
+  modalObservaciones(r) {
+    return `
+      <div class="modal__cabecera">
+        <div><h3 class="modal__titulo">Editar observaciones</h3><p class="modal__subtitulo">${esc(r.codigo)} · ${esc(r.evento)}</p></div>
+        <button type="button" class="boton-icono boton-icono--sin-borde" data-cerrar-modal aria-label="Cerrar">${icono("cerrar", 18)}</button>
+      </div>
+      <div class="modal__cuerpo">
+        <div class="campo">
+          <label class="campo__etiqueta" for="observaciones-reserva">Observaciones <span class="campo__opcional">(opcional)</span></label>
+          <textarea id="observaciones-reserva" class="area-texto" rows="3" maxlength="500" placeholder="Ej. Necesito acceso para silla de ruedas">${esc(r.observaciones)}</textarea>
+        </div>
+      </div>
+      <div class="modal__pie">
+        <button type="button" class="boton boton--neutro" data-cerrar-modal>Volver</button>
+        <button type="button" class="boton boton--primario" id="guardar-observaciones">Guardar</button>
+      </div>`;
   },
 
   // ─── Ventana para confirmar la cancelación ─────────────────────────────────
   modalCancelar(r) {
     const avisoConfirmada =
       r.estado === "Confirmada"
-        ? `<div class="alerta alerta--ambar">${icono("alerta", 14)}<p>Esta reserva ya fue confirmada por el agente. Las entradas que canceles quedarán libres para otros clientes.</p></div>`
+        ? `<div class="alerta alerta--ambar">${icono("alerta", 14)}<p>Esta reserva ya está pagada y confirmada. Las entradas que canceles quedarán libres para otros clientes.</p></div>`
         : "";
     return `
       <div class="modal__cabecera">

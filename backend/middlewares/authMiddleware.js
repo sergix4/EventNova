@@ -14,7 +14,7 @@ async function revisarSesion(req, res, roles = [], mensaje = '') {
   const usuario = req.session.usuario;
 
   if (!usuario) {
-    res.status(401).json({ error: 'Debes iniciar sesión.' });
+    res.status(401).json({ error: 'Debes iniciar sesión.', codigo: 'SIN_SESION' });
     return false;
   }
   if (roles.length > 0 && !roles.includes(usuario.rol)) {
@@ -25,7 +25,7 @@ async function revisarSesion(req, res, roles = [], mensaje = '') {
   try {
     if (!(await PersonaModel.tieneRol(usuario.numero_id, usuario.rol))) {
       req.session.destroy(() => {});
-      res.status(401).json({ error: 'Tu cuenta fue suspendida o ya no existe. Comunícate con el administrador.' });
+      res.status(401).json({ error: 'Tu cuenta fue suspendida o ya no existe. Comunícate con el administrador.', codigo: 'CUENTA_SUSPENDIDA' });
       return false;
     }
   } catch (error) {

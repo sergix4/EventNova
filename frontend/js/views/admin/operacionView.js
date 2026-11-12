@@ -439,7 +439,7 @@ export const OperacionView = {
         </div></div>` : ''}
       </div>
       <div class="modal__pie">
-        <button type="button" class="boton boton--rojo-contorno" data-eliminar-reserva>${icono('papelera', 15)}Eliminar reserva</button>
+        ${r.estado === 'Cancelada' ? `<button type="button" class="boton boton--rojo-contorno" data-eliminar-reserva>${icono('papelera', 15)}Eliminar reserva</button>` : ''}
         <button type="button" class="boton boton--primario boton--seminegrita" data-cerrar-modal>Cerrar</button>
       </div>`
   },

@@ -262,14 +262,22 @@
   .pasos { grid-template-columns: 1fr; }
   .pasos::before { display: none; }
   .cta { padding: 64px 32px; }
-  .pie-sitio__fila { flex-direction: column; }
 }
 
 @media (max-width: 639px) {
   .grid-eventos { grid-template-columns: 1fr; }
-  .pie-sitio__enlaces { flex-wrap: wrap; justify-content: center; }
 }
 
 
 /* Home: mensaje cuando todavía no hay eventos disponibles */
 .mensaje-vacio { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 32px 16px; font-size: 16px; line-height: 24px; color: var(--gris-500); }
+
+/* M3: pie de página responsivo */
+@media (max-width: 1023px) {
+  .pie-sitio__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+  .pie-sitio__marca { grid-column: 1 / -1; }
+}
+@media (max-width: 639px) {
+  .pie-sitio__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 24px; }
+  .pie-sitio__inferior { flex-direction: column; align-items: flex-start; gap: 12px; }
+}

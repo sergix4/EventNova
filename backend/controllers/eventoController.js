@@ -12,6 +12,18 @@ const DURACION_MINIMA_HORAS = 1; // un evento dura mínimo 1 hora
 const ANTICIPACION_MINIMA_HORAS = 24; // se registra con mínimo 24 horas de anticipación
 const UNA_HORA_MS = 60 * 60 * 1000;
 
+// D1: convierte la fecha a "AAAA-MM-DD HH:mm:ss" en hora de Colombia
+// (app.js fija process.env.TZ = "America/Bogota"). Así una fecha que llega
+// con zona ("...Z") no se guarda corrida 5 horas.
+function aHoraLocal(ms) {
+  const d = new Date(ms);
+  const dos = (n) => String(n).padStart(2, "0");
+  return (
+    `${d.getFullYear()}-${dos(d.getMonth() + 1)}-${dos(d.getDate())} ` +
+    `${dos(d.getHours())}:${dos(d.getMinutes())}:${dos(d.getSeconds())}`
+  );
+}
+
 // ─── Tarea 16: largos y topes (los mismos del formulario y de develop.sql) ──
 const MAX_NOMBRE = 150; // VARCHAR(150)
 const MAX_TEATRO = 150; // VARCHAR(150)
@@ -159,8 +171,8 @@ function validarDatosEvento(body, { validarAnticipacion = true } = {}) {
       teatro,
       direccion_evento,
       id_ciudad,
-      fecha_inicio,
-      fecha_fin,
+      fecha_inicio: aHoraLocal(inicioMs),
+      fecha_fin: aHoraLocal(finMs),
       capacidad,
       precio_base,
       observaciones,
@@ -369,7 +381,7 @@ const eventoController = {
       if (!cupo) {
         return res
           .status(400)
-          .json({ error: "El agente seleccionado no existe." });
+          .json({ error: "El agente seleccionado no existe o está suspendido." });
       }
       if (cupo.eventos_activos >= cupo.limite_evento) {
         const quien =

@@ -52,8 +52,10 @@ export const ReservasAgenteView = {
         fondo: "#eef2ff",
       }),
       kpiFila({
-        etiqueta: "Por confirmar",
-        valor: cuenta("Reservada"),
+        etiqueta: "Entradas vendidas",
+        valor: reservas
+          .filter((r) => r.estado !== "Cancelada")
+          .reduce((suma, r) => suma + r.entradas, 0),
         icono: "reloj",
         color: "#d97706",
         fondo: "#fffbeb",

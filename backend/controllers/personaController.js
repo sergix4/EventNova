@@ -410,6 +410,20 @@ const personaController = {
         }
       }
 
+      // Regla del equipo: no se suspende a quien tiene reservas o eventos vinculados
+      if (!activo && persona.rol === "cliente" && persona.cliente.total_reservas > 0) {
+        const n = persona.cliente.total_reservas;
+        return res.status(409).json({
+          error: `No se puede suspender a ${persona.nombre}: tiene ${n} reserva${n === 1 ? "" : "s"} vinculada${n === 1 ? "" : "s"}.`,
+        });
+      }
+      if (!activo && persona.rol === "agente" && persona.agente.total_eventos > 0) {
+        const n = persona.agente.total_eventos;
+        return res.status(409).json({
+          error: `No se puede suspender a ${persona.nombre}: tiene ${n} evento${n === 1 ? "" : "s"} vinculado${n === 1 ? "" : "s"}.`,
+        });
+      }
+
       const usuario = await PersonaModel.cambiarActivo(id, activo, motivo);
       res.json({
         mensaje: activo

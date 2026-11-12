@@ -69,7 +69,10 @@ const EventoModel = {
   // Las fechas llegan como 'AAAA-MM-DD'. Se muestran los eventos que ocurren
   // dentro del rango (un festival de varios días aparece si se cruza con él).
   async getCatalogo(filtros = {}) {
-    const condiciones = [`es.nombre_estado NOT IN ('Finalizado', 'Cancelado')`];
+    const condiciones = [
+      `es.nombre_estado NOT IN ('Finalizado', 'Cancelado')`,
+      `u.activo`, // M1: no se muestran eventos de agentes suspendidos
+    ];
     const params = [];
 
     if (filtros.id_pais) {
@@ -114,7 +117,9 @@ const EventoModel = {
        JOIN public."CIUDAD" c        ON c.id_ciudad = e.id_ciudad
        JOIN public."DEPARTAMENTO" d  ON d.id_departamento = c.id_departamento
        JOIN public."PAIS" p          ON p.id_pais = d.id_pais
+       JOIN public."USUARIO" u       ON u.numero_id = e.id_agente
        WHERE es.nombre_estado NOT IN ('Finalizado', 'Cancelado')
+         AND u.activo
        ORDER BY p.nombre_pais, d.nombre_departamento, c.nombre_ciudad`,
     );
     return result.rows;
