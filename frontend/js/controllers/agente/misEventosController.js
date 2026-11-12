@@ -121,13 +121,22 @@ function eliminar(evento) {
 }
 
 // ─── Edición dentro de la misma página ──────────────────────────────────────
-function editar(evento) {
-  if (!evento) return;
-  if (NO_EDITABLES.includes(evento.estado)) {
-    mostrarToast(`No se puede editar un evento que está ${evento.estado}.`, {
+async function editar(eventoDeLaLista) {
+  if (!eventoDeLaLista) return;
+  if (NO_EDITABLES.includes(eventoDeLaLista.estado)) {
+    mostrarToast(`No se puede editar un evento que está ${eventoDeLaLista.estado}.`, {
       error: true,
       duracion: 3000,
     });
+    return;
+  }
+  // Ajustes finales: el listado ya no trae la imagen (base64). Se pide el evento
+  // completo para que el formulario la muestre y al guardar NO se pierda.
+  let evento;
+  try {
+    evento = await EventoModel.obtenerPorId(eventoDeLaLista.id);
+  } catch (error) {
+    mostrarToast("No se pudo abrir el evento.", { detalle: error.message, error: true, duracion: 4000 });
     return;
   }
   MisEventosView.cabecera(true);

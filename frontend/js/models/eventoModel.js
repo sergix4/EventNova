@@ -73,8 +73,12 @@ function adaptarEventoBD(fila) {
     direccion: fila.direccion_evento || "",
     observaciones: fila.observaciones || "",
     informacion: fila.observaciones || "",
-    imagen: fila.imagen_evento || IMAGEN_DEFECTO,
-    imagen_evento: fila.imagen_evento || "",
+    // Ajustes finales: los listados ya no traen el base64, solo "tiene_imagen";
+    // la imagen se pide aparte. El detalle (GET /api/eventos/:id) sí la trae completa.
+    imagen:
+      fila.imagen_evento ||
+      (fila.tiene_imagen ? `/api/eventos/${fila.id_evento}/imagen` : IMAGEN_DEFECTO),
+    imagen_evento: fila.imagen_evento || "", // solo viene en el detalle (formulario de editar)
     id_ciudad: fila.id_ciudad,
     ciudad: fila.nombre_ciudad,
     id_departamento: fila.id_departamento,

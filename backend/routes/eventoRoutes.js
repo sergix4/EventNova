@@ -17,6 +17,7 @@ router.get('/catalogo/ciudades', eventoController.ciudadesCatalogo);
 router.get('/estados', eventoController.listarEstados);
 router.get('/agentes', soloAgenteOAdmin, eventoController.listarAgentes);
 router.get('/:id', eventoController.obtener);
+router.get('/:id/imagen', eventoController.imagen); // Ajustes finales: imagen aparte (no en los listados)
 
 // Rutas protegidas (solo agentes y administradores)
 router.post('/', soloAgenteOAdmin, eventoController.crear);
