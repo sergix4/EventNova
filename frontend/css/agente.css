@@ -1101,7 +1101,7 @@
   align-items: center;
 }
 
-/* D5: la columna Acciones siempre visible y tabla más angosta en portátiles */
+/* D5: la columna Acciones siempre visible (tablas de Mis eventos y de Reservas) */
 .tabla-agente th:last-child,
 .tabla-agente td:last-child {
   position: sticky;
@@ -1110,10 +1110,18 @@
   box-shadow: -6px 0 8px -6px rgba(17, 24, 39, 0.12);
 }
 .tabla-agente thead th:last-child { background: #f9fafb; }
-.tabla-agente .acciones-iconos { flex-direction: column; align-items: stretch; }
+/* Solo en la tabla de Reservas: botones en columna y sin «Fecha de reserva» en portátiles */
+.tabla-reservas-agente .acciones-iconos { flex-direction: column; align-items: stretch; }
 @media (max-width: 1439px) {
-  .tabla-agente th:nth-child(6),
-  .tabla-agente td:nth-child(6) { display: none; }
-  .tabla-agente td:first-child .persona__correo,
-  .tabla-agente td:first-child .avatar { display: none; }
+  .tabla-reservas-agente th:nth-child(6),
+  .tabla-reservas-agente td:nth-child(6) { display: none; }
+  .tabla-reservas-agente td:first-child .persona__correo,
+  .tabla-reservas-agente td:first-child .avatar { display: none; }
+}
+
+/* R1: en portátiles (menos de 1440 px) la tabla de Mis eventos usa celdas
+   más angostas para que quepan las 8 columnas sin desplazarse */
+@media (max-width: 1439px) {
+  .tabla-mis-eventos th,
+  .tabla-mis-eventos td { padding-left: 10px; padding-right: 10px; }
 }

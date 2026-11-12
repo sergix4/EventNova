@@ -95,11 +95,11 @@ El equipo usa una base compartida en **Neon Postgres** (nube).
    usuarios `@demo.eventnova.com`, sus eventos y sus reservas; lo demás no se toca).
 
 > `develop.sql` es el script **consolidado**: ya trae todos los cambios de las
-> 1, así que una base nueva queda igual a la de Neon **sin**
+migraciones 01 a 11, así que una base nueva queda igual a la de Neon **sin**
 > ejecutar ninguna migración.
 
 **Para aplicar una migración nueva a una base que ya existe** (no borra datos):
-`npm run db:migrar -- migracion_10.sql` (cambiar por el nombre de la migración).
+`npm run db:migrar -- migracion_11.sql` (cambiar por el nombre de la migración).
 Los archivos `migracion_XX.sql` son el historial de cambios que se aplicó a Neon;
 solo sirven para bases creadas antes de esa migración.
 
@@ -191,7 +191,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Tabla `RESERVA` con los campos del enunciado (`migracion_05.sql`) y modelo `backend/models/reservaModel.js` (valor total automático y validación de cupos).
 - ✅ CRUD de reservas (`/api/reservas`): el cliente reserva desde el detalle del evento; valor total automático, validación de cupos y permisos por rol.
 - ✅ Vista "Mis reservas" del cliente: listado real de sus reservas con filtros (texto, estado, fecha), detalle del evento asociado y cancelación de reservas propias.
-- ✅ Administrar reservas (perfil agente): listado real de las reservas de sus eventos con filtros (texto, evento, estado, fecha), indicador de entradas vendidas, detalle y cancelación (total o parcial) con causa obligatoria; las reservas antiguas que quedaron en Reservada también se pueden confirmar.
+- ✅ Administrar reservas (perfil agente): listado real de las reservas de sus eventos con filtros (texto, evento, estado, fecha), indicador de entradas vendidas, detalle y cancelación (total o parcial) con causa obligatoria.
 - ✅ Reglas de eventos: duración mínima de 1 hora, registro con 24 h de anticipación y sin fechas pasadas; solo se reserva En Boletería; En Vivo y Finalizado cambian solos según la hora; cancelar un evento cancela todas sus reservas.
 - ✅ Dashboard del administrador con estadísticas reales (`/api/reportes/dashboard`, solo administrador): totales de usuarios, reservas y eventos; ingresos, reservas y eventos por mes del año elegido; cobertura por país/departamento/ciudad; actividad reciente y resumen de pagos de reservas (`migracion_06.sql`).
 - ✅ Script de base de datos consolidado: `develop.sql` crea las 14 tablas finales con sus triggers; se quitaron las tablas que no pide el enunciado (CATEGORIA, AGRUPA, RESEÑA, METODO_PAGO y TIPO) con `migracion_07.sql`.
@@ -204,10 +204,11 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Reporte de cobertura y eventos con datos reales (`/api/reportes/cobertura?anio=2026` o `?anio=todos`, solo administrador): listado de eventos (código, nombre, estado, fecha) por país, departamento y ciudad de realización, filtros encadenados con el conteo de eventos de cada nivel, gráficas por país y departamento, ranking de ciudades y resumen de cobertura.
 - ✅ Reporte de reservas y operación con datos reales (`/api/reportes/operacion?anio=2026` o `?anio=todos`, solo administrador): historial de reservas por cliente (selector, buscador y ficha del cliente), reservas canceladas con causa, fecha y **quién canceló** (`RESERVA.cancelada_por`), cancelaciones **parciales** de entradas (tabla `CANCELACION_ENTRADAS`), eventos cancelados con su causa y reservas afectadas, resumen operativo y actividad reciente (`migracion_08.sql`).
 - ✅ «Mi perfil» conectado a la BD (`/api/auth/perfil`) para cliente, agente y administrador: cada usuario edita sus propios datos (nombre, correo, fecha de nacimiento, dirección, 1 a 3 teléfonos, país → departamento → ciudad y los campos de su rol que le corresponden), cambia su contraseña pidiendo la actual, el cliente activa o desactiva la publicidad y el agente ve sus eventos y reservas reales. Puntos, comisión, salario y horario solo los cambia el administrador desde Usuarios; el agente puede cambiar su plan desde su perfil. El perfil del admin ya no usa datos de ejemplo.
-- ✅ Auditoría final: seguridad (límite de intentos de inicio de sesión, cabeceras de seguridad, sesiones de usuarios suspendidos invalidadas, cédula del agente oculta en la API pública), reglas de reservas (no se cancela un evento que ya empezó, precio congelado con reservas, reservas sin confirmar se cancelan solas al terminar el evento · `migracion_09.sql`), CRUD completo desde el panel admin (registrar clientes y agentes, eliminar reservas canceladas) y sin datos ni botones de ejemplo.
+- ✅ Auditoría final: seguridad (límite de intentos de inicio de sesión, cabeceras de seguridad, sesiones de usuarios suspendidos invalidadas, cédula del agente oculta en la API pública), reglas de reservas (no se cancela un evento que ya empezó, precio congelado con reservas · migracion_09.sql), CRUD completo desde el panel admin (registrar clientes y agentes, eliminar reservas canceladas) y sin datos ni botones de ejemplo.
 - ✅ Ajustes finales: reservas confirmadas al pagar (una reserva por compra), suspensión de usuarios (migracion_10.sql), imágenes fuera de los listados, reintentos de conexión con Neon y textos corregidos.
 - ✅ Auditoría 3 (PR #50): no se suspende a clientes con reservas ni a agentes con eventos; los eventos de agentes suspendidos no se muestran ni se venden; un usuario suspendido o con la sesión vencida vuelve al login con un aviso; el cliente edita las observaciones de sus reservas confirmadas; el admin solo elimina reservas canceladas; fechas de eventos normalizadas a hora de Colombia; pie de página responsivo y columna de acciones fija en las reservas del agente.
 - ✅ Auditoría 4: la reserva se confirma sola al pagar (sin confirmación manual, migracion_11), observaciones editables, pago simulado al subir de plan, fecha de nacimiento desde 1900 y mínimo 18 años.
+- ✅ Auditoría 5: columna «Entradas» visible en Mis eventos del agente en portátiles y manual de usuario actualizado.
 
 ## Documentación
 
