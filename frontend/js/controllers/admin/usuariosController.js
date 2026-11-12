@@ -2,7 +2,7 @@
 // CONTROLADOR de la gestión de clientes, agentes (Sprint 3 · Tarea 5)
 // y administradores (Sprint 3 · Tarea 6).
 // Conecta pages/admin/usuarios.html con:
-//   - PersonaModel  → /api/usuarios (listar, editar y eliminar personas)
+//   - PersonaModel  → /api/usuarios (listar, editar, suspender y reactivar personas)
 //   - PlanModel     → /api/planes   (selector de plan del agente)
 //   - País / Departamento / Ciudad → selectores encadenados del modal
 
@@ -39,7 +39,7 @@ let pagina = 1;
 let temporizador = null; // para no llamar a la API en cada tecla del buscador
 let planes = null; // se piden una sola vez (al editar el primer agente)
 let paises = null; // ídem
-let usuarioSesion = null; // administrador que tiene la sesión abierta (no puede eliminarse)
+let usuarioSesion = null; // administrador que tiene la sesión abierta (no puede suspenderse)
 
 // ─── Listado ────────────────────────────────────────────────────────────────
 async function cargarUsuarios() {
@@ -318,26 +318,30 @@ async function registrar() {
   });
 }
 
-// ─── Eliminar ───────────────────────────────────────────────────────────────
-function eliminar(id) {
+// ─── Suspender / Reactivar (Ajustes finales: reemplaza a "Eliminar") ──────────
+// activo = false -> suspender · activo = true -> reactivar
+function cambiarEstado(id, activo) {
   const persona = buscarPersona(id);
   if (!persona) return;
-  const caja = abrirModal(UsuariosView.confirmarEliminar(persona), {
-    clase: "modal--sm",
-  });
+  const caja = abrirModal(
+    activo ? UsuariosView.confirmarReactivar(persona) : UsuariosView.confirmarSuspender(persona),
+    { clase: "modal--sm" },
+  );
   caja
-    .querySelector("#confirmar-eliminar")
+    .querySelector(activo ? "#confirmar-reactivar" : "#confirmar-suspender")
     .addEventListener("click", async () => {
+      const motivo = caja.querySelector("#motivo-suspension")?.value.trim() || null;
       cerrarModal();
       try {
-        await PersonaModel.eliminar(id);
-        mostrarToast(`${persona.nombre} fue eliminado correctamente.`, {
-          duracion: 2500,
-        });
+        await PersonaModel.cambiarEstado(id, activo, motivo);
+        mostrarToast(
+          activo ? `${persona.nombre} fue reactivado.` : `${persona.nombre} fue suspendido.`,
+          { duracion: 2500 },
+        );
         await cargarUsuarios();
       } catch (error) {
-        // 409: "No se puede eliminar: el cliente tiene 10 reserva(s) asociada(s)."
-        mostrarToast("No se pudo eliminar", {
+        // 409: "No puedes suspender tu propia cuenta de administrador."
+        mostrarToast(activo ? "No se pudo reactivar" : "No se pudo suspender", {
           detalle: error.message,
           error: true,
           duracion: 5000,
@@ -367,11 +371,12 @@ document.getElementById("buscar-usuario").addEventListener("input", () => {
 });
 
 document.getElementById("tabla-usuarios").addEventListener("click", (e) => {
-  const boton = e.target.closest("[data-ver], [data-editar], [data-eliminar]");
+  const boton = e.target.closest("[data-ver], [data-editar], [data-suspender], [data-reactivar]");
   if (!boton) return;
   if (boton.dataset.ver) return ver(boton.dataset.ver);
   if (boton.dataset.editar) return editar(boton.dataset.editar);
-  eliminar(boton.dataset.eliminar);
+  if (boton.dataset.suspender) return cambiarEstado(boton.dataset.suspender, false);
+  cambiarEstado(boton.dataset.reactivar, true);
 });
 
 document

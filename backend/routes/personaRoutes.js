@@ -20,6 +20,7 @@ router.post('/agentes', (req, res) => personaController.crearPersona(req, res, '
 router.post('/administradores', (req, res) => personaController.crearPersona(req, res, 'administrador'));
 router.get('/:id', personaController.obtener);
 router.put('/:id', personaController.actualizar);
-router.delete('/:id', personaController.eliminar);
+// Ajustes finales: ya no se elimina a nadie; se suspende o se reactiva
+router.patch('/:id/estado', personaController.cambiarEstado);
 
 module.exports = router;

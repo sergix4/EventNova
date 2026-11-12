@@ -58,7 +58,7 @@ const UsuarioModel = {
   // Si es agente, también trae los datos propios del agente (empresa, descripción y plan).
   async findByEmail(correo) {
     const result = await pool.query(
-      `SELECT u.numero_id, u.correo, u.nombre, u.contraseña, u.direccion,
+      `SELECT u.numero_id, u.correo, u.nombre, u.contraseña, u.direccion, u.activo,
               c.numero_id  AS es_cliente,
               a.numero_id  AS es_agente,
               ad.numero_id AS es_administrador,
@@ -91,6 +91,7 @@ const UsuarioModel = {
       ...contacto, // telefono, id_ciudad, ciudad
       contraseña: fila.contraseña, // hash — solo se usa dentro del backend
       rol,
+      activo: fila.activo, // false = cuenta suspendida por el administrador
       agente: rol === 'agente'
         ? {
             nombre_empresa: fila.nombre_empresa,

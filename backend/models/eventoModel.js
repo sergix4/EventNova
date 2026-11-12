@@ -155,6 +155,7 @@ const EventoModel = {
       `SELECT a.numero_id AS id_agente, u.nombre AS nombre_agente, a.nombre_empresa
        FROM public."AGENTE" a
        JOIN public."USUARIO" u ON u.numero_id = a.numero_id
+       WHERE u.activo -- los agentes suspendidos no aparecen para asignarles eventos
        ORDER BY u.nombre ASC`,
     );
     return result.rows;
