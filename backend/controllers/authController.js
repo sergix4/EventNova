@@ -40,8 +40,10 @@ async function validarCiudadYTelefono({ id_ciudad, telefono, telefono2 }) {
   return { idCiudad, tel, tel2: tel2 || null };
 }
 
-// Valida los datos propios del agente. Devuelve { error } o { com, exp }
-function validarDatosAgente({ comision, experiencia }) {
+// Valida los datos propios del agente. Devuelve { error } o { exp }
+// Ajustes finales: la comisión YA NO la elige el agente al registrarse;
+// nace en 0 y solo el administrador la cambia (Usuarios → Editar).
+function validarDatosAgente({ experiencia }) {
   const exp = Number(experiencia);
   if (
     experiencia === undefined ||
@@ -54,17 +56,7 @@ function validarDatosAgente({ comision, experiencia }) {
       error: "Los años de experiencia deben ser un número entero entre 0 y 60.",
     };
   }
-  const com = Number(comision);
-  if (
-    comision === undefined ||
-    comision === "" ||
-    Number.isNaN(com) ||
-    com < 0 ||
-    com > 100
-  ) {
-    return { error: "La comisión debe ser un porcentaje entre 0 y 100." };
-  }
-  return { com, exp };
+  return { exp };
 }
 
 // Tarea 16: valida los datos comunes del registro (cliente y agente).
@@ -288,7 +280,7 @@ const authController = {
         nombre_plan: planDb.nombre_plan,
         nombre_empresa: empresa,
         descripcion_agente: descripcion,
-        comision: datosAgente.com,
+        comision: 0, // la fija el administrador después
         experiencia: datosAgente.exp,
       });
 

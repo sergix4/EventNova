@@ -24,7 +24,7 @@ function hayFiltros() {
 function aplicarFiltros() {
   const q = filtros.buscar.value.toLowerCase()
   const resultado = eventos.filter(e =>
-    (!q || e.nombre.toLowerCase().includes(q) || e.ciudad.toLowerCase().includes(q) || e.categoria.toLowerCase().includes(q)) &&
+    (!q || e.nombre.toLowerCase().includes(q) || e.ciudad.toLowerCase().includes(q) || (e.recinto || '').toLowerCase().includes(q)) &&
     (!filtros.pais.value || e.pais === filtros.pais.value) &&
     (!filtros.departamento.value || e.departamento === filtros.departamento.value) &&
     (!filtros.ciudad.value || e.ciudad === filtros.ciudad.value) &&

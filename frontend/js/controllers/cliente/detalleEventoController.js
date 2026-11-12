@@ -139,7 +139,16 @@ async function buscarReservaActiva() {
 async function iniciar() {
   await iniciarPanel({ rol: 'cliente', activo: 'explorar' })
   iniciarNotificaciones()
-  evento = await EventoModel.obtenerDetalle()
+  // Ajustes finales: si el evento no existe o fue eliminado, se muestra un
+  // mensaje en vez de dejar la página en blanco
+  try {
+    evento = await EventoModel.obtenerDetalle()
+  } catch (error) {
+    return DetalleEventoView.noEncontrado(
+      error.status === 404 ? 'Este evento no existe o fue eliminado' : 'No se pudo cargar el evento',
+    )
+  }
+  if (!evento) return DetalleEventoView.noEncontrado('Este evento no existe o fue eliminado')
   const activa = await buscarReservaActiva()
   if (activa) {
     estado.reserva = activa

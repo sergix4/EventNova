@@ -46,6 +46,17 @@ function desglosarFecha(iso) {
   };
 }
 
+// Ajustes finales: "29 de oct de 2026" o, si el evento dura varios días,
+// "29 de oct – 26 de nov de 2026" (así se ve que una exposición sigue En Vivo)
+function rangoFechas(inicioIso, finIso) {
+  const ini = desglosarFecha(inicioIso);
+  const fin = desglosarFecha(finIso);
+  if (!fin.fechaInput || ini.fechaInput === fin.fechaInput) return ini.fechaLegible;
+  const mismoAnio = ini.fechaInput.slice(0, 4) === fin.fechaInput.slice(0, 4);
+  const desde = mismoAnio ? ini.fechaLegible.replace(/( de)? \d{4}$/, "") : ini.fechaLegible;
+  return `${desde} – ${fin.fechaLegible}`;
+}
+
 // Adapta una fila de PostgreSQL (SELECT_BASE) al objeto que usan MisEventosView y FormularioEventoView
 function adaptarEventoBD(fila) {
   const inicio = desglosarFecha(fila.fecha_inicio);
@@ -71,6 +82,8 @@ function adaptarEventoBD(fila) {
     id_pais: fila.id_pais,
     pais: fila.nombre_pais,
     fecha: inicio.fechaLegible,
+    fechaFin: fin.fechaLegible,
+    fechaRango: rangoFechas(fila.fecha_inicio, fila.fecha_fin),
     fecha_inicio_input: inicio.fechaInput,
     hora_inicio_input: inicio.horaInput,
     fecha_fin_input: fin.fechaInput,
@@ -175,12 +188,12 @@ export const EventoModel = {
           id: e.id,
           nombre: e.nombre,
           ciudad: e.ciudad,
-          fecha: e.fecha,
+          fecha: e.fechaRango,
           hora: e.hora_inicio_input,
           precio: e.precio,
           estadoTexto: est.texto,
           estadoColor: est.color,
-          categoria: e.teatro || "Evento",
+          recinto: e.teatro, // antes se llamaba "categoria", pero es el teatro/lugar
           imagen: e.imagen,
         };
       });
@@ -195,14 +208,15 @@ export const EventoModel = {
         id: ev.id,
         codigo: ev.codigo,
         nombre: ev.nombre,
-        categoria: ev.teatro || "General",
         estado: ev.estado,
         ciudad: ev.ciudad,
         departamento: ev.departamento,
         pais: ev.pais,
         recinto: ev.teatro + (ev.direccion ? ` · ${ev.direccion}` : ""),
-        fechaLarga: ev.fecha,
-        fechaCorta: ev.fecha,
+        fechaLarga: ev.fechaRango,
+        fechaCorta: ev.fechaRango,
+        fechaInicio: ev.fecha,
+        fechaFin: ev.fechaFin,
         horaInicio: ev.hora_inicio_input,
         horaFin: ev.hora_fin_input,
         precio: ev.precio_base,
@@ -256,13 +270,13 @@ export const EventoModel = {
       pais: e.pais,
       departamento: e.departamento,
       ciudad: e.ciudad,
-      fecha: e.fecha,
+      fecha: e.fechaRango,
       hora: e.hora_inicio_input,
       precio: e.precio,
       cuposTotal: e.capacidad,
       cuposVendidos: e.reservas,
       estado: e.estado,
-      categoria: e.teatro || "Evento",
+      recinto: e.teatro, // antes "categoria": en realidad es el teatro/lugar
       imagen: e.imagen,
     }));
   },

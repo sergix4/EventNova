@@ -16,7 +16,6 @@ export const InicioView = {
       <article class="tarjeta-evento" aria-labelledby="evento-${e.id}">
         <div class="tarjeta-evento__imagen">
           <img src="${esc(e.imagen)}" alt="Imagen del evento ${esc(e.nombre)}" loading="lazy">
-          <span class="tarjeta-evento__categoria">${esc(e.categoria)}</span>
           <span class="tarjeta-evento__estado">
             <span class="insignia estado-portada estado-portada--${e.estadoColor}"><span class="insignia__punto" aria-hidden="true"></span>${esc(e.estadoTexto)}</span>
           </span>
@@ -24,6 +23,7 @@ export const InicioView = {
         <div class="tarjeta-evento__cuerpo">
           <h3 class="tarjeta-evento__nombre" id="evento-${e.id}">${esc(e.nombre)}</h3>
           <div class="tarjeta-evento__meta">
+            ${e.recinto ? `<span class="meta">${icono('edificio', 16)}<span class="solo-lector">Lugar: </span>${esc(e.recinto)}</span>` : ''}
             <span class="meta">${icono('ubicacion', 16)}<span class="solo-lector">Ciudad: </span>${esc(e.ciudad)}</span>
             <div class="meta-fila">
               <span class="meta">${icono('calendario', 16)}<span class="solo-lector">Fecha: </span>${esc(e.fecha)}</span>

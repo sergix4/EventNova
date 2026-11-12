@@ -70,7 +70,6 @@ export function tarjetaEvento(e, { explorar = false } = {}) {
     <article class="evento">
       <div class="evento__imagen">
         <img src="${esc(e.imagen)}" alt="${esc(e.nombre)}" loading="lazy">
-        <span class="evento__categoria">${esc(e.categoria)}</span>
         <span class="evento__estado">${insigniaEvento(e.estado, { borde: explorar })}</span>
       </div>
       <div class="evento__cuerpo">
@@ -80,6 +79,7 @@ export function tarjetaEvento(e, { explorar = false } = {}) {
             : `<h3 class="evento__nombre">${esc(e.nombre)}</h3>`
         }
         <div class="evento__meta">
+          ${e.recinto ? `<span class="meta">${icono("edificio", tam)}${esc(e.recinto)}</span>` : ""}
           <span class="meta">${icono("ubicacion", tam)}${esc(ubicacion)}</span>
           <div class="meta-fila">
             <span class="meta">${icono("calendario", explorar ? 13 : 15)}${esc(e.fecha)}</span>
