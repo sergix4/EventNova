@@ -189,15 +189,15 @@ const reservaController = {
     if (error) return res.status(400).json({ error });
 
     try {
-      // La reserva queda a nombre del cliente en sesión (nunca se toma del body)
-      // Si ya tenía una reserva activa de este evento, el Modelo le suma las
-      // entradas (responde 200 con entradas_agregadas); si no, crea una (201).
+      // La reserva queda a nombre del cliente en sesión (nunca se toma del body).
+      // Ajustes finales: siempre se crea una reserva NUEVA y ya "Confirmada"
+      // (el cliente pagó). El tope de 10 es por cliente y evento.
       const reserva = await ReservaModel.create(
         { id_evento, ...datos },
         req.session.usuario.numero_id,
         MAX_ENTRADAS,
       );
-      res.status(reserva.entradas_agregadas ? 200 : 201).json(reserva);
+      res.status(201).json(reserva);
     } catch (err) {
       responderErrorModelo(res, err, "crear");
     }
