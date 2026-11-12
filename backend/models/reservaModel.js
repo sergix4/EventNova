@@ -42,9 +42,11 @@ function errorReserva(codigo, mensaje, extra = {}) {
 async function bloquearEvento(client, id_evento) {
   const result = await client.query(
     `SELECT e.id_evento, e.capacidad, e.precio_base, es.nombre_estado,
-            (e.fecha_inicio <= (NOW() AT TIME ZONE 'America/Bogota')) AS ya_empezo
+            (e.fecha_inicio <= (NOW() AT TIME ZONE 'America/Bogota')) AS ya_empezo,
+            u.activo AS agente_activo
      FROM public."EVENTO" e
      JOIN public."ESTADO" es ON es.id_estado = e.id_estado
+     JOIN public."USUARIO" u ON u.numero_id = e.id_agente
      WHERE e.id_evento = $1
      FOR UPDATE OF e`,
     [id_evento],
@@ -78,6 +80,15 @@ async function validarCupos(
   if (!evento) {
     throw errorReserva("EVENTO_NO_EXISTE", "El evento no existe.");
   }
+
+  // M1: si el agente del evento está suspendido, no se venden entradas
+  if (!evento.agente_activo) {
+    throw errorReserva(
+      "EVENTO_NO_DISPONIBLE",
+      "Este evento no está disponible: su organizador está suspendido.",
+    );
+  }
+
   if (evento.nombre_estado === "Programado") {
     throw errorReserva(
       "EVENTO_NO_DISPONIBLE",

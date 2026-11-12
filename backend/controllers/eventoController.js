@@ -369,7 +369,7 @@ const eventoController = {
       if (!cupo) {
         return res
           .status(400)
-          .json({ error: "El agente seleccionado no existe." });
+          .json({ error: "El agente seleccionado no existe o está suspendido." });
       }
       if (cupo.eventos_activos >= cupo.limite_evento) {
         const quien =

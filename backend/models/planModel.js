@@ -54,7 +54,8 @@ const PlanModel = {
                  AND es.nombre_estado = ANY($2)) AS eventos_activos
        FROM public."AGENTE" ag
        JOIN public."TIPO_PLAN" tp ON tp.id_plan = ag.id_plan
-       WHERE ag.numero_id = $1`,
+       JOIN public."USUARIO" u    ON u.numero_id = ag.numero_id
+       WHERE ag.numero_id = $1 AND u.activo`,
       [numero_id, ESTADOS_ACTIVOS],
     );
     return result.rows[0] || null;
