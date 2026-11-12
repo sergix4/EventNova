@@ -161,12 +161,14 @@ el mismo servidor entrega las páginas HTML y responde la API.
 | PATCH          | `/api/reservas/:id/estado`      | Confirmar o cancelar una reserva                                                       |
 | GET            | `/api/usuarios`                 | Listar usuarios (admin; opcional `?rol=` cliente, agente o administrador y `?buscar=`) |
 | GET/PUT/DELETE | `/api/usuarios/:id`             | Consultar / editar (persona, teléfonos y datos del rol) / eliminar (admin)             |
+| PATCH          | /api/usuarios/:id/estado        | Suspender o reactivar una cuenta (admin)                                               |
 | POST           | `/api/usuarios/clientes`        | Registrar un cliente desde el panel (solo administrador)                               |
 | POST           | `/api/usuarios/agentes`         | Registrar un agente desde el panel (solo administrador)                                |
 | POST           | `/api/usuarios/administradores` | Registrar un administrador (solo otro administrador con sesión)                        |
 | GET/POST       | `/api/eventos`                  | Listar eventos / registrar evento (agente o admin)                                     |
 | GET            | `/api/eventos/catalogo`         | Catálogo para el cliente (filtros de ubicación y fecha)                                |
 | GET            | `/api/eventos/estados`          | Estados del evento                                                                     |
+| GET            | /api/eventos/:id/imagen         | Imagen del evento (pública)                                                            |
 | GET/PUT/DELETE | `/api/eventos/:id`              | Consultar / editar / eliminar un evento (agente dueño o admin)                         |
 | PATCH          | `/api/eventos/:id/estado`       | Cambiar el estado (al cancelar, también cancela sus reservas)                          |
 | GET            | `/api/reportes/dashboard`       | Dashboard del administrador                                                            |
@@ -193,7 +195,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Script de base de datos consolidado: `develop.sql` crea las 13 tablas finales con sus triggers; se quitaron las tablas que no pide el enunciado (CATEGORIA, AGRUPA, RESEÑA, METODO_PAGO y TIPO) con `migracion_07.sql`.
 - ✅ Datos de demostración (`npm run db:demo`, `backend/database/seed_demo.js`): clientes, agentes, eventos y reservas en todos los estados (con causas de cancelación) para probar los reportes y la sustentación.
 - ✅ API de usuarios (`/api/usuarios`, solo administrador): listado por rol con búsqueda, consulta, edición en transacción (persona, teléfonos y datos de cliente/agente/administrador) y eliminación protegida (no se borra a quien tiene reservas o eventos, ni el admin a sí mismo).
-- ✅ Gestión de clientes y agentes (`pages/admin/usuarios.html`, solo administrador): pestañas con buscador, paginación, Ver, Editar (persona, teléfonos, país → departamento → ciudad y datos del rol) y Eliminar con confirmación y aviso cuando tiene reservas o eventos.
+- ✅ Gestión de clientes y agentes (`pages/admin/usuarios.html`, solo administrador): pestañas con buscador, paginación, Ver, Editar (persona, teléfonos, país → departamento → ciudad y datos del rol) y Suspender / Reactivar con motivo y aviso cuando tiene reservas o eventos.
 - ✅ CRUD de administradores (pestaña «Administradores» en `pages/admin/usuarios.html`): solo un administrador con sesión registra a otro (persona, contraseña, salario y horario); un administrador no puede eliminarse a sí mismo, siempre queda al menos uno, y si un administrador es eliminado su sesión deja de servir.
 - ✅ Reporte general con datos reales (`/api/reportes/generales`, solo administrador): totales de clientes, agentes, administradores, reservas y eventos con los nuevos del mes; eventos y reservas por estado; reservas y eventos por mes del año elegido y los últimos 50 registros del sistema con filtros.
 - ✅ Reportes comerciales con datos reales (`/api/reportes/comerciales?anio=2026`, solo administrador): ingresos por agente y por cliente con su promedio general, ingresos totales por mes, número de reservas por evento y por mes, y eventos creados por agente y ciudad (activos, finalizados y cancelados).
@@ -201,6 +203,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Reporte de reservas y operación con datos reales (`/api/reportes/operacion?anio=2026` o `?anio=todos`, solo administrador): historial de reservas por cliente (selector, buscador y ficha del cliente), reservas canceladas con causa, fecha y **quién canceló** (`RESERVA.cancelada_por`), cancelaciones **parciales** de entradas (tabla `CANCELACION_ENTRADAS`), eventos cancelados con su causa y reservas afectadas, resumen operativo y actividad reciente (`migracion_08.sql`).
 - ✅ «Mi perfil» conectado a la BD (`/api/auth/perfil`) para cliente, agente y administrador: cada usuario edita sus propios datos (nombre, correo, fecha de nacimiento, dirección, 1 a 3 teléfonos, país → departamento → ciudad y los campos de su rol que le corresponden), cambia su contraseña pidiendo la actual, el cliente activa o desactiva la publicidad y el agente ve sus eventos y reservas reales. Puntos, comisión, plan, salario y horario solo los cambia el administrador desde Usuarios. El perfil del admin ya no usa datos de ejemplo.
 - ✅ Auditoría final: seguridad (límite de intentos de inicio de sesión, cabeceras de seguridad, sesiones de usuarios eliminados invalidadas, cédula del agente oculta en la API pública), reglas de reservas (no se cancela un evento que ya empezó, precio congelado con reservas, reservas sin confirmar se cancelan solas al terminar el evento · `migracion_09.sql`), CRUD completo desde el panel admin (registrar clientes y agentes, eliminar reservas) y sin datos ni botones de ejemplo.
+- ✅ Ajustes finales: reservas confirmadas al pagar (una reserva por compra), suspensión de usuarios (migracion_10.sql), imágenes fuera de los listados, reintentos de conexión con Neon y textos corregidos.
 
 ## Convenciones
 
