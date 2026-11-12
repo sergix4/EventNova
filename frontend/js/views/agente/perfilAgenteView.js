@@ -165,17 +165,23 @@ export const PerfilAgenteView = {
   },
 
   // ─── Ventanas del plan ──────────────────────
-  modalPlan(plan) {
+  // Auditoría 4: subir de plan pasa por el mismo pago simulado de las reservas;
+  // bajar de plan no tiene costo.
+  modalPlan(plan, planActual) {
+    const sube = plan.precioValor > (planActual?.precioValor ?? 0);
     return `
       <div class="confirmacion">
         <div class="confirmacion__fila">
           <div class="confirmacion__icono" style="background:#eef2ff;color:#4f46e5">${icono("ticket", 20)}</div>
-          <div><h3 class="modal__titulo">Cambiar plan</h3><p class="confirmacion__texto">¿Estás seguro de que deseas cambiar tu plan de EventNova a <strong style="color:var(--gris-700)">${esc(plan.nombre)}</strong>?</p></div>
+          <div><h3 class="modal__titulo">${sube ? "Pagar y cambiar plan" : "Cambiar plan"}</h3><p class="confirmacion__texto">${sube
+            ? `Para pasar a <strong style="color:var(--gris-700)">${esc(plan.nombre)}</strong> debes pagar el primer mes.`
+            : `Vas a pasar a <strong style="color:var(--gris-700)">${esc(plan.nombre)}</strong>. Este cambio no tiene costo.`}</p></div>
         </div>
         <div class="cambio-plan"><span>${esc(plan.nombre)}</span><strong>${esc(plan.precioCorto)} / mes</strong></div>
+        ${sube ? '<p class="pago__nota" style="text-align:center;margin-top:12px;font-size:12px;color:var(--gris-500)">🔒 Pago simulado · No se realizará ningún cobro real</p>' : ""}
         <div class="confirmacion__acciones">
           <button type="button" class="boton boton--neutro" data-cerrar-modal>Cancelar</button>
-          <button type="button" class="boton boton--coral boton--seminegrita" id="confirmar">Confirmar cambio</button>
+          <button type="button" class="boton boton--coral boton--seminegrita" id="confirmar">${sube ? `Pagar ${esc(plan.precioCorto)}` : "Confirmar cambio"}</button>
         </div>
       </div>`;
   },

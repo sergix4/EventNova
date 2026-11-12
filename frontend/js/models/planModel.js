@@ -29,6 +29,7 @@ export const PlanModel = {
       id_plan: p.id_plan,
       nombre: p.nombre_plan,
       precioCorto: precioCorto(p.precio_plan),
+      precioValor: Number(p.precio_plan), // Auditoría 4: para saber si el cambio sube o baja de plan
       precio: precioCorto(p.precio_plan) + " COP",
       limite: p.limite_evento,
       ilimitado: p.limite_evento >= LIMITE_ILIMITADO,

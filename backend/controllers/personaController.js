@@ -19,6 +19,8 @@ const MAX_TELEFONOS = 3;
 const NUMERO_ID_VALIDO = /^[A-Za-z0-9-]{5,20}$/;
 const MIN_CONTRASENA = 8;
 const MAX_CONTRASENA = 72; // bcrypt solo tiene en cuenta los primeros 72 caracteres
+const EDAD_MINIMA = 18; // Auditoría 4: para pagar en EventNova hay que ser mayor de edad
+const ANIO_MINIMO = 1900;
 
 // "Si el campo no viene en el body, se conserva el valor actual".
 // Así el frontend puede mandar solo lo que cambió.
@@ -64,6 +66,13 @@ async function prepararDatos(actual, body) {
     }
     if (fecha > new Date())
       return { error: "La fecha de nacimiento no puede ser futura." };
+        // Auditoría 4: ni fechas imposibles (1800) ni menores de edad
+    if (anio < ANIO_MINIMO)
+      return { error: `La fecha de nacimiento no puede ser anterior a ${ANIO_MINIMO}.` };
+    const cumple18 = new Date(fecha);
+    cumple18.setFullYear(cumple18.getFullYear() + EDAD_MINIMA);
+    if (cumple18 > new Date())
+      return { error: `La persona debe tener mínimo ${EDAD_MINIMA} años.` };
   }
 
   if (!Number.isInteger(id_ciudad) || id_ciudad <= 0)

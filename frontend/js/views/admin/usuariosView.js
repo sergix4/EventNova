@@ -305,7 +305,10 @@ export const UsuariosView = {
 
   // ─── Modal EDITAR ─────────────────────────────────────────────────────────
   formulario(p, planes = []) {
-    const hoy = new Date().toISOString().slice(0, 10);
+    // Auditoría 4: mínimo 18 años y desde 1900 (igual que el backend)
+    const hace18 = new Date();
+    hace18.setFullYear(hace18.getFullYear() - 18);
+    const maxNacimiento = hace18.toISOString().slice(0, 10);
     const tel = (i) =>
       entrada(
         `tel-${i}`,
@@ -373,7 +376,7 @@ export const UsuariosView = {
               { requerido: p.nuevo },
             )}
             ${campo("correo", "Correo", entrada("correo", p.correo, 'type="email" maxlength="150" autocomplete="off"'), { requerido: true })}
-            ${campo("fecha-nacimiento", "Fecha de nacimiento", entrada("fecha-nacimiento", p.fecha_nacimiento, `type="date" max="${hoy}"`))}
+            ${campo("fecha-nacimiento", "Fecha de nacimiento", entrada("fecha-nacimiento", p.fecha_nacimiento, `type="date" min="1900-01-01" max="${maxNacimiento}"`))}
             ${campo("direccion", "Dirección", entrada("direccion", p.direccion, 'maxlength="255"'))}
           </div>
 

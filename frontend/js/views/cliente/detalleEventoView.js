@@ -16,7 +16,7 @@ const AVISOS = {
 
 export const METODOS_PAGO = [
   { id: 'Tarjeta débito', icono: 'tarjetaCredito', desc: 'Pago inmediato con tu tarjeta' },
-  { id: 'Tarjeta crédito', icono: 'tarjetaCredito2', desc: 'Hasta 36 cuotas sin intereses' },
+  { id: 'Tarjeta crédito', icono: 'tarjetaCredito2', desc: 'Paga con tu tarjeta de crédito' },
   { id: 'PSE', icono: 'casa', desc: 'Débito automático desde tu banco' },
   { id: 'Nequi', icono: 'celular', desc: 'Paga con tu cuenta Nequi' },
 ]
@@ -165,7 +165,7 @@ export const DetalleEventoView = {
       </div>
          <button type="button" class="boton boton--coral boton--bloque" data-accion="abrir-pago">${icono('ticket', 18)}${reservaActual ? 'Agregar y pagar' : 'Reservar y pagar'}</button>
          ${volver}
-         <p class="tarjeta-reserva__seguridad">Pago 100% seguro · Múltiples métodos disponibles</p>`
+         <p class="tarjeta-reserva__seguridad">Pago simulado · Tarjeta, PSE o Nequi</p>`
   },
 
   reservaHecha(estado, reserva, estadoEvento, totalEntradas = 0, numReservas = 0) {
@@ -197,7 +197,7 @@ export const DetalleEventoView = {
       ['Evento', evento.nombre], ['Fecha', evento.fechaLarga], ['Ciudad', `${evento.ciudad}, ${evento.departamento}`],   
       ['Entradas', `${cantidad} entrada${cantidad > 1 ? 's' : ''}`], ['Precio c/u', pesos(evento.precio)],
     ]
-    const conTarjeta = metodo === 'Tarjeta débito' || metodo === 'Tarjeta crédito'
+
     return `
       <div class="pago__cabecera">
         <div class="pago__icono">${icono('ticket', 20)}</div>
@@ -218,11 +218,6 @@ export const DetalleEventoView = {
               <small>${m.desc}</small>
             </button>`).join('')}
         </div>
-        ${conTarjeta ? `
-          <div class="tarjeta-simulada">
-            <div class="tarjeta-simulada__campos"><span>•••• •••• •••• 4287</span><span style="width:64px">08/27</span><span style="width:56px">•••</span></div>
-            <p>Campos simulados — no ingresar datos reales</p>
-          </div>` : ''}
       </div>
       <div class="pago__acciones">
         <button type="button" class="boton boton--coral boton--bloque boton--grande" data-accion="pagar" style="box-shadow:var(--sombra-md)">${icono('escudo', 16, { grosor: 2.5 })}Pagar ${pesos(total)}</button>

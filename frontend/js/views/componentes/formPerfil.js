@@ -41,7 +41,10 @@ export const FormPerfilView = {
    * @param extra    { titulo, html } campos propios del rol (opcional)
    */
   modalEditar(p, extra = null) {
-    const hoy = new Date().toISOString().slice(0, 10);
+    // Auditoría 4: mínimo 18 años y desde 1900 (igual que el backend)
+    const hace18 = new Date();
+    hace18.setFullYear(hace18.getFullYear() - 18);
+    const maxNacimiento = hace18.toISOString().slice(0, 10);
     const tel = (i) =>
       entradaPerfil(
         `pf-tel-${i}`,
@@ -61,7 +64,7 @@ export const FormPerfilView = {
             ${campo("pf-nombre", "Nombre completo", entradaPerfil("pf-nombre", p.nombre, 'maxlength="100" autocomplete="name"'), { requerido: true, ancho: true })}
             ${campo("pf-identificacion", "Identificación", entradaPerfil("pf-identificacion", p.numero_id, "disabled"), { ayuda: "No se puede modificar." })}
             ${campo("pf-correo", "Correo electrónico", entradaPerfil("pf-correo", p.correo, 'type="email" maxlength="150" autocomplete="email"'), { requerido: true })}
-            ${campo("pf-nacimiento", "Fecha de nacimiento", entradaPerfil("pf-nacimiento", p.fecha_nacimiento, `type="date" max="${hoy}"`))}
+            ${campo("pf-nacimiento", "Fecha de nacimiento", entradaPerfil("pf-nacimiento", p.fecha_nacimiento, `type="date" min="1900-01-01" max="${maxNacimiento}"`))}
             ${campo("pf-direccion", "Dirección", entradaPerfil("pf-direccion", p.direccion, 'maxlength="255" autocomplete="street-address"'))}
           </div>
  
