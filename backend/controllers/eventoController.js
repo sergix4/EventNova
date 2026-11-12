@@ -246,7 +246,7 @@ const eventoController = {
     // Filtros de fecha: formato AAAA-MM-DD (el que entrega <input type="date">)
     const FORMATO_FECHA = /^\d{4}-\d{2}-\d{2}$/;
     for (const campo of ["fecha_desde", "fecha_hasta"]) {
-      const valor = (req.query[campo] || "").trim();
+      const valor = texto(req.query[campo]); // ?fecha_desde[]=... ya no tumba la petición
       if (!valor) continue;
       if (!FORMATO_FECHA.test(valor) || Number.isNaN(Date.parse(valor))) {
         return res

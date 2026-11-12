@@ -9,6 +9,7 @@ const bcrypt = require("bcryptjs");
 const PersonaModel = require("../models/personaModel");
 const PlanModel = require("../models/planModel");
 const CiudadModel = require("../models/ciudadModel");
+const { texto } = require("../utils/texto");
 
 const ROLES = ["cliente", "agente", "administrador"];
 const TELEFONO_VALIDO = /^\+?[\d\s-]{7,20}$/;
@@ -195,8 +196,9 @@ async function prepararDatos(actual, body) {
 const personaController = {
   // GET /api/usuarios?rol=cliente|agente|administrador&buscar=texto
   async listar(req, res) {
-    const rol = (req.query.rol || "").trim().toLowerCase();
-    const buscar = (req.query.buscar || "").trim();
+    // texto(): si llega ?rol[]=cliente (una lista) cuenta como vacío y no da error 500
+    const rol = texto(req.query.rol).toLowerCase();
+    const buscar = texto(req.query.buscar);
 
     if (rol && !ROLES.includes(rol)) {
       return res
