@@ -412,6 +412,15 @@ const reservaController = {
   // DELETE /api/reservas/:id  (solo administrador)
   async eliminar(req, res) {
     try {
+      // D6: solo se borran reservas canceladas; las activas guardan ingresos
+      const actual = await ReservaModel.getById(req.params.id);
+      if (!actual)
+        return res.status(404).json({ error: "Reserva no encontrada." });
+      if (actual.estado_reserva !== "Cancelada") {
+        return res.status(409).json({
+          error: `Solo se pueden eliminar reservas canceladas (esta está ${actual.estado_reserva}). Primero cancélala con su causa.`,
+        });
+      }
       const eliminada = await ReservaModel.remove(req.params.id);
       if (!eliminada)
         return res.status(404).json({ error: "Reserva no encontrada." });

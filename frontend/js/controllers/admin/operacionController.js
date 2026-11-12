@@ -123,7 +123,7 @@ function conectar() {
       const r = datos.reservas.find(x => String(x.id_reserva) === verReserva.dataset.reserva)
       if (r) {
         const caja = abrirModal(OperacionView.modalReserva(r, datos.parciales.filter(p => p.codigo === r.codigo)), { clase: 'modal--lg' })
-        caja.querySelector('[data-eliminar-reserva]').addEventListener('click', () => eliminarReserva(r))
+        caja.querySelector('[data-eliminar-reserva]')?.addEventListener('click', () => eliminarReserva(r))
       }
       return
     }
