@@ -1100,3 +1100,20 @@
 .filtros-tabla--centro {
   align-items: center;
 }
+
+/* D5: la columna Acciones siempre visible y tabla más angosta en portátiles */
+.tabla-agente th:last-child,
+.tabla-agente td:last-child {
+  position: sticky;
+  right: 0;
+  background: #fff;
+  box-shadow: -6px 0 8px -6px rgba(17, 24, 39, 0.12);
+}
+.tabla-agente thead th:last-child { background: #f9fafb; }
+.tabla-agente .acciones-iconos { flex-direction: column; align-items: stretch; }
+@media (max-width: 1439px) {
+  .tabla-agente th:nth-child(6),
+  .tabla-agente td:nth-child(6) { display: none; }
+  .tabla-agente td:first-child .persona__correo,
+  .tabla-agente td:first-child .avatar { display: none; }
+}
