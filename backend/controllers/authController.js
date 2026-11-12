@@ -7,6 +7,7 @@ const bcrypt = require("bcryptjs");
 const UsuarioModel = require("../models/usuarioModel");
 const PlanModel = require("../models/planModel");
 const CiudadModel = require("../models/ciudadModel");
+const PersonaModel = require("../models/personaModel");
 const { texto } = require("../utils/texto");
 
 const TELEFONO_VALIDO = /^\+?[\d\s-]{7,20}$/;
@@ -311,8 +312,22 @@ const authController = {
   // Devuelve el usuario que tiene la sesion abierta (o null si no hay sesion).
   // Las paginas HTML lo usan para mostrar el nombre del usuario y para
   // proteger los paneles de cliente y agente.
-  sesion(req, res) {
-    return res.json({ usuario: req.session.usuario || null });
+  // M2: si la cuenta fue suspendida mientras tenía la sesión abierta, se cierra
+  // la sesión y se avisa con { aviso: "suspendida" }.
+  async sesion(req, res) {
+    const usuario = req.session.usuario;
+    if (!usuario) return res.json({ usuario: null });
+    try {
+      if (!(await PersonaModel.tieneRol(usuario.numero_id, usuario.rol))) {
+        req.session.destroy(() => {});
+        res.clearCookie("eventnova.sid");
+        return res.json({ usuario: null, aviso: "suspendida" });
+      }
+      return res.json({ usuario });
+    } catch (error) {
+      console.error("Error al consultar la sesión:", error);
+      return res.status(500).json({ error: "Error interno del servidor." });
+    }
   },
 
   logout(req, res) {

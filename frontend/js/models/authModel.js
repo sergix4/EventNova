@@ -23,7 +23,11 @@ export const AuthModel = {
   /** Devuelve el usuario con sesión activa o null si no hay sesión. */
   async obtenerSesion() {
     try {
-      const { usuario } = await peticion('/auth/sesion')
+      const { usuario, aviso } = await peticion('/auth/sesion')
+      // M2: la cuenta fue suspendida con la sesión abierta -> el login lo explica
+      if (aviso) {
+        try { sessionStorage.setItem('eventnova-aviso', aviso) } catch {}
+      }
       return usuario
     } catch {
       return null
