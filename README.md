@@ -15,12 +15,14 @@ EventNova/
 ├── backend/                  # Servidor Express (API REST + archivos estáticos)
 │   ├── app.js                # Punto de entrada: /api + sirve la carpeta frontend/
 │   ├── config/db.js          # Conexión a PostgreSQL (pg)
-│   ├── models/               # MODELO: consultas SQL (usuario, plan, país, departamento, ciudad, evento, reserva)
+│   ├── models/               # MODELO: consultas SQL (usuario, persona, plan, país, departamento, ciudad, evento, reserva, reporte)
 │   ├── controllers/          # CONTROLADOR: reciben la petición y responden JSON
 │   ├── routes/               # Rutas /api/auth, /api/paises, /api/departamentos, /api/ciudades, /api/eventos, /api/reservas, /api/usuarios, /api/planes, /api/reportes, /api/status
-│   ├── middlewares/          # authMiddleware.js: soloAdmin protege crear/editar/eliminar
+│   ├── middlewares/          # authMiddleware (sesión, rol y cuenta activa), limiteLogin, validarId, sincronizarEstados, manejarErrores
 │   ├── database/             # develop.sql, migraciones, seed_planes.sql, seed_estados.sql, seed_admin.js, seed_demo.js
 │   └── .env.example          # Plantilla de variables de entorno
+│
+├── docs/                     # Manual de usuario, diagramas UML, E-R y modelo relacional (PDF)
 │
 └── frontend/                 # Interfaz HTML5 + CSS + JavaScript
     ├── index.html            # Página de inicio pública
@@ -29,7 +31,7 @@ EventNova/
     │   ├── login.html, registro.html
     │   ├── cliente/          # inicio, explorar, detalle-evento, mis-reservas, perfil
     │   ├── agente/           # mis-eventos, registrar-evento, reservas, perfil
-    │   └── admin/            # dashboard, reportes, cobertura, operación, ubicación, perfil
+    │   └── admin/            # dashboard, reportes generales y comerciales, cobertura, operación, usuarios, ubicación, perfil
     ├── css/                  # base.css (diseño común) + una hoja por sección
     └── js/                   # MVC del lado del cliente
         ├── models/           # MODELO: fetch a la API
@@ -93,11 +95,11 @@ El equipo usa una base compartida en **Neon Postgres** (nube).
    usuarios `@demo.eventnova.com`, sus eventos y sus reservas; lo demás no se toca).
 
 > `develop.sql` es el script **consolidado**: ya trae todos los cambios de las
-> migraciones 01 a 09, así que una base nueva queda igual a la de Neon **sin**
+> migraciones 01 a 10, así que una base nueva queda igual a la de Neon **sin**
 > ejecutar ninguna migración.
 
 **Para aplicar una migración nueva a una base que ya existe** (no borra datos):
-`npm run db:migrar -- migracion_07.sql` (cambiar por el nombre de la migración).
+`npm run db:migrar -- migracion_10.sql` (cambiar por el nombre de la migración).
 Los archivos `migracion_XX.sql` son el historial de cambios que se aplicó a Neon;
 solo sirven para bases creadas antes de esa migración.
 
@@ -144,7 +146,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 | POST           | `/api/auth/login`               | Iniciar sesión                                                                         |
 | POST           | `/api/auth/register`            | Registrar cliente                                                                      |
 | POST           | `/api/auth/register-agente`     | Registrar agente (con plan)                                                            |
-| GET            | `/api/auth/sesion`              | Usuario con sesión activa (o `null`)                                                   |
+| GET            | `/api/auth/sesion`              | Usuario con sesión activa (o `null`; con `aviso: "suspendida"` si la cuenta se suspendió) |
 | POST           | `/api/auth/logout`              | Cerrar sesión                                                                          |
 | GET/PUT        | `/api/auth/perfil`              | «Mi perfil»: consultar / editar los datos propios (cualquier rol con sesión)           |
 | PUT            | `/api/auth/perfil/contrasena`   | Cambiar la contraseña propia (pide la actual)                                          |
@@ -154,21 +156,21 @@ el mismo servidor entrega las páginas HTML y responde la API.
 | GET/PUT/DELETE | `/api/departamentos/:id`        | Consultar / editar / eliminar un departamento                                          |
 | GET/POST       | `/api/ciudades`                 | Listar (obligatorio `?id_departamento=`) / crear ciudades                              |
 | GET/PUT/DELETE | `/api/ciudades/:id`             | Consultar / editar / eliminar una ciudad                                               |
-| GET/POST       | `/api/reservas`                 | Listar (según el rol de la sesión) / crear reserva (cliente)                           |
+| GET/POST       | `/api/reservas`                 | Listar (según el rol de la sesión) / crear reserva (cliente; queda Confirmada al pagar) |
 | GET            | `/api/reservas/estados`         | Estados de la reserva                                                                  |
 | GET            | `/api/reservas/cupos/:idEvento` | Entradas disponibles de un evento                                                      |
-| GET/PUT/DELETE | `/api/reservas/:id`             | Consultar / modificar entradas (si está Reservada) / eliminar (admin)                  |
-| PATCH          | `/api/reservas/:id/estado`      | Confirmar o cancelar una reserva                                                       |
+| GET/PUT/DELETE | `/api/reservas/:id`             | Consultar / modificar (Confirmada: observaciones · Reservada: entradas y observaciones; solo con el evento En Boletería) / eliminar una reserva cancelada (admin) |
+| PATCH          | `/api/reservas/:id/estado`      | Cancelar una reserva (total o parcial) o confirmar una reserva antigua pendiente       |
 | GET            | `/api/usuarios`                 | Listar usuarios (admin; opcional `?rol=` cliente, agente o administrador y `?buscar=`) |
-| GET/PUT/DELETE | `/api/usuarios/:id`             | Consultar / editar (persona, teléfonos y datos del rol) / eliminar (admin)             |
-| PATCH          | /api/usuarios/:id/estado        | Suspender o reactivar una cuenta (admin)                                               |
+| GET/PUT        | `/api/usuarios/:id`             | Consultar / editar (persona, teléfonos y datos del rol) (admin)                        |
+| PATCH          | `/api/usuarios/:id/estado`      | Suspender o reactivar una cuenta (admin; no suspende clientes con reservas ni agentes con eventos) |
 | POST           | `/api/usuarios/clientes`        | Registrar un cliente desde el panel (solo administrador)                               |
 | POST           | `/api/usuarios/agentes`         | Registrar un agente desde el panel (solo administrador)                                |
 | POST           | `/api/usuarios/administradores` | Registrar un administrador (solo otro administrador con sesión)                        |
 | GET/POST       | `/api/eventos`                  | Listar eventos / registrar evento (agente o admin)                                     |
-| GET            | `/api/eventos/catalogo`         | Catálogo para el cliente (filtros de ubicación y fecha)                                |
+| GET            | `/api/eventos/catalogo`         | Catálogo para el cliente (filtros de ubicación y fecha; solo agentes activos)          |
 | GET            | `/api/eventos/estados`          | Estados del evento                                                                     |
-| GET            | /api/eventos/:id/imagen         | Imagen del evento (pública)                                                            |
+| GET            | `/api/eventos/:id/imagen`       | Imagen del evento (pública)                                                            |
 | GET/PUT/DELETE | `/api/eventos/:id`              | Consultar / editar / eliminar un evento (agente dueño o admin)                         |
 | PATCH          | `/api/eventos/:id/estado`       | Cambiar el estado (al cancelar, también cancela sus reservas)                          |
 | GET            | `/api/reportes/dashboard`       | Dashboard del administrador                                                            |
@@ -189,21 +191,33 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Tabla `RESERVA` con los campos del enunciado (`migracion_05.sql`) y modelo `backend/models/reservaModel.js` (valor total automático y validación de cupos).
 - ✅ CRUD de reservas (`/api/reservas`): el cliente reserva desde el detalle del evento; valor total automático, validación de cupos y permisos por rol.
 - ✅ Vista "Mis reservas" del cliente: listado real de sus reservas con filtros (texto, estado, fecha), detalle del evento asociado y cancelación de reservas propias.
-- ✅ Administrar reservas (perfil agente): listado real de las reservas de sus eventos con filtros (texto, evento, estado, fecha), detalle y cambio de estado Reservada → Confirmada / Cancelada con causa obligatoria.
+- ✅ Administrar reservas (perfil agente): listado real de las reservas de sus eventos con filtros (texto, evento, estado, fecha), indicador de entradas vendidas, detalle y cancelación (total o parcial) con causa obligatoria; las reservas antiguas que quedaron en Reservada también se pueden confirmar.
 - ✅ Reglas de eventos: duración mínima de 1 hora, registro con 24 h de anticipación y sin fechas pasadas; solo se reserva En Boletería; En Vivo y Finalizado cambian solos según la hora; cancelar un evento cancela todas sus reservas.
 - ✅ Dashboard del administrador con estadísticas reales (`/api/reportes/dashboard`, solo administrador): totales de usuarios, reservas y eventos; ingresos, reservas y eventos por mes del año elegido; cobertura por país/departamento/ciudad; actividad reciente y resumen de pagos de reservas (`migracion_06.sql`).
-- ✅ Script de base de datos consolidado: `develop.sql` crea las 13 tablas finales con sus triggers; se quitaron las tablas que no pide el enunciado (CATEGORIA, AGRUPA, RESEÑA, METODO_PAGO y TIPO) con `migracion_07.sql`.
+- ✅ Script de base de datos consolidado: `develop.sql` crea las 14 tablas finales con sus triggers; se quitaron las tablas que no pide el enunciado (CATEGORIA, AGRUPA, RESEÑA, METODO_PAGO y TIPO) con `migracion_07.sql`.
 - ✅ Datos de demostración (`npm run db:demo`, `backend/database/seed_demo.js`): clientes, agentes, eventos y reservas en todos los estados (con causas de cancelación) para probar los reportes y la sustentación.
-- ✅ API de usuarios (`/api/usuarios`, solo administrador): listado por rol con búsqueda, consulta, edición en transacción (persona, teléfonos y datos de cliente/agente/administrador) y eliminación protegida (no se borra a quien tiene reservas o eventos, ni el admin a sí mismo).
-- ✅ Gestión de clientes y agentes (`pages/admin/usuarios.html`, solo administrador): pestañas con buscador, paginación, Ver, Editar (persona, teléfonos, país → departamento → ciudad y datos del rol) y Suspender / Reactivar con motivo y aviso cuando tiene reservas o eventos.
-- ✅ CRUD de administradores (pestaña «Administradores» en `pages/admin/usuarios.html`): solo un administrador con sesión registra a otro (persona, contraseña, salario y horario); un administrador no puede eliminarse a sí mismo, siempre queda al menos uno, y si un administrador es eliminado su sesión deja de servir.
+- ✅ API de usuarios (`/api/usuarios`, solo administrador): listado por rol con búsqueda, consulta, edición en transacción (persona, teléfonos y datos de cliente/agente/administrador) y suspensión / reactivación protegida (no se suspende a un cliente con reservas, a un agente con eventos, ni el admin a sí mismo).
+- ✅ Gestión de clientes y agentes (`pages/admin/usuarios.html`, solo administrador): pestañas con buscador, paginación, Ver, Editar (persona, teléfonos, país → departamento → ciudad y datos del rol) y Suspender / Reactivar con motivo; el botón Suspender se deshabilita si el cliente tiene reservas o el agente tiene eventos.
+- ✅ CRUD de administradores (pestaña «Administradores» en `pages/admin/usuarios.html`): solo un administrador con sesión registra a otro (persona, contraseña, salario y horario); un administrador no puede suspenderse a sí mismo, siempre queda al menos uno activo, y si un administrador es suspendido su sesión deja de servir.
 - ✅ Reporte general con datos reales (`/api/reportes/generales`, solo administrador): totales de clientes, agentes, administradores, reservas y eventos con los nuevos del mes; eventos y reservas por estado; reservas y eventos por mes del año elegido y los últimos 50 registros del sistema con filtros.
 - ✅ Reportes comerciales con datos reales (`/api/reportes/comerciales?anio=2026`, solo administrador): ingresos por agente y por cliente con su promedio general, ingresos totales por mes, número de reservas por evento y por mes, y eventos creados por agente y ciudad (activos, finalizados y cancelados).
 - ✅ Reporte de cobertura y eventos con datos reales (`/api/reportes/cobertura?anio=2026` o `?anio=todos`, solo administrador): listado de eventos (código, nombre, estado, fecha) por país, departamento y ciudad de realización, filtros encadenados con el conteo de eventos de cada nivel, gráficas por país y departamento, ranking de ciudades y resumen de cobertura.
 - ✅ Reporte de reservas y operación con datos reales (`/api/reportes/operacion?anio=2026` o `?anio=todos`, solo administrador): historial de reservas por cliente (selector, buscador y ficha del cliente), reservas canceladas con causa, fecha y **quién canceló** (`RESERVA.cancelada_por`), cancelaciones **parciales** de entradas (tabla `CANCELACION_ENTRADAS`), eventos cancelados con su causa y reservas afectadas, resumen operativo y actividad reciente (`migracion_08.sql`).
-- ✅ «Mi perfil» conectado a la BD (`/api/auth/perfil`) para cliente, agente y administrador: cada usuario edita sus propios datos (nombre, correo, fecha de nacimiento, dirección, 1 a 3 teléfonos, país → departamento → ciudad y los campos de su rol que le corresponden), cambia su contraseña pidiendo la actual, el cliente activa o desactiva la publicidad y el agente ve sus eventos y reservas reales. Puntos, comisión, plan, salario y horario solo los cambia el administrador desde Usuarios. El perfil del admin ya no usa datos de ejemplo.
-- ✅ Auditoría final: seguridad (límite de intentos de inicio de sesión, cabeceras de seguridad, sesiones de usuarios eliminados invalidadas, cédula del agente oculta en la API pública), reglas de reservas (no se cancela un evento que ya empezó, precio congelado con reservas, reservas sin confirmar se cancelan solas al terminar el evento · `migracion_09.sql`), CRUD completo desde el panel admin (registrar clientes y agentes, eliminar reservas) y sin datos ni botones de ejemplo.
+- ✅ «Mi perfil» conectado a la BD (`/api/auth/perfil`) para cliente, agente y administrador: cada usuario edita sus propios datos (nombre, correo, fecha de nacimiento, dirección, 1 a 3 teléfonos, país → departamento → ciudad y los campos de su rol que le corresponden), cambia su contraseña pidiendo la actual, el cliente activa o desactiva la publicidad y el agente ve sus eventos y reservas reales. Puntos, comisión, salario y horario solo los cambia el administrador desde Usuarios; el agente puede cambiar su plan desde su perfil. El perfil del admin ya no usa datos de ejemplo.
+- ✅ Auditoría final: seguridad (límite de intentos de inicio de sesión, cabeceras de seguridad, sesiones de usuarios suspendidos invalidadas, cédula del agente oculta en la API pública), reglas de reservas (no se cancela un evento que ya empezó, precio congelado con reservas, reservas sin confirmar se cancelan solas al terminar el evento · `migracion_09.sql`), CRUD completo desde el panel admin (registrar clientes y agentes, eliminar reservas canceladas) y sin datos ni botones de ejemplo.
 - ✅ Ajustes finales: reservas confirmadas al pagar (una reserva por compra), suspensión de usuarios (migracion_10.sql), imágenes fuera de los listados, reintentos de conexión con Neon y textos corregidos.
+- ✅ Auditoría 3 (PR #50): no se suspende a clientes con reservas ni a agentes con eventos; los eventos de agentes suspendidos no se muestran ni se venden; un usuario suspendido o con la sesión vencida vuelve al login con un aviso; el cliente edita las observaciones de sus reservas confirmadas; el admin solo elimina reservas canceladas; fechas de eventos normalizadas a hora de Colombia; pie de página responsivo y columna de acciones fija en las reservas del agente.
+
+## Documentación
+
+En la carpeta [`docs/`](docs/) (actualizados el 12 de noviembre de 2026):
+
+| Documento | Contenido |
+| --- | --- |
+| [Manual de usuario](docs/Manual_Usuario_EventNova.pdf) | Uso del sistema por rol (cliente, agente y administrador), flujo de una reserva, preguntas frecuentes |
+| [Diagramas UML](docs/Diagramas_UML_EventNova.pdf) | Diagrama de clases (pág. 1) y diagrama de paquetes MVC (pág. 2) |
+| [Diagrama E-R](docs/Diagrama_ER_EventNova.pdf) | Entidad-relación en notación Chen (13 entidades + teléfono multivaluado) |
+| [Modelo relacional](docs/Modelo_Relacional_EventNova.pdf) | Las 14 tablas de `develop.sql` con columnas, tipos y llaves |
 
 ## Convenciones
 
@@ -213,7 +227,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 
 ## Equipo
 
-- Daniel Castañeda Londoño
-- Sergio Alejandro Morales Florez
-- Paola Andrea Carmona Salazar
-- Isabella Serna Torres
+- Daniel Castañeda Londoño https://github.com/alejandrocastalondo-source
+- Sergio Alejandro Morales Florez https://github.com/sergix4
+- Paola Andrea Carmona Salazar https://github.com/paolaandrea3883-blip
+- Isabella Serna Torres https://github.com/IsabellaSernaT
