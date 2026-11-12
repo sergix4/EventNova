@@ -9,7 +9,10 @@ const pool = require("../config/db");
 const SELECT_BASE = `
   SELECT e.id_evento, e.codigo_evento, e.nombre_evento, e.descripcion_evento,
          e.teatro, e.direccion_evento, e.fecha_inicio, e.fecha_fin,
-         e.capacidad, e.precio_base, e.observaciones, e.imagen_evento,
+         e.capacidad, e.precio_base, e.observaciones,
+         -- Ajustes finales: los listados NO llevan la imagen (base64 de hasta 2 MB),
+         -- solo si tiene o no. La imagen se pide aparte en /api/eventos/:id/imagen
+         (e.imagen_evento IS NOT NULL) AS tiene_imagen,
          e.causa_cancelacion, e.fecha_registro,
          e.id_ciudad, c.nombre_ciudad,
          d.id_departamento, d.nombre_departamento,
@@ -117,11 +120,24 @@ const EventoModel = {
     return result.rows;
   },
   
+  // UN solo evento: este SÍ lleva la imagen completa (la usa el formulario de editar)
   async getById(id) {
-    const result = await pool.query(`${SELECT_BASE} WHERE e.id_evento = $1`, [
-      id,
-    ]);
+    const result = await pool.query(
+      `SELECT b.*, ev.imagen_evento
+       FROM (${SELECT_BASE} WHERE e.id_evento = $1) b
+       JOIN public."EVENTO" ev ON ev.id_evento = b.id_evento`,
+      [id],
+    );
     return result.rows[0];
+  },
+
+  // Solo la imagen del evento (data URL "data:image/png;base64,...") o null
+  async getImagen(id) {
+    const result = await pool.query(
+      'SELECT imagen_evento FROM public."EVENTO" WHERE id_evento = $1',
+      [id],
+    );
+    return result.rows[0]?.imagen_evento || null;
   },
 
   // Los 5 estados posibles (para llenar selects y filtros)

@@ -108,7 +108,8 @@ function adaptarReservaBD(fila) {
     estadoEvento: fila.estado_evento,
     eventoFinalizado: fila.estado_evento === "Finalizado",
     precioBase: Number(fila.precio_base) || 0,
-    imagen: fila.imagen_evento || IMAGEN_DEFECTO,
+    // Ajustes finales: la imagen ya no viene en el listado, se pide aparte
+    imagen: fila.tiene_imagen ? `/api/eventos/${fila.id_evento}/imagen` : IMAGEN_DEFECTO,
     // El cliente puede cancelar mientras la reserva no esté cancelada
     // y el evento todavía no haya empezado
     cancelable:

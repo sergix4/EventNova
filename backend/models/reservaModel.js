@@ -13,7 +13,8 @@ const SELECT_BASE = `
          r.causa_cancelacion, r.fecha_cancelacion, r.cancelada_por,
          r.id_estado_reserva, er.nombre_estado AS estado_reserva,
          r.id_evento, e.codigo_evento, e.nombre_evento, e.teatro,
-         e.fecha_inicio, e.fecha_fin, e.precio_base, e.imagen_evento,
+         e.fecha_inicio, e.fecha_fin, e.precio_base,
+         (e.imagen_evento IS NOT NULL) AS tiene_imagen, -- la imagen se pide aparte
          ee.nombre_estado AS estado_evento, e.id_agente,
          c.nombre_ciudad,
          r.id_cliente, u.nombre AS nombre_cliente, u.correo AS correo_cliente

@@ -321,6 +321,26 @@ const eventoController = {
     }
   },
 
+  // GET /api/eventos/:id/imagen  (Ajustes finales)
+  // Devuelve la imagen del evento como archivo (image/png, image/jpeg...).
+  // Los listados ya no traen el base64: cada tarjeta pide su imagen aquí.
+  async imagen(req, res) {
+    try {
+      const dataUrl = await EventoModel.getImagen(req.params.id);
+      // "data:image/png;base64,iVBOR..." -> tipo = "image/png", datos = "iVBOR..."
+      const partes = /^data:(image\/(?:png|jpeg|webp|gif));base64,(.+)$/.exec(dataUrl || "");
+      if (!partes) {
+        // Sin imagen (o el evento no existe): se usa la imagen por defecto
+        return res.redirect("/img/evento-defecto.svg");
+      }
+      res.set("Cache-Control", "no-cache"); // el navegador la guarda, pero pregunta si cambió
+      res.type(partes[1]).send(Buffer.from(partes[2], "base64"));
+    } catch (error) {
+      console.error("Error al obtener la imagen del evento:", error);
+      res.status(500).json({ error: "Error interno del servidor." });
+    }
+  },
+
   // POST /api/eventos (solo agente o administrador)
   async crear(req, res) {
     const { error, datos } = validarDatosEvento(req.body);
