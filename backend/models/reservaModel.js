@@ -160,13 +160,16 @@ const ReservaModel = {
     return result.rows;
   },
 
-  // Crea la reserva (nace en estado "Reservada").
-  // UNA SOLA FILA POR CLIENTE Y EVENTO: si el cliente ya tiene una reserva
-  // activa (Reservada o Confirmada) de ese evento, NO se crea otra: se le
-  // SUMAN las entradas nuevas y vuelve a "Reservada" para que el agente
-  // confirme las nuevas entradas.
+  // Crea la reserva. Ajustes finales:
+  //  1. Nace "Confirmada": el cliente ya pagó, el agente no tiene que confirmarla.
+  //  2. CADA COMPRA ES UNA RESERVA NUEVA (con su propio código y su propia fecha).
+  //     Antes, "Agregar más entradas" sumaba a la reserva vieja sin cambiarle la
+  //     fecha, y ese dinero aparecía en los reportes del mes en que se hizo la
+  //     PRIMERA reserva. Ahora cada pago queda en el mes en que se hizo.
+  //  3. El tope de entradas es por CLIENTE y EVENTO: se suman todas sus reservas
+  //     activas (no canceladas) de ese evento.
   // datos = { id_evento, numero_entradas, observaciones }
-  // maxEntradas = tope de entradas por reserva (lo manda el controlador)
+  // maxEntradas = tope de entradas por cliente y evento (lo manda el controlador)
   // El valor total lo calcula PostgreSQL: numero_entradas x precio_base.
   async create(datos, id_cliente, maxEntradas = 10) {
     const client = await pool.connect();
@@ -175,42 +178,21 @@ const ReservaModel = {
       // Bloquea el evento: si el cliente da doble clic, la 2.ª petición espera
       await validarCupos(client, datos.id_evento, datos.numero_entradas);
 
-      // ¿Ya tiene una reserva activa de este evento?
-      const existente = await client.query(
-        `SELECT r.id_reserva, r.numero_entradas
+      // ¿Cuántas entradas tiene YA el cliente en este evento?
+      const previas = await client.query(
+        `SELECT COALESCE(SUM(r.numero_entradas), 0)::int AS ya_tiene
          FROM public."RESERVA" r
          JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
          WHERE r.id_cliente = $1 AND r.id_evento = $2
-           AND er.nombre_estado <> 'Cancelada'
-         ORDER BY r.id_reserva ASC
-         LIMIT 1
-         FOR UPDATE OF r`,
+           AND er.nombre_estado <> 'Cancelada'`,
         [id_cliente, datos.id_evento],
       );
-
-      if (existente.rowCount > 0) {
-        const { id_reserva, numero_entradas: yaTiene } = existente.rows[0];
-        if (yaTiene + datos.numero_entradas > maxEntradas) {
-          throw errorReserva(
-            "MAXIMO_ENTRADAS",
-            `Ya tienes ${yaTiene} entradas reservadas para este evento: puedes agregar máximo ${Math.max(0, maxEntradas - yaTiene)} más.`,
-          );
-        }
-        await client.query(
-          `UPDATE public."RESERVA" r
-           SET numero_entradas = r.numero_entradas + $1::int,
-               valor_total = (r.numero_entradas + $1::int) * e.precio_base,
-               observaciones = CASE WHEN $2::text IS NULL THEN r.observaciones
-                                    ELSE concat_ws(E'\n', r.observaciones, $2::text) END,
-               id_estado_reserva = (SELECT id_estado_reserva FROM public."ESTADO_RESERVA"
-                                    WHERE nombre_estado = 'Reservada')
-           FROM public."EVENTO" e
-           WHERE e.id_evento = r.id_evento AND r.id_reserva = $3`,
-          [datos.numero_entradas, datos.observaciones || null, id_reserva],
+      const yaTiene = previas.rows[0].ya_tiene;
+      if (yaTiene + datos.numero_entradas > maxEntradas) {
+        throw errorReserva(
+          "MAXIMO_ENTRADAS",
+          `Ya tienes ${yaTiene} entradas para este evento: puedes agregar máximo ${Math.max(0, maxEntradas - yaTiene)} más (el tope es ${maxEntradas} por cliente).`,
         );
-        await client.query("COMMIT");
-        const reserva = await this.getById(id_reserva);
-        return { ...reserva, entradas_agregadas: datos.numero_entradas };
       }
 
       const result = await client.query(
@@ -219,7 +201,7 @@ const ReservaModel = {
             id_estado_reserva, id_cliente, id_evento)
          SELECT $1::int, $1::int * e.precio_base, $2,
                 (SELECT id_estado_reserva FROM public."ESTADO_RESERVA"
-                 WHERE nombre_estado = 'Reservada'),
+                 WHERE nombre_estado = 'Confirmada'),
                 $3, e.id_evento
          FROM public."EVENTO" e
          WHERE e.id_evento = $4
@@ -233,7 +215,9 @@ const ReservaModel = {
       );
 
       await client.query("COMMIT");
-      return this.getById(result.rows[0].id_reserva);
+      const reserva = await this.getById(result.rows[0].id_reserva);
+      // entradas_previas > 0 = el cliente ya tenía entradas y esta es una compra adicional
+      return { ...reserva, entradas_previas: yaTiene };
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;

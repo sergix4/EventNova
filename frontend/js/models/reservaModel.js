@@ -117,8 +117,8 @@ function adaptarReservaBD(fila) {
       !EVENTO_NO_CANCELABLE.includes(fila.estado_evento),
     // Estados a los que el agente puede cambiarla (Tarea 8)
     siguientesEstados: siguientesEstados(fila),
-    // > 0 cuando el cliente ya tenía reserva de este evento y se le SUMARON entradas
-    entradasAgregadas: Number(fila.entradas_agregadas) || 0,
+    // > 0 cuando el cliente ya tenía entradas de este evento (compra adicional)
+    entradasPrevias: Number(fila.entradas_previas) || 0,
     id_cliente: fila.id_cliente,
     cliente: fila.nombre_cliente || "",
     correo: fila.correo_cliente || "",

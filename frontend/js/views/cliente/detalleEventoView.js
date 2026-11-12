@@ -32,7 +32,8 @@ function filaInfo(nombreIcono, etiqueta, valor) {
 
 export const DetalleEventoView = {
   /** Dibuja toda la página (se llama de nuevo cuando cambia el estado) */
-     mostrar(evento, { cantidad, estadoReserva, reserva, agregando }) {
+  // totalEntradas / numReservas: suma de TODAS las reservas activas del cliente en este evento
+  mostrar(evento, { cantidad, estadoReserva, reserva, agregando, totalEntradas = 0, numReservas = 0 }) {
     const disponibles = evento.capacidad - evento.vendidas
     const porcentaje = Math.round((evento.vendidas / evento.capacidad) * 100)
     const total = evento.precio * cantidad
@@ -96,8 +97,8 @@ export const DetalleEventoView = {
             </div>
             <div class="linea"></div>
                ${estadoReserva !== 'ninguna' && !agregando
-                 ? this.reservaHecha(estadoReserva, reserva, evento.estado)
-                 : this.formularioReserva(evento, cantidad, total, disponibles, agregando ? reserva : null)}
+                 ? this.reservaHecha(estadoReserva, reserva, evento.estado, totalEntradas, numReservas)
+                 : this.formularioReserva(evento, cantidad, total, disponibles, agregando ? reserva : null, totalEntradas)}
           </section>
           <div class="ayuda">
             <p>¿Necesitas ayuda?</p>
@@ -123,9 +124,9 @@ export const DetalleEventoView = {
       </div>`
   },
 
-     /** reservaActual: la reserva activa del cliente cuando está AGREGANDO entradas a ella */
-     formularioReserva(evento, cantidad, total, disponibles, reservaActual = null) {
-       const yaTiene = reservaActual ? reservaActual.entradas : 0
+     /** reservaActual: la reserva más reciente del cliente cuando está AGREGANDO entradas
+      *  yaTiene: entradas que el cliente ya tiene en este evento (todas sus reservas activas) */
+     formularioReserva(evento, cantidad, total, disponibles, reservaActual = null, yaTiene = 0) {
        const volver = reservaActual ? '<button type="button" class="boton boton--contorno boton--bloque" data-accion="cancelar-agregar">Volver a mi reserva</button>' : ''
        // Solo se reserva cuando el evento está "En Boletería"
        if (evento.estado === 'Programado') {
@@ -138,11 +139,11 @@ export const DetalleEventoView = {
          return `<button type="button" class="boton boton--neutro boton--bloque" disabled>Sin cupos disponibles</button>${volver}`
        }
        if (yaTiene >= MAX_ENTRADAS) {
-         return `<p class="aviso-reserva__texto">Ya tienes el máximo de ${MAX_ENTRADAS} entradas en tu reserva ${esc(reservaActual.codigo)}.</p>${volver}`
+         return `<p class="aviso-reserva__texto">Ya tienes el máximo de ${MAX_ENTRADAS} entradas para este evento.</p>${volver}`
        }
        const tope = Math.min(MAX_ENTRADAS - yaTiene, disponibles)
        const avisoSuma = reservaActual
-         ? `<div class="alerta alerta--ambar">${icono('info', 14)}<p>Ya tienes <strong>${yaTiene} entrada${yaTiene > 1 ? 's' : ''}</strong> en tu reserva ${esc(reservaActual.codigo)}. Las que agregues se sumarán a esa misma reserva (puedes agregar hasta ${tope}).</p></div>`
+         ? `<div class="alerta alerta--ambar">${icono('info', 14)}<p>Ya tienes <strong>${yaTiene} entrada${yaTiene > 1 ? 's' : ''}</strong> para este evento. Las que compres ahora quedarán en una <strong>reserva nueva</strong>, con su propio código (puedes agregar hasta ${tope}).</p></div>`
          : ''
        return `
          ${avisoSuma}
@@ -168,8 +169,13 @@ export const DetalleEventoView = {
          <p class="tarjeta-reserva__seguridad">Pago 100% seguro · Múltiples métodos disponibles</p>`
   },
 
-  reservaHecha(estado, reserva, estadoEvento) {
+  reservaHecha(estado, reserva, estadoEvento, totalEntradas = 0, numReservas = 0) {
     const pildora = AVISOS[estado].pildora
+    // Si tiene varias reservas de este evento, se muestra el total y el enlace a todas
+    const varias = numReservas > 1
+      ? `<div class="estado-reserva__fila"><span>Total en este evento</span><strong>${totalEntradas} entradas · ${numReservas} reservas</strong></div>
+         <a href="/pages/cliente/mis-reservas.html" class="boton boton--contorno boton--bloque">Ver todas en Mis reservas</a>`
+      : ''
     return `
       <div class="pila-16">
         <div class="estado-reserva estado-reserva--${estado}">
@@ -178,9 +184,10 @@ export const DetalleEventoView = {
           <div class="estado-reserva__fila"><span>Valor total</span><strong>${pesos(reserva.valorTotal)}</strong></div>
           <div class="linea linea--gris"></div>
           <div class="estado-reserva__fila"><span>Estado</span><span class="insignia" style="background:${pildora[0]};color:${pildora[1]};font-weight:700">${pildora[2]}</span></div>
+          ${varias}
         </div>
         ${estado === 'cancelada' ? '<button type="button" class="boton boton--contorno boton--bloque" data-accion="volver-a-reservar">Volver a reservar</button>' : ''}
-        ${estado !== 'cancelada' && estadoEvento === 'En Boletería' && reserva.entradas < MAX_ENTRADAS ? '<button type="button" class="boton boton--contorno boton--bloque" data-accion="agregar-entradas">Agregar más entradas</button>' : ''}
+        ${estado !== 'cancelada' && estadoEvento === 'En Boletería' && totalEntradas < MAX_ENTRADAS ? '<button type="button" class="boton boton--contorno boton--bloque" data-accion="agregar-entradas">Agregar más entradas</button>' : ''}
       </div>`
   },
 
@@ -244,14 +251,14 @@ export const DetalleEventoView = {
     return `
       <div class="pago__exito">
         <div class="pago__exito-icono">${icono('check', 28, { grosor: 2.5 })}</div>
-           <strong>${reserva.entradasAgregadas ? '¡Entradas agregadas a tu reserva!' : '¡Reserva registrada!'}</strong>
-           <p>${reserva.entradasAgregadas
-             ? `Se sumaron ${reserva.entradasAgregadas} entrada${reserva.entradasAgregadas > 1 ? 's' : ''} a tu reserva. Queda pendiente de confirmación por parte del agente`
-             : 'Queda pendiente de confirmación por parte del agente'}</p>
+           <strong>¡Reserva confirmada!</strong>
+           <p>${reserva.entradasPrevias
+             ? `Tu pago fue aprobado. Esta compra quedó como una reserva nueva; ahora tienes ${reserva.entradasPrevias + reserva.entradas} entradas para este evento.`
+             : 'Tu pago fue aprobado y tu reserva quedó confirmada.'}</p>
       </div>
       <div class="pago__seccion" style="border-bottom:0;padding-top:20px">
         ${filas.map(([e, v]) => `<div class="pago__fila" style="padding:10px 0"><span>${e}</span><strong>${esc(v)}</strong></div>`).join('')}
-        <div class="pago__fila" style="padding:10px 0"><span>Estado</span><span class="insignia" style="background:#fef3c7;color:#92400e;font-weight:700">${esc(reserva.estado)}</span></div>
+        <div class="pago__fila" style="padding:10px 0"><span>Estado</span><span class="insignia" style="background:#dcfce7;color:#15803d;font-weight:700">${esc(reserva.estado)}</span></div>
       </div>
       <div class="pago__acciones" style="padding-top:0">
         <button type="button" class="boton boton--primario boton--bloque boton--grande" data-accion="ver-reserva">Ver mi reserva</button>

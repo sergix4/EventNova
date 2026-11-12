@@ -1,8 +1,9 @@
 // js/controllers/cliente/detalleEventoController.js
 // CONTROLADOR del detalle del evento: cantidad de entradas, "me gusta",
 // ventana de pago (simulada) y la reserva REAL contra /api/reservas (Tarea 6).
-// Una sola reserva por cliente y evento: si ya tiene una activa, se muestra y
-// las entradas nuevas se SUMAN a ella ("Agregar más entradas").
+// Ajustes finales: cada compra es una RESERVA NUEVA y ya confirmada. Si el
+// cliente ya tiene reservas de este evento se muestra la más reciente y el
+// total; "Agregar más entradas" crea otra reserva (tope: 10 por cliente y evento).
 
 import { iniciarPanel, iniciarNotificaciones } from '../comun/panelController.js'
 import { EventoModel } from '../../models/eventoModel.js'
@@ -13,9 +14,10 @@ import { mostrarToast } from '../../views/componentes/toast.js'
 import { MisReservasView } from '../../views/cliente/misReservasView.js'
 import { conectarSelectorEntradas } from '../comun/selectorEntradasController.js'
 
-// reserva = la reserva activa del cliente en este evento (null si no tiene)
-// agregando = true mientras elige cuántas entradas SUMAR a esa reserva
-const estado = { cantidad: 1, estadoReserva: 'ninguna', reserva: null, agregando: false }
+// reserva = la reserva activa MÁS RECIENTE del cliente en este evento (null si no tiene)
+// totalEntradas / numReservas = suma de todas sus reservas activas de este evento
+// agregando = true mientras elige cuántas entradas más comprar
+const estado = { cantidad: 1, estadoReserva: 'ninguna', reserva: null, agregando: false, totalEntradas: 0, numReservas: 0 }
 const MAX_ENTRADAS = 10
 let evento = null
 
@@ -70,8 +72,8 @@ function abrirPago() {
         estado.agregando = false
         estado.cantidad = 1
         caja.innerHTML = DetalleEventoView.pagoExitoso(evento, reserva, metodo)
-        // Detrás de la ventana, la página ya muestra la reserva y los cupos al día
-        recargarEvento().then(dibujar).catch(() => dibujar())
+        // Detrás de la ventana, la página ya muestra la reserva, el total y los cupos al día
+        Promise.all([recargarEvento(), cargarReservas()]).then(dibujar).catch(() => dibujar())
       } catch (error) {
         // p. ej. 409 "Solo quedan 2 entradas disponibles para este evento."
         caja.innerHTML = DetalleEventoView.pagoError(error.message)
@@ -115,9 +117,9 @@ function cancelarReserva() {
       estado.reserva = await ReservaModel.cancelar(r.id, causa, cantidad)
       estado.estadoReserva = estadoVista(estado.reserva)
       cerrarModal()
-      await recargarEvento()
+      await Promise.all([recargarEvento(), cargarReservas()])
       dibujar()
-      mostrarToast(cantidad < r.entradas ? `Se cancelaron ${cantidad} entradas.` : 'Reserva cancelada.', { detalle: estado.reserva.codigo })
+      mostrarToast(cantidad < r.entradas ? `Se cancelaron ${cantidad} entradas.` : 'Reserva cancelada.', { detalle: r.codigo })
     } catch (error) {
       MisReservasView.mostrarErrorCancelacion(error.message)
       confirmar.disabled = false
@@ -126,13 +128,21 @@ function cancelarReserva() {
   })
 }
 
-// ¿El cliente ya tiene una reserva ACTIVA (no cancelada) de este evento?
-async function buscarReservaActiva() {
+// Reservas ACTIVAS (no canceladas) del cliente en este evento. La API las
+// devuelve de la más reciente a la más antigua: se muestra la primera.
+async function cargarReservas() {
+  let activas = []
   try {
     const mias = await ReservaModel.delCliente()
-    return mias.find(r => String(r.id_evento) === String(evento.id) && r.estado !== 'Cancelada') || null
+    activas = mias.filter(r => String(r.id_evento) === String(evento.id) && r.estado !== 'Cancelada')
   } catch {
-    return null // si falla, la página funciona igual (el backend también suma)
+    // si falla, la página funciona igual (el backend igual revisa el tope de 10)
+  }
+  estado.totalEntradas = activas.reduce((suma, r) => suma + r.entradas, 0)
+  estado.numReservas = activas.length
+  if (activas.length > 0) {
+    estado.reserva = activas[0]
+    estado.estadoReserva = estadoVista(activas[0])
   }
 }
 
@@ -149,19 +159,15 @@ async function iniciar() {
     )
   }
   if (!evento) return DetalleEventoView.noEncontrado('Este evento no existe o fue eliminado')
-  const activa = await buscarReservaActiva()
-  if (activa) {
-    estado.reserva = activa
-    estado.estadoReserva = estadoVista(activa)
-  }
+  await cargarReservas()
   dibujar()
 
   document.getElementById('detalle-evento').addEventListener('click', (e) => {
     const accion = e.target.closest('[data-accion]')?.dataset.accion
     if (!accion) return
     const disponibles = evento.capacidad - evento.vendidas
-    // Si está agregando entradas, el tope es lo que le falta para llegar a 10
-    const yaTiene = estado.agregando && estado.reserva ? estado.reserva.entradas : 0
+    // El tope es lo que le falta al cliente para llegar a 10 en este evento
+    const yaTiene = estado.totalEntradas
     if (accion === 'menos') estado.cantidad = Math.max(1, estado.cantidad - 1)
     if (accion === 'mas') estado.cantidad = Math.min(MAX_ENTRADAS - yaTiene, disponibles, estado.cantidad + 1)
     if (accion === 'agregar-entradas') { estado.agregando = true; estado.cantidad = 1 }
