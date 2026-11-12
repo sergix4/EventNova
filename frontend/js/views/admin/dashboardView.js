@@ -123,7 +123,7 @@ function resumenPagos(resumen, anio) {
   const tarjetas = [
     { etiqueta: 'Total ingresos', valor: cop(resumen.valor_confirmado), sub: 'COP de reservas confirmadas', icono: 'dolar', color: '#4f46e5', fondo: '#eef2ff' },
     { etiqueta: 'Reservas confirmadas', valor: num(resumen.confirmadas), sub: 'Pagos completados', icono: 'checkCirculo', color: '#059669', fondo: '#ecfdf5' },
-    { etiqueta: 'Reservas pendientes', valor: num(resumen.pendientes), sub: `${cop(resumen.valor_pendiente)} por confirmar`, icono: 'reloj', color: '#d97706', fondo: '#fffbeb' },
+    { etiqueta: 'Entradas vendidas', valor: num(resumen.entradas), sub: 'De reservas no canceladas', icono: 'ticket', color: '#d97706', fondo: '#fffbeb' },
     { etiqueta: 'Canceladas', valor: num(resumen.canceladas), sub: 'Por el cliente, el agente o el evento', icono: 'equisCirculo', color: '#dc2626', fondo: '#fef2f2' },
   ]
   return `
@@ -198,8 +198,8 @@ export const DashboardView = {
           <div class="grafica grafica--220"><canvas id="grafica-ingresos" aria-label="Ingresos por mes"></canvas></div>
         </section>
         <section class="tarjeta-grafica">
-          ${cabeceraGrafica(`Reservas por mes en ${anio}`, 'Confirmadas · Pendientes · Canceladas',
-            leyenda([{ color: '#4f46e5', texto: 'Confirmadas' }, { color: '#f4845f', texto: 'Pendientes' }, { color: '#fca5a5', texto: 'Canceladas' }]))}
+          ${cabeceraGrafica(`Reservas por mes en ${anio}`, 'Confirmadas · Canceladas',
+            leyenda([{ color: '#4f46e5', texto: 'Confirmadas' }, { color: '#fca5a5', texto: 'Canceladas' }]))}
           <div class="grafica grafica--220"><canvas id="grafica-reservas" aria-label="Reservas por mes"></canvas></div>
         </section>
       </div>
@@ -230,7 +230,6 @@ export const DashboardView = {
       etiquetas: MESES, radio: 3, separacion: 0.6,
       series: [
         { nombre: 'Confirmadas', datos: reservasMes.confirmadas, color: '#4f46e5', anchoBarra: 0.8 },
-        { nombre: 'Pendientes', datos: reservasMes.pendientes, color: '#f4845f', anchoBarra: 0.8 },
         { nombre: 'Canceladas', datos: reservasMes.canceladas, color: '#fca5a5', anchoBarra: 0.8 },
       ],
     })

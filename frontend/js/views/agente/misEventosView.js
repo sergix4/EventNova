@@ -31,10 +31,8 @@ export const MisEventosView = {
     // Reservas: cada reserva cuenta UNA vez, sin importar cuántas entradas tenga
     const recibidas = reservas.filter((r) => r.estado !== "Cancelada");
     const entradas = recibidas.reduce((s, r) => s + r.entradas, 0);
-    const pendientes = reservas.filter((r) => r.estado === "Reservada").length;
-    const entradasPendientes = reservas
-      .filter((r) => r.estado === "Reservada")
-      .reduce((s, r) => s + r.entradas, 0);
+    const canceladas = reservas.filter((r) => r.estado === "Cancelada");
+    const entradasCanceladas = canceladas.reduce((s, r) => s + r.entradas, 0);
 
     document.getElementById("estadisticas").innerHTML = [
       kpiTendencia({
@@ -65,14 +63,12 @@ export const MisEventosView = {
         sube: entradas > 0,
       }),
       kpiTendencia({
-        etiqueta: "Reservas pendientes",
-        valor: num(pendientes),
-        icono: "reloj",
-        color: "#d97706",
-        fondo: "#fffbeb",
-        tendencia: pendientes
-          ? `${num(entradasPendientes)} entradas por confirmar`
-          : "Nada por confirmar",
+        etiqueta: "Reservas canceladas",
+        valor: num(canceladas.length),
+        icono: "equisCirculo",
+        color: "#dc2626",
+        fondo: "#fef2f2",
+        tendencia: `${num(entradasCanceladas)} entrada${entradasCanceladas !== 1 ? "s" : ""}`,
         sube: false,
       }),
     ].join("");

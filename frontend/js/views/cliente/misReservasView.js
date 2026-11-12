@@ -188,8 +188,7 @@ export const MisReservasView = {
       aviso = `<div class="alerta alerta--roja">${icono("alerta", 14)}<div><p class="alerta__titulo alerta__titulo--rojo">Causa de cancelación</p><p>${esc(r.causaCancelacion)}</p></div></div>`;
     if (r.estado === "Confirmada")
       aviso = `<div class="alerta alerta--verde">${icono("check", 14, { grosor: 2.5 })}<p>Tu reserva está pagada y confirmada. Presenta el código <strong>${esc(r.codigo)}</strong> el día del evento.</p></div>`;
-    if (r.estado === "Reservada")
-      aviso = `<div class="alerta alerta--ambar">${icono("reloj", 14)}<p>Pendiente de confirmación por el agente. Te avisaremos en la campana de notificaciones cuando sea aprobada.</p></div>`;
+
 
     const lista = (filas) =>
       filas
