@@ -95,7 +95,7 @@ El equipo usa una base compartida en **Neon Postgres** (nube).
    usuarios `@demo.eventnova.com`, sus eventos y sus reservas; lo demás no se toca).
 
 > `develop.sql` es el script **consolidado**: ya trae todos los cambios de las
-> migraciones 01 a 10, así que una base nueva queda igual a la de Neon **sin**
+> 1, así que una base nueva queda igual a la de Neon **sin**
 > ejecutar ninguna migración.
 
 **Para aplicar una migración nueva a una base que ya existe** (no borra datos):
@@ -156,11 +156,11 @@ el mismo servidor entrega las páginas HTML y responde la API.
 | GET/PUT/DELETE | `/api/departamentos/:id`        | Consultar / editar / eliminar un departamento                                          |
 | GET/POST       | `/api/ciudades`                 | Listar (obligatorio `?id_departamento=`) / crear ciudades                              |
 | GET/PUT/DELETE | `/api/ciudades/:id`             | Consultar / editar / eliminar una ciudad                                               |
-| GET/POST       | `/api/reservas`                 | Listar (según el rol de la sesión) / crear reserva (cliente; queda Confirmada al pagar) |
+| GET/POST       | `/api/reservas`                 | Listar (según el rol de la sesión) / crear reserva (cliente; queda Confirmada al pagar)|
 | GET            | `/api/reservas/estados`         | Estados de la reserva                                                                  |
 | GET            | `/api/reservas/cupos/:idEvento` | Entradas disponibles de un evento                                                      |
-| GET/PUT/DELETE | `/api/reservas/:id`             | Consultar / modificar (Confirmada: observaciones · Reservada: entradas y observaciones; solo con el evento En Boletería) / eliminar una reserva cancelada (admin) |
-| PATCH          | `/api/reservas/:id/estado`      | Cancelar una reserva (total o parcial) o confirmar una reserva antigua pendiente       |
+| GET/PUT/DELETE | `/api/reservas/:id`             | Consultar / modificar las observaciones (solo con el evento En Boletería) / eliminar una reserva cancelada (admin) |
+| PATCH          | `/api/reservas/:id/estado`      | Cancelar una reserva (total o parcial). La confirmación es automática al pagar.        |
 | GET            | `/api/usuarios`                 | Listar usuarios (admin; opcional `?rol=` cliente, agente o administrador y `?buscar=`) |
 | GET/PUT        | `/api/usuarios/:id`             | Consultar / editar (persona, teléfonos y datos del rol) (admin)                        |
 | PATCH          | `/api/usuarios/:id/estado`      | Suspender o reactivar una cuenta (admin; no suspende clientes con reservas ni agentes con eventos) |
@@ -207,6 +207,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Auditoría final: seguridad (límite de intentos de inicio de sesión, cabeceras de seguridad, sesiones de usuarios suspendidos invalidadas, cédula del agente oculta en la API pública), reglas de reservas (no se cancela un evento que ya empezó, precio congelado con reservas, reservas sin confirmar se cancelan solas al terminar el evento · `migracion_09.sql`), CRUD completo desde el panel admin (registrar clientes y agentes, eliminar reservas canceladas) y sin datos ni botones de ejemplo.
 - ✅ Ajustes finales: reservas confirmadas al pagar (una reserva por compra), suspensión de usuarios (migracion_10.sql), imágenes fuera de los listados, reintentos de conexión con Neon y textos corregidos.
 - ✅ Auditoría 3 (PR #50): no se suspende a clientes con reservas ni a agentes con eventos; los eventos de agentes suspendidos no se muestran ni se venden; un usuario suspendido o con la sesión vencida vuelve al login con un aviso; el cliente edita las observaciones de sus reservas confirmadas; el admin solo elimina reservas canceladas; fechas de eventos normalizadas a hora de Colombia; pie de página responsivo y columna de acciones fija en las reservas del agente.
+- ✅ Auditoría 4: la reserva se confirma sola al pagar (sin confirmación manual, migracion_11), observaciones editables, pago simulado al subir de plan, fecha de nacimiento desde 1900 y mínimo 18 años.
 
 ## Documentación
 

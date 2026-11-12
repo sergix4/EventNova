@@ -360,3 +360,19 @@
 .ficha-cliente { border-top: 1px solid var(--gris-100); display: flex; flex-direction: column; gap: 16px; }
 .ficha-cliente__nombre { font-size: 15px; color: var(--gris-800); }
 .celda-recortada--corta { max-width: 220px; }
+
+/* Auditoría 4: en portátiles (menos de 1440 px) la tabla de Usuarios
+   usa celdas más angostas para que la columna Acciones quepa completa */
+@media (max-width: 1439px) {
+  #panel-usuarios .tabla th,
+  #panel-usuarios .tabla td { padding-left: 10px; padding-right: 10px; }
+}
+
+/* Y si la pantalla es aún más pequeña, la columna Acciones queda fija a la derecha */
+#panel-usuarios th.crud__acciones,
+#panel-usuarios td.crud__acciones {
+  position: sticky;
+  right: 0;
+  background: #fff;
+}
+#panel-usuarios thead th.crud__acciones { background: #fafafa; }

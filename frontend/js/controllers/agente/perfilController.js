@@ -49,12 +49,14 @@ function editar(enfocar) {
 // ─── Plan (Tarea 14: se guarda en la BD) ────────────────────────────────────
 function cambiarPlan(idPlan) {
   const plan = estado.planes.find((p) => p.id_plan === idPlan);
-  const caja = abrirModal(PerfilAgenteView.modalPlan(plan), {
+  const actual = estado.planes.find((p) => p.id_plan === estado.planActual);
+  const caja = abrirModal(PerfilAgenteView.modalPlan(plan, actual), {
     cerrarAlHacerClicFuera: false,
   });
   const boton = caja.querySelector("#confirmar");
   boton.addEventListener("click", async () => {
     boton.disabled = true;
+    boton.textContent = "Procesando…";
     try {
       const { mensaje, usuario } = await PerfilModel.cambiarPlan(idPlan);
       usarPerfil(usuario);
