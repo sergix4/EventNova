@@ -23,8 +23,8 @@ let evento = null
 
 const esperar = (ms) => new Promise(r => setTimeout(r, ms))
 
-// 'Reservada' -> 'reservada' (así se llaman los avisos de la vista)
-const estadoVista = (reserva) => reserva.estado.toLowerCase()
+// Auditoría 4: solo hay dos avisos posibles (la reserva se confirma al pagar)
+const estadoVista = (reserva) => (reserva.estado === 'Cancelada' ? 'cancelada' : 'confirmada')
 
 function dibujar() {
   // Se conserva lo que el usuario escribió en "Observaciones" al redibujar

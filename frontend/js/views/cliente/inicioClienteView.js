@@ -13,7 +13,7 @@ export const InicioClienteView = {
     // Si no tiene eventos próximos, se muestra un guion
     const proximo = resumen.proximoEvento || { fecha: '—', detalle: 'No tienes eventos próximos' }
     document.getElementById('estadisticas').innerHTML = [
-      tarjetaEstadistica({ etiqueta: 'Reservas activas', valor: resumen.activas, sub: 'Reservadas y confirmadas', icono: 'portapapeles' }),
+      tarjetaEstadistica({ etiqueta: 'Reservas activas', valor: resumen.activas, sub: 'Pagadas y sin cancelar', icono: 'portapapeles' }),
       tarjetaEstadistica({ etiqueta: 'Reservas confirmadas', valor: resumen.confirmadas, sub: 'Histórico total', icono: 'check', color: '#10b981', fondo: '#10b98118' }),
       tarjetaEstadistica({ etiqueta: 'Próximo evento', valor: proximo.fecha, sub: proximo.detalle, icono: 'calendario', color: '#f4845f', fondo: '#f4845f18' }),
     ].join('')

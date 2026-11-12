@@ -10,9 +10,9 @@ SELECT 'Plan Básico', 'Hasta 5 eventos activos, gestión de reservas, panel de 
 WHERE NOT EXISTS (SELECT 1 FROM public."TIPO_PLAN" WHERE nombre_plan = 'Plan Básico');
 
 INSERT INTO public."TIPO_PLAN" (nombre_plan, descripcion_plan, precio_plan, limite_evento)
-SELECT 'Plan Profesional', 'Hasta 20 eventos activos, estadísticas básicas, soporte prioritario', 49900, 20
+SELECT 'Plan Profesional', 'Hasta 20 eventos activos, gestión de reservas, estadísticas de tus eventos', 49900, 20
 WHERE NOT EXISTS (SELECT 1 FROM public."TIPO_PLAN" WHERE nombre_plan = 'Plan Profesional');
 
 INSERT INTO public."TIPO_PLAN" (nombre_plan, descripcion_plan, precio_plan, limite_evento)
-SELECT 'Plan Empresa', 'Eventos ilimitados, reportes avanzados, múltiples usuarios', 89900, 9999
+SELECT 'Plan Empresa', 'Eventos activos ilimitados, gestión de reservas, estadísticas de tus eventos', 89900, 9999
 WHERE NOT EXISTS (SELECT 1 FROM public."TIPO_PLAN" WHERE nombre_plan = 'Plan Empresa');

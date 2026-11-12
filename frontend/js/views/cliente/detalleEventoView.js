@@ -10,7 +10,6 @@ const pesos = (v) => '$ ' + v.toLocaleString('es-CO')
    // Máximo de entradas por reserva (el mismo MAX_ENTRADAS del backend)
 const MAX_ENTRADAS = 10
 const AVISOS = {
-  reservada: { icono: 'reloj', color: '#d97706', titulo: 'Reserva pendiente de confirmación', texto: 'Tu reserva fue registrada exitosamente. Está pendiente de confirmación por parte del agente.', pildora: ['#fef3c7', '#92400e', 'Reservada'] },
   confirmada: { icono: 'check', color: '#16a34a', titulo: '¡Reserva confirmada!', texto: 'Tu pago fue aprobado y tu reserva está confirmada. Puedes consultarla cuando quieras en «Mis reservas».', pildora: ['#dcfce7', '#15803d', 'Confirmada'] },
   cancelada: { icono: 'advertencia', color: '#dc2626', titulo: 'Reserva cancelada', texto: 'Esta reserva fue cancelada. Si tienes dudas, contacta al agente responsable del evento.', pildora: ['#fee2e2', '#991b1b', 'Cancelada'] },
 }

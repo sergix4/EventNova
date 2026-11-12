@@ -59,19 +59,12 @@ function fechaISO(iso) {
   return `${d.getFullYear()}-${mes}-${dia}`;
 }
 
-// Estados a los que se puede pasar una reserva desde el perfil agente (Tarea 8):
-//   Reservada  -> Confirmada / Cancelada
-//   Confirmada -> Cancelada
+// Estados a los que se puede pasar una reserva (Tarea 8 · Auditoría 4):
+//   Confirmada -> Cancelada (si el evento no ha empezado)
 //   Cancelada  -> (ninguno)
-// Si el evento ya está Finalizado o Cancelado, solo queda la opción de cancelar.
 function siguientesEstados(fila) {
   if (fila.estado_reserva === "Cancelada") return [];
-  const eventoCerrado = ["Finalizado", "Cancelado"].includes(
-    fila.estado_evento,
-  );
-  const opciones = [];
-  if (fila.estado_reserva === "Reservada" && !eventoCerrado)
-    opciones.push("Confirmada");
+  const opciones = []; // Auditoría 4: la reserva ya nace Confirmada; solo se cancela
   // Igual que en el backend: si el evento ya empezó o terminó no se cancela
   if (!EVENTO_NO_CANCELABLE.includes(fila.estado_evento))
     opciones.push("Cancelada");
@@ -283,19 +276,12 @@ export const ReservaModel = {
               ? `Cancelaste tu reserva ${r.codigo} de ${evento}.`
               : `Tu reserva ${r.codigo} de ${evento} fue cancelada.`,
         });
-      } else if (r.estado === "Confirmada") {
+      } else {
         avisos.push({
           id_reserva: r.id,
           emoji: "✅",
           fecha: reservadaEl,
           texto: `Tu reserva ${r.codigo} para ${evento} fue confirmada.`,
-        });
-      } else {
-        avisos.push({
-          id_reserva: r.id,
-          emoji: "⏳",
-          fecha: reservadaEl,
-          texto: `Tu reserva ${r.codigo} para ${evento} está pendiente de confirmación.`,
         });
       }
 

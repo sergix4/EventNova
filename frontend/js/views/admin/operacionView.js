@@ -141,7 +141,7 @@ export const OperacionView = {
 
     const resumen = [
       ['Total reservas', rs.total, '#4f46e5', '#eef2ff'], ['Reservas confirmadas', rs.confirmadas, '#059669', '#ecfdf5'],
-      ['Reservas pendientes (Reservada)', rs.reservadas, '#d97706', '#fffbeb'], ['Reservas canceladas', rs.canceladas, '#dc2626', '#fef2f2'],
+      ['Cancelaciones parciales', rs.parciales, '#d97706', '#fffbeb'], ['Reservas canceladas', rs.canceladas, '#dc2626', '#fef2f2'],
       ['Total eventos', ev.total, '#7c3aed', '#f5f3ff'], ['Eventos activos', ev.activos, '#4f46e5', '#eef2ff'],
       ['Eventos finalizados', ev.finalizados, '#6b7280', '#f3f4f6'], ['Eventos cancelados', ev.cancelados, '#dc2626', '#fef2f2'],
     ]
@@ -343,8 +343,8 @@ export const OperacionView = {
       })
     }
     graficoBarras(document.getElementById('grafica-estados'), {
-      etiquetas: ['Confirmadas', 'Pendientes (Reservada)', 'Canceladas'], radio: 5, separacion: 0.45,
-      series: [{ nombre: 'Reservas', datos: [rs.confirmadas, rs.reservadas, rs.canceladas], color: ['#059669', '#d97706', '#dc2626'] }],
+      etiquetas: ['Confirmadas', 'Canceladas'], radio: 5, separacion: 0.45,
+      series: [{ nombre: 'Reservas', datos: [rs.confirmadas, rs.canceladas], color: ['#059669', '#dc2626'] }],
     })
   },
 

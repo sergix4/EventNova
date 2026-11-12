@@ -205,7 +205,7 @@ const reservaController = {
 
   // PUT /api/reservas/:id  (cliente dueño o administrador)
   // body: { numero_entradas, observaciones }
-  // Solo se puede editar mientras la reserva esté "Reservada".
+  // Solo cambia las observaciones, mientras el evento esté En Boletería.
   async actualizar(req, res) {
     const { id } = req.params;
     const usuario = req.session.usuario;
@@ -234,32 +234,25 @@ const reservaController = {
         });
       }
 
-      // M4: una reserva CONFIRMADA (ya pagada) solo cambia sus observaciones.
-      // Para cambiar entradas: «Agregar más entradas» o «Cancelar entradas».
-      if (actual.estado_reserva === "Confirmada") {
-        if (
-          req.body.numero_entradas !== undefined &&
-          Number(req.body.numero_entradas) !== Number(actual.numero_entradas)
-        ) {
-          return res.status(409).json({
-            error:
-              "Una reserva confirmada no cambia su número de entradas: usa «Agregar más entradas» o «Cancelar entradas».",
-          });
-        }
-        const observaciones = texto(req.body.observaciones) || null;
-        if (observaciones && observaciones.length > MAX_OBSERVACIONES) {
-          return res.status(400).json({
-            error: `Las observaciones no pueden superar ${MAX_OBSERVACIONES} caracteres.`,
-          });
-        }
-        return res.json(await ReservaModel.updateObservaciones(id, observaciones));
+      // Auditoría 4: toda reserva activa ya está pagada (Confirmada), así que
+      // solo se cambian sus observaciones. Para cambiar entradas:
+      // «Agregar más entradas» (compra nueva) o «Cancelar entradas».
+      if (
+        req.body.numero_entradas !== undefined &&
+        Number(req.body.numero_entradas) !== Number(actual.numero_entradas)
+      ) {
+        return res.status(409).json({
+          error:
+            "El número de entradas no se modifica: usa «Agregar más entradas» o «Cancelar entradas».",
+        });
       }
-
-      // Reserva "Reservada": puede cambiar entradas y observaciones
-      const { error, datos } = validarEntradas(req.body);
-      if (error) return res.status(400).json({ error });
-      const actualizada = await ReservaModel.update(id, datos);
-      res.json(actualizada);
+      const observaciones = texto(req.body.observaciones) || null;
+      if (observaciones && observaciones.length > MAX_OBSERVACIONES) {
+        return res.status(400).json({
+          error: `Las observaciones no pueden superar ${MAX_OBSERVACIONES} caracteres.`,
+        });
+      }
+      res.json(await ReservaModel.updateObservaciones(id, observaciones));
     } catch (err) {
       responderErrorModelo(res, err, "actualizar");
     }
@@ -267,7 +260,7 @@ const reservaController = {
 
   // PATCH /api/reservas/:id/estado
   // body: { id_estado_reserva, causa_cancelacion, entradas_cancelar (opcional) }
-  // Cambios permitidos: Reservada -> Confirmada / Cancelada · Confirmada -> Cancelada
+  // Cambio permitido: Confirmada -> Cancelada (la confirmación es automática al pagar)
   //   cliente: solo puede CANCELAR sus propias reservas
   //   agente:  confirma o cancela reservas de sus eventos (causa obligatoria al cancelar)
   //   admin:   confirma o cancela cualquier reserva (causa obligatoria al cancelar)
@@ -311,10 +304,11 @@ const reservaController = {
           .status(400)
           .json({ error: `La reserva ya está ${actual.estado_reserva}.` });
       }
-      if (destino.nombre_estado === "Reservada") {
-        return res
-          .status(400)
-          .json({ error: "Una reserva no puede volver al estado Reservada." });
+      // Auditoría 4: la reserva se confirma sola al pagar; a mano solo se cancela
+      if (destino.nombre_estado !== "Cancelada") {
+        return res.status(400).json({
+          error: "Las reservas se confirman solas al pagar: solo se pueden cancelar.",
+        });
       }
       if (usuario.rol === "cliente" && destino.nombre_estado !== "Cancelada") {
         return res

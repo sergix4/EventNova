@@ -6,7 +6,7 @@
 //   - 22 eventos en 15 ciudades de 5 países, en TODOS los estados
 //     (Programado, En Boletería, En Vivo, Finalizado y Cancelado con su causa)
 //   - 82 reservas repartidas en los meses de 2026, en los 3 estados
-//     (Reservada, Confirmada y Cancelada con su causa)
+//     (Confirmada y Cancelada con su causa: la reserva se confirma al pagar)
 //
 // Uso:
 //   npm run db:demo              -> CARGA la demo
@@ -298,20 +298,20 @@ const EVENTOS = [
     reservas: [
       ['C04', 4, 'Confirmada', haceDias(28, '11:30')],
       ['C06', 3, 'Confirmada', haceDias(20, '19:45')],
-      ['C01', 2, 'Reservada',  haceDias(15, '10:10')],
-      ['C05', 2, 'Reservada',  haceDias(6, '16:30')],
+      ['C01', 2, 'Confirmada', haceDias(15, '10:10')],
+      ['C05', 2, 'Confirmada', haceDias(6, '16:30')],
       ['C08', 2, 'Cancelada',  haceDias(18, '13:00'), NO_ASISTE, haceDias(9, '08:40')],
-      ['C10', 5, 'Reservada',  esteMes(1)],
-      ['C02', 2, 'Reservada',  esteMes(0)],
+      ['C10', 5, 'Confirmada', esteMes(1)],
+      ['C02', 2, 'Confirmada', esteMes(0)],
     ] },
   { agente: 'A02', nombre: 'Stand-up: Noche de Impro', ciudad: 'bogota', teatro: T_COLSUBSIDIO, direccion: 'Calle 26 # 25-40, Bogotá',
     descripcion: 'Comedia de improvisación con el público.',
     inicio: enDias(12, '20:00'), fin: enDias(12, '22:00'), capacidad: 600, precio: 50000, estado: 'En Boletería', registro: haceDias(30, '12:00'),
     reservas: [
       ['C04', 2, 'Confirmada', haceDias(25, '20:00')],
-      ['C05', 3, 'Reservada',  haceDias(10, '09:30')],
+      ['C05', 3, 'Confirmada', haceDias(10, '09:30')],
       ['C07', 2, 'Cancelada',  haceDias(20, '17:10'), CAMBIO, haceDias(8, '12:00')],
-      ['C03', 1, 'Reservada',  esteMes(0)],
+      ['C03', 1, 'Confirmada', esteMes(0)],
     ] },
   { agente: 'A03', nombre: 'Festival de Música del Pacífico', ciudad: 'medellin', teatro: 'Teatro Metropolitano José Gutiérrez Gómez', direccion: 'Calle 41 # 57-30, Medellín',
     descripcion: 'Marimba, chirimía y currulao en el corazón de Medellín.',
@@ -319,24 +319,24 @@ const EVENTOS = [
     reservas: [
       ['C05', 4, 'Confirmada', haceDias(30, '14:20')],
       ['C09', 2, 'Confirmada', haceDias(21, '18:00')],
-      ['C03', 2, 'Reservada',  haceDias(14, '11:00')],
-      ['C10', 1, 'Reservada',  esteMes(2)],
+      ['C03', 2, 'Confirmada', haceDias(14, '11:00')],
+      ['C10', 1, 'Confirmada', esteMes(2)],
     ] },
   { agente: 'A02', nombre: 'Concierto de Fin de Año en Ciudad de México', ciudad: 'cdmx', teatro: 'Auditorio Nacional', direccion: 'Paseo de la Reforma 50, Ciudad de México',
     descripcion: 'Gran concierto de pop latino para despedir el año.',
     inicio: enDias(45, '21:00'), fin: enDias(45, '23:59'), capacidad: 3000, precio: 180000, estado: 'En Boletería', registro: haceDias(25, '08:30'),
     reservas: [
-      ['C04', 2, 'Reservada',  haceDias(20, '22:00')],
+      ['C04', 2, 'Confirmada', haceDias(20, '22:00')],
       ['C08', 2, 'Confirmada', haceDias(12, '10:45')],
-      ['C01', 3, 'Reservada',  haceDias(4, '19:00')],
+      ['C01', 3, 'Confirmada', haceDias(4, '19:00')],
     ] },
   { agente: 'A04', nombre: 'Noche de Boleros', ciudad: 'bucaramanga', teatro: 'Teatro Santander', direccion: 'Calle 33 # 18-63, Bucaramanga',
     descripcion: 'Tríos y solistas interpretan los boleros de siempre.',
     inicio: enDias(8, '20:00'), fin: enDias(8, '22:00'), capacidad: 450, precio: 40000, estado: 'En Boletería', registro: haceDias(20, '15:00'),
     reservas: [
-      ['C08', 2, 'Reservada',  haceDias(15, '12:30')],
+      ['C08', 2, 'Confirmada', haceDias(15, '12:30')],
       ['C06', 2, 'Confirmada', haceDias(11, '20:15')],
-      ['C07', 1, 'Reservada',  esteMes(0)],
+      ['C07', 1, 'Confirmada', esteMes(0)],
     ] },
 
   // ── PROGRAMADOS (visibles pero todavía sin venta de entradas) ─────────────
