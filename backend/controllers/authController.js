@@ -127,6 +127,14 @@ const authController = {
         return res.status(401).json({ error: "Credenciales inválidas." });
       }
 
+      // Ajustes finales: la cuenta suspendida no puede entrar. Se revisa DESPUÉS
+      // de la contraseña para no contarle a cualquiera que ese correo existe.
+      if (!usuario.activo) {
+        return res.status(403).json({
+          error: "Tu cuenta está suspendida. Comunícate con el administrador de EventNova.",
+        });
+      }
+
       if (!usuario.rol) {
         return res
           .status(403)

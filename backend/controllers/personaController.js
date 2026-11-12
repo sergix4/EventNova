@@ -365,48 +365,60 @@ const personaController = {
     }
   },
 
-  // DELETE /api/usuarios/:id
-  async eliminar(req, res) {
+  // PATCH /api/usuarios/:id/estado   body: { activo: false, motivo: "..." }
+  // Ajustes finales (recomendación del docente): en vez de ELIMINAR a una
+  // persona se SUSPENDE. Conserva todos sus datos, reservas y eventos, pero no
+  // puede iniciar sesión hasta que se reactive ({ activo: true }).
+  async cambiarEstado(req, res) {
     const { id } = req.params;
+    const activo = req.body?.activo;
+    const motivo = texto(req.body?.motivo) || null;
+
+    if (typeof activo !== "boolean") {
+      return res
+        .status(400)
+        .json({ error: "Indica si la cuenta queda activa (true) o suspendida (false)." });
+    }
+    if (motivo && motivo.length > 300) {
+      return res
+        .status(400)
+        .json({ error: "El motivo no puede superar 300 caracteres." });
+    }
+
     try {
       const persona = await PersonaModel.obtener(id);
       if (!persona)
         return res.status(404).json({ error: "Usuario no encontrado." });
 
-      // Reglas de negocio: no se borra a quien tenga historia en el sistema
-      if (persona.rol === "cliente" && persona.cliente.total_reservas > 0) {
+      if (persona.activo === activo) {
         return res.status(409).json({
-          error: `No se puede eliminar: el cliente tiene ${persona.cliente.total_reservas} reserva(s) asociada(s).`,
+          error: activo ? "La cuenta ya está activa." : "La cuenta ya está suspendida.",
         });
       }
-      if (persona.rol === "agente" && persona.agente.total_eventos > 0) {
-        return res.status(409).json({
-          error: `No se puede eliminar: el agente tiene ${persona.agente.total_eventos} evento(s) asociado(s).`,
-        });
-      }
-      if (persona.rol === "administrador") {
+
+      // Reglas para suspender a un administrador
+      if (!activo && persona.rol === "administrador") {
         if (req.session.usuario.numero_id === id) {
-          return res.status(409).json({
-            error: "No puedes eliminar tu propia cuenta de administrador.",
-          });
+          return res
+            .status(409)
+            .json({ error: "No puedes suspender tu propia cuenta de administrador." });
         }
         if ((await PersonaModel.contarAdministradores()) <= 1) {
-          return res.status(409).json({
-            error: "Debe quedar al menos un administrador en el sistema.",
-          });
+          return res
+            .status(409)
+            .json({ error: "Debe quedar al menos un administrador activo en el sistema." });
         }
       }
 
-      await PersonaModel.eliminar(id);
-      res.json({ mensaje: "Usuario eliminado correctamente." });
+      const usuario = await PersonaModel.cambiarActivo(id, activo, motivo);
+      res.json({
+        mensaje: activo
+          ? "Cuenta reactivada correctamente."
+          : "Cuenta suspendida correctamente.",
+        usuario,
+      });
     } catch (error) {
-      if (error.code === "23503") {
-        // FK violation: respaldo por si algo quedó asociado
-        return res.status(409).json({
-          error: "No se puede eliminar: el usuario tiene registros asociados.",
-        });
-      }
-      console.error("Error al eliminar usuario:", error);
+      console.error("Error al cambiar el estado del usuario:", error);
       res.status(500).json({ error: "Error interno del servidor." });
     }
   },

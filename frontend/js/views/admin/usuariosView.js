@@ -68,6 +68,8 @@ function ubicacionCorta(u) {
 /** Avatar + nombre + correo dentro de la tabla.
  *  extra: HTML opcional que va junto al nombre (ej. la etiqueta "Tú") */
 function celdaPersona(p, extra = "") {
+  // Ajustes finales: etiqueta roja si la cuenta está suspendida
+  if (!p.activo) extra += '<span class="etiqueta-suspendido">Suspendido</span>';
   return `
     <div class="persona">
       <span class="avatar">${esc(iniciales(p.nombre))}</span>
@@ -75,25 +77,33 @@ function celdaPersona(p, extra = "") {
     </div>`;
 }
 
-/** Botones Ver / Editar / Eliminar (mismo estilo que ubicacion.html).
- *  esYo = true cuando la fila es el administrador con sesión: no puede eliminarse. */
+/** Botones Ver / Editar / Suspender o Reactivar (Ajustes finales: ya no se elimina a nadie).
+ *  esYo = true cuando la fila es el administrador con sesión: no puede suspenderse. */
 function celdaAcciones(p, esYo = false) {
   const id = esc(p.numero_id);
   const nombre = esc(p.nombre);
-  const botonEliminar = esYo
-    ? `<button type="button" class="crud__eliminar" disabled title="No puedes eliminar tu propia cuenta">Eliminar</button>`
-    : `<button type="button" class="crud__eliminar" data-eliminar="${id}" aria-label="Eliminar ${nombre}">Eliminar</button>`;
+  let botonEstado;
+  if (esYo) {
+    botonEstado = `<button type="button" class="crud__eliminar" disabled title="No puedes suspender tu propia cuenta">Suspender</button>`;
+  } else if (p.activo) {
+    botonEstado = `<button type="button" class="crud__eliminar" data-suspender="${id}" aria-label="Suspender ${nombre}">Suspender</button>`;
+  } else {
+    botonEstado = `<button type="button" class="crud__reactivar" data-reactivar="${id}" aria-label="Reactivar ${nombre}">Reactivar</button>`;
+  }
   return `
     <td class="crud__acciones">
       <button type="button" class="crud__editar" data-ver="${id}" aria-label="Ver ${nombre}">Ver</button>
       <button type="button" class="crud__editar" data-editar="${id}" aria-label="Editar ${nombre}">Editar</button>
-      ${botonEliminar}
+      ${botonEstado}
     </td>`;
 }
 
+/** <tr> normal o atenuado si la cuenta está suspendida */
+const abrirFila = (p) => (p.activo ? "<tr>" : '<tr class="fila--suspendida">');
+
 function filaCliente(p) {
   return `
-    <tr>
+    ${abrirFila(p)}
       <td>${celdaPersona(p)}</td>
       <td class="sin-salto">${esc(p.numero_id)}</td>
       <td>${esc(ubicacionCorta(p.ubicacion))}</td>
@@ -106,7 +116,7 @@ function filaCliente(p) {
 
 function filaAgente(p) {
   return `
-    <tr>
+    ${abrirFila(p)}
       <td>${celdaPersona(p)}</td>
       <td class="texto-medio">${esc(p.agente.nombre_empresa)}</td>
       <td class="sin-salto">${esc(p.agente.plan || "—")}</td>
@@ -120,7 +130,7 @@ function filaAgente(p) {
 function filaAdministrador(p, idSesion) {
   const esYo = p.numero_id === idSesion;
   return `
-    <tr>
+    ${abrirFila(p)}
       <td>${celdaPersona(p, esYo ? '<span class="etiqueta-tu">Tú</span>' : "")}</td>
       <td class="sin-salto">${esc(p.numero_id)}</td>
       <td>${esc(p.administrador.horario)}</td>
@@ -263,6 +273,8 @@ export const UsuariosView = {
           ${dato("Teléfonos", p.telefonos.join(" · ") || "—")}
           ${dato("Fecha de nacimiento", p.fecha_nacimiento ? fechaCorta(p.fecha_nacimiento) : "—")}
           ${dato("Registrado el", fechaCorta(p.fecha_registro))}
+          ${dato("Estado de la cuenta", p.activo ? "Activa" : `Suspendida desde el ${fechaCorta(p.fecha_suspension)}`)}
+          ${p.activo ? "" : dato("Motivo de la suspensión", p.motivo_suspension || "Sin motivo registrado")}
           ${dato("Dirección", p.direccion || "—")}
           ${dato("Ubicación", u.ciudad ? `${u.ciudad}, ${u.departamento}, ${u.pais}` : "—")}
         </div>
@@ -416,36 +428,42 @@ export const UsuariosView = {
     boton.textContent = activo ? "Guardando…" : textoNormal;
   },
 
-  // ─── Modal ELIMINAR ───────────────────────────────────────────────────────
-  confirmarEliminar(p) {
-    // Aviso adelantado: el backend igual decide (responde 409 si no se puede)
-    // El administrador no tiene reservas ni eventos: su regla (no a sí mismo,
-    // al menos uno) la valida el backend y llega como toast si no se puede.
-    const asociados =
-      p.rol === "cliente"
-        ? p.cliente.total_reservas
-        : p.rol === "agente"
-          ? p.agente.total_eventos
-          : 0;
-    const cosa =
-      p.rol === "cliente" ? "reserva(s) asociada(s)" : "evento(s) asociado(s)";
-    const aviso =
-      asociados > 0
-        ? `<div class="alerta alerta--ambar">${icono("advertencia", 16)}<span>Tiene <strong>${asociados} ${cosa}</strong>. El sistema no permitirá eliminarlo.</span></div>`
-        : "";
+  // ─── Modal SUSPENDER (Ajustes finales: reemplaza a "Eliminar") ──────────────
+  confirmarSuspender(p) {
     return `
       <div class="confirmacion">
         <div class="confirmacion__fila">
-          <div class="confirmacion__icono" style="background:#fef2f2;color:#dc2626">${icono("papelera", 20)}</div>
+          <div class="confirmacion__icono" style="background:#fef2f2;color:#dc2626">${icono("advertencia", 20)}</div>
           <div>
-            <h3 class="modal__titulo">¿Eliminar ${NOMBRE_ROL[p.rol].toLowerCase()}?</h3>
-            <p class="confirmacion__texto">Se eliminará <strong>${esc(p.nombre)}</strong> (${esc(p.numero_id)}) junto con sus teléfonos. Esta acción no se puede deshacer.</p>
+            <h3 class="modal__titulo">¿Suspender ${NOMBRE_ROL[p.rol].toLowerCase()}?</h3>
+            <p class="confirmacion__texto"><strong>${esc(p.nombre)}</strong> (${esc(p.numero_id)}) no podrá iniciar sesión mientras esté suspendido. <strong>No se borra nada</strong>: sus reservas, eventos y datos se conservan y puedes reactivarlo cuando quieras.</p>
           </div>
         </div>
-        ${aviso}
+        <div class="campo">
+          <label class="campo__etiqueta" for="motivo-suspension">Motivo <span class="campo__opcional">(opcional)</span></label>
+          <textarea class="area-texto" id="motivo-suspension" rows="2" maxlength="300" placeholder="Ej. Incumplimiento de las condiciones de uso"></textarea>
+        </div>
         <div class="confirmacion__acciones">
           <button type="button" class="boton boton--neutro" data-cerrar-modal>Cancelar</button>
-          <button type="button" class="boton boton--peligro boton--seminegrita" id="confirmar-eliminar">Eliminar</button>
+          <button type="button" class="boton boton--peligro boton--seminegrita" id="confirmar-suspender">Suspender</button>
+        </div>
+      </div>`;
+  },
+
+  // ─── Modal REACTIVAR ──────────────────────────────────────────────────────
+  confirmarReactivar(p) {
+    return `
+      <div class="confirmacion">
+        <div class="confirmacion__fila">
+          <div class="confirmacion__icono" style="background:#f0fdf4;color:#16a34a">${icono("check", 20)}</div>
+          <div>
+            <h3 class="modal__titulo">¿Reactivar ${NOMBRE_ROL[p.rol].toLowerCase()}?</h3>
+            <p class="confirmacion__texto"><strong>${esc(p.nombre)}</strong> podrá volver a iniciar sesión con su correo y contraseña de siempre.</p>
+          </div>
+        </div>
+        <div class="confirmacion__acciones">
+          <button type="button" class="boton boton--neutro" data-cerrar-modal>Cancelar</button>
+          <button type="button" class="boton boton--primario boton--seminegrita" id="confirmar-reactivar">Reactivar</button>
         </div>
       </div>`;
   },

@@ -27,7 +27,8 @@ export const PersonaModel = {
   actualizar(numeroId, datos) {
     return peticion(`/usuarios/${encodeURIComponent(numeroId)}`, { metodo: 'PUT', datos })
   },
-  eliminar(numeroId) {
-    return peticion(`/usuarios/${encodeURIComponent(numeroId)}`, { metodo: 'DELETE' })
+  /** Ajustes finales: suspende (activo = false) o reactiva (activo = true). Ya no se elimina a nadie. */
+  cambiarEstado(numeroId, activo, motivo = null) {
+    return peticion(`/usuarios/${encodeURIComponent(numeroId)}/estado`, { metodo: 'PATCH', datos: { activo, motivo } })
   },
 }

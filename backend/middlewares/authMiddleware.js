@@ -25,7 +25,7 @@ async function revisarSesion(req, res, roles = [], mensaje = '') {
   try {
     if (!(await PersonaModel.tieneRol(usuario.numero_id, usuario.rol))) {
       req.session.destroy(() => {});
-      res.status(401).json({ error: 'Tu cuenta ya no existe. Inicia sesión de nuevo.' });
+      res.status(401).json({ error: 'Tu cuenta fue suspendida o ya no existe. Comunícate con el administrador.' });
       return false;
     }
   } catch (error) {

@@ -85,6 +85,10 @@ CREATE TABLE public."USUARIO" (
     id_ciudad        INTEGER,
     -- cuándo se registró (hora de Colombia) · migracion_06
     fecha_registro   TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'America/Bogota'),
+    -- suspensión de la cuenta (en vez de eliminarla) · migracion_10
+    activo            BOOLEAN NOT NULL DEFAULT TRUE,
+    fecha_suspension  TIMESTAMP,
+    motivo_suspension VARCHAR(300),
     CONSTRAINT fk_usuario_ciudad FOREIGN KEY (id_ciudad) REFERENCES public."CIUDAD" (id_ciudad)
 );
 

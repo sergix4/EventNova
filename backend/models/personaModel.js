@@ -16,6 +16,8 @@ const SELECT_PERSONA = `
   SELECT u.numero_id, u.correo, u.nombre, u.direccion,
          TO_CHAR(u.fecha_nacimiento, 'YYYY-MM-DD')     AS fecha_nacimiento,
          TO_CHAR(u.fecha_registro, 'YYYY-MM-DD HH24:MI') AS fecha_registro,
+         u.activo, u.motivo_suspension,
+         TO_CHAR(u.fecha_suspension, 'YYYY-MM-DD HH24:MI') AS fecha_suspension,
          u.id_ciudad, c.nombre_ciudad, d.id_departamento, d.nombre_departamento,
          p.id_pais, p.nombre_pais,
          ARRAY(SELECT t.telefono FROM public."TELEFONOS" t
@@ -58,6 +60,9 @@ function formatear(fila) {
     direccion: fila.direccion,
     fecha_nacimiento: fila.fecha_nacimiento,
     fecha_registro: fila.fecha_registro,
+    activo: fila.activo, // false = cuenta suspendida
+    fecha_suspension: fila.fecha_suspension,
+    motivo_suspension: fila.motivo_suspension,
     rol: fila.rol,
     telefonos: fila.telefonos || [],
     ubicacion: {
@@ -219,31 +224,38 @@ const PersonaModel = {
     return PersonaModel.obtener(datos.numero_id); // la persona recién creada
   },
 
-  // ¿Esa identificación sigue siendo de un administrador? (lo usa soloAdmin)
+  // ¿Esa identificación sigue siendo de un administrador ACTIVO? (lo usa adminVigente)
   async esAdministrador(numero_id) {
     const result = await pool.query(
-      `SELECT 1 FROM public."ADMINISTRADOR" WHERE numero_id = $1`,
+      `SELECT 1 FROM public."ADMINISTRADOR" ad
+       JOIN public."USUARIO" u ON u.numero_id = ad.numero_id
+       WHERE ad.numero_id = $1 AND u.activo`,
       [numero_id],
     );
     return result.rowCount > 0;
   },
 
-  // ¿La persona sigue existiendo con ese rol? (lo usa authMiddleware para que la
-  // sesión de un usuario eliminado por el administrador deje de servir)
+  // ¿La persona sigue existiendo con ese rol y ACTIVA? (lo usa authMiddleware para
+  // que la sesión de un usuario suspendido por el administrador deje de servir)
   async tieneRol(numero_id, rol) {
     const tabla = { cliente: "CLIENTE", agente: "AGENTE", administrador: "ADMINISTRADOR" }[rol];
     if (!tabla) return false;
     const result = await pool.query(
-      `SELECT 1 FROM public."${tabla}" WHERE numero_id = $1`,
+      `SELECT 1 FROM public."${tabla}" t
+       JOIN public."USUARIO" u ON u.numero_id = t.numero_id
+       WHERE t.numero_id = $1 AND u.activo`,
       [numero_id],
     );
     return result.rowCount > 0;
   },
 
-  // Cuántos administradores hay (siempre debe quedar al menos uno)
+  // Cuántos administradores ACTIVOS hay (siempre debe quedar al menos uno)
   async contarAdministradores() {
     const result = await pool.query(
-      `SELECT COUNT(*)::int AS total FROM public."ADMINISTRADOR"`,
+      `SELECT COUNT(*)::int AS total
+       FROM public."ADMINISTRADOR" ad
+       JOIN public."USUARIO" u ON u.numero_id = ad.numero_id
+       WHERE u.activo`,
     );
     return result.rows[0].total;
   },
@@ -320,41 +332,20 @@ const PersonaModel = {
     return PersonaModel.obtener(numero_id); // devuelve la persona ya actualizada
   },
 
-  // Elimina la persona EN UNA TRANSACCIÓN. Primero las tablas "hijas"
-  // (rol y teléfonos) y al final USUARIO, para no romper las llaves foráneas.
-  // El controlador ya revisó que no tenga reservas ni eventos.
-  async eliminar(numero_id) {
-    const client = await pool.connect();
-    try {
-      await client.query("BEGIN");
-      await client.query(
-        `DELETE FROM public."CLIENTE"       WHERE numero_id = $1`,
-        [numero_id],
-      );
-      await client.query(
-        `DELETE FROM public."AGENTE"        WHERE numero_id = $1`,
-        [numero_id],
-      );
-      await client.query(
-        `DELETE FROM public."ADMINISTRADOR" WHERE numero_id = $1`,
-        [numero_id],
-      );
-      await client.query(
-        `DELETE FROM public."TELEFONOS"     WHERE numero_id = $1`,
-        [numero_id],
-      );
-      const result = await client.query(
-        `DELETE FROM public."USUARIO" WHERE numero_id = $1`,
-        [numero_id],
-      );
-      await client.query("COMMIT");
-      return result.rowCount > 0; // true si se borró, false si no existía
-    } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally {
-      client.release();
-    }
+  // Ajustes finales: SUSPENDE o REACTIVA la cuenta (ya no se elimina a nadie).
+  // activo = false -> suspendida (guarda la fecha y el motivo)
+  // activo = true  -> reactivada (borra la fecha y el motivo)
+  // Sus reservas, eventos y demás datos NO se tocan.
+  async cambiarActivo(numero_id, activo, motivo = null) {
+    await pool.query(
+      `UPDATE public."USUARIO"
+       SET activo = $1,
+           fecha_suspension  = CASE WHEN $1 THEN NULL ELSE (NOW() AT TIME ZONE 'America/Bogota') END,
+           motivo_suspension = CASE WHEN $1 THEN NULL ELSE $2::varchar END
+       WHERE numero_id = $3`,
+      [activo, motivo, numero_id],
+    );
+    return PersonaModel.obtener(numero_id);
   },
 
   // ─── Sprint 3 · Tarea 13: «Mi perfil» ──────────────────────────────────────

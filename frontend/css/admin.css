@@ -330,6 +330,11 @@
 .usuarios__acciones .boton { padding: 8px 16px; }
 .usuarios .crud__eliminar:disabled { opacity: 0.4; cursor: not-allowed; }
 .etiqueta-tu { font-size: 11px; line-height: 16px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: #fef3c7; color: #92400e; margin-left: 6px; vertical-align: middle; }
+/* Ajustes finales: usuarios suspendidos */
+.etiqueta-suspendido { font-size: 11px; line-height: 16px; font-weight: 600; padding: 1px 8px; border-radius: 999px; background: #fee2e2; color: #991b1b; margin-left: 6px; vertical-align: middle; }
+.fila--suspendida td:not(.crud__acciones) { opacity: 0.55; }
+.crud__reactivar { color: var(--verde, #16a34a); }
+.crud__reactivar:hover { text-decoration: underline; }
 .usuarios__error { margin: 16px 24px 0; }
 .usuarios .tabla td .persona__correo { max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .modal--xl { max-width: 680px; }
