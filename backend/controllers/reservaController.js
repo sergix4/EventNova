@@ -209,8 +209,6 @@ const reservaController = {
   async actualizar(req, res) {
     const { id } = req.params;
     const usuario = req.session.usuario;
-    const { error, datos } = validarEntradas(req.body);
-    if (error) return res.status(400).json({ error });
 
     try {
       const actual = await ReservaModel.getById(id);
@@ -225,12 +223,41 @@ const reservaController = {
           .status(403)
           .json({ error: "No tienes permiso para modificar esta reserva." });
       }
-      if (actual.estado_reserva !== "Reservada") {
+      if (actual.estado_reserva === "Cancelada") {
+        return res
+          .status(409)
+          .json({ error: "Una reserva cancelada ya no se puede modificar." });
+      }
+      if (actual.estado_evento !== "En Boletería") {
         return res.status(409).json({
-          error: `Solo se puede modificar una reserva en estado Reservada (esta está ${actual.estado_reserva}).`,
+          error: `Solo se puede modificar mientras el evento esté En Boletería (está ${actual.estado_evento}).`,
         });
       }
 
+      // M4: una reserva CONFIRMADA (ya pagada) solo cambia sus observaciones.
+      // Para cambiar entradas: «Agregar más entradas» o «Cancelar entradas».
+      if (actual.estado_reserva === "Confirmada") {
+        if (
+          req.body.numero_entradas !== undefined &&
+          Number(req.body.numero_entradas) !== Number(actual.numero_entradas)
+        ) {
+          return res.status(409).json({
+            error:
+              "Una reserva confirmada no cambia su número de entradas: usa «Agregar más entradas» o «Cancelar entradas».",
+          });
+        }
+        const observaciones = texto(req.body.observaciones) || null;
+        if (observaciones && observaciones.length > MAX_OBSERVACIONES) {
+          return res.status(400).json({
+            error: `Las observaciones no pueden superar ${MAX_OBSERVACIONES} caracteres.`,
+          });
+        }
+        return res.json(await ReservaModel.updateObservaciones(id, observaciones));
+      }
+
+      // Reserva "Reservada": puede cambiar entradas y observaciones
+      const { error, datos } = validarEntradas(req.body);
+      if (error) return res.status(400).json({ error });
       const actualizada = await ReservaModel.update(id, datos);
       res.json(actualizada);
     } catch (err) {

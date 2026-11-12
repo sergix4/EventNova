@@ -97,10 +97,37 @@ function abrirDetalle(id) {
 
     const cancelar = e.target.closest("[data-cancelar]");
     if (cancelar) return abrirCancelacion(cancelar.dataset.cancelar);
+
+    const editarObs = e.target.closest("[data-editar-obs]");
+    if (editarObs) return abrirObservaciones(editarObs.dataset.editarObs);
   });
 }
 function cerrarDetalle() {
   document.querySelector(".cajon-fondo")?.remove();
+}
+
+// ─── M4: editar las observaciones de una reserva propia ─────────────────────
+function abrirObservaciones(id) {
+  const r = buscarReserva(id);
+  if (!r || !r.editable) return;
+  const caja = abrirModal(MisReservasView.modalObservaciones(r));
+  const guardar = caja.querySelector("#guardar-observaciones");
+  guardar.addEventListener("click", async () => {
+    guardar.disabled = true;
+    guardar.textContent = "Guardando…";
+    const texto = caja.querySelector("#observaciones-reserva").value.trim();
+    try {
+      const actualizada = await ReservaModel.editarObservaciones(r.id, texto || null);
+      reservas = reservas.map((x) => (String(x.id) === String(r.id) ? actualizada : x));
+      cerrarModal();
+      abrirDetalle(r.id); // refresca el panel con el texto nuevo
+      mostrarToast("Observaciones guardadas.", { detalle: actualizada.codigo });
+    } catch (error) {
+      mostrarToast(error.message, { error: true });
+      guardar.disabled = false;
+      guardar.textContent = "Guardar";
+    }
+  });
 }
 
 // ─── Ventana para cancelar una reserva propia ────────────────────────────────

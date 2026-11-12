@@ -115,6 +115,9 @@ function adaptarReservaBD(fila) {
     cancelable:
       fila.estado_reserva !== "Cancelada" &&
       !EVENTO_NO_CANCELABLE.includes(fila.estado_evento),
+    // M4: se pueden editar las observaciones mientras el evento esté En Boletería
+    editable:
+      fila.estado_reserva !== "Cancelada" && fila.estado_evento === "En Boletería",
     // Estados a los que el agente puede cambiarla (Tarea 8)
     siguientesEstados: siguientesEstados(fila),
     // > 0 cuando el cliente ya tenía entradas de este evento (compra adicional)
@@ -167,6 +170,11 @@ export const ReservaModel = {
     return adaptarReservaBD(
       await peticion("/reservas", { metodo: "POST", datos }),
     );
+  },
+
+  /** M4: cambia solo las observaciones (PUT /api/reservas/:id) */
+  async editarObservaciones(id, observaciones) {
+    return this.actualizar(id, { observaciones });
   },
 
   /** Cambia número de entradas y observaciones (PUT /api/reservas/:id) */

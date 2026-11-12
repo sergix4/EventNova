@@ -240,6 +240,15 @@ const ReservaModel = {
   // Modifica el número de entradas y las observaciones.
   // Vuelve a validar cupos y a calcular el valor total.
   // (El estado se cambia con cambiarEstado)
+  // M4: solo cambia las observaciones (reservas Confirmadas)
+  async updateObservaciones(id, observaciones) {
+    await pool.query(
+      'UPDATE public."RESERVA" SET observaciones = $1 WHERE id_reserva = $2',
+      [observaciones, id],
+    );
+    return this.getById(id);
+  },
+
   async update(id, datos) {
     const client = await pool.connect();
     try {
