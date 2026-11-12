@@ -77,6 +77,15 @@ function celdaPersona(p, extra = "") {
     </div>`;
 }
 
+/** Regla del equipo: no se suspende a quien tiene reservas o eventos vinculados.
+ *  Devuelve el motivo (para el title del botón) o "" si se puede suspender. */
+function vinculos(p) {
+  const n = p.cliente?.total_reservas || p.agente?.total_eventos || 0;
+  if (!n) return "";
+  const que = p.cliente ? `reserva${n === 1 ? "" : "s"}` : `evento${n === 1 ? "" : "s"}`;
+  return `No se puede suspender: tiene ${n} ${que} vinculad${p.cliente ? "a" : "o"}${n === 1 ? "" : "s"}`;
+}
+
 /** Botones Ver / Editar / Suspender o Reactivar (Ajustes finales: ya no se elimina a nadie).
  *  esYo = true cuando la fila es el administrador con sesión: no puede suspenderse. */
 function celdaAcciones(p, esYo = false) {
@@ -85,6 +94,8 @@ function celdaAcciones(p, esYo = false) {
   let botonEstado;
   if (esYo) {
     botonEstado = `<button type="button" class="crud__eliminar" disabled title="No puedes suspender tu propia cuenta">Suspender</button>`;
+  } else if (p.activo && vinculos(p)) {
+    botonEstado = `<button type="button" class="crud__eliminar" disabled title="${esc(vinculos(p))}">Suspender</button>`;
   } else if (p.activo) {
     botonEstado = `<button type="button" class="crud__eliminar" data-suspender="${id}" aria-label="Suspender ${nombre}">Suspender</button>`;
   } else {
