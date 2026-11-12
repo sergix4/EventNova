@@ -11,7 +11,7 @@ const pesos = (v) => '$ ' + v.toLocaleString('es-CO')
 const MAX_ENTRADAS = 10
 const AVISOS = {
   reservada: { icono: 'reloj', color: '#d97706', titulo: 'Reserva pendiente de confirmación', texto: 'Tu reserva fue registrada exitosamente. Está pendiente de confirmación por parte del agente.', pildora: ['#fef3c7', '#92400e', 'Reservada'] },
-  confirmada: { icono: 'check', color: '#16a34a', titulo: '¡Reserva confirmada!', texto: 'Tu reserva está confirmada. Recibirás tus entradas digitales en el correo registrado.', pildora: ['#dcfce7', '#15803d', 'Confirmada'] },
+  confirmada: { icono: 'check', color: '#16a34a', titulo: '¡Reserva confirmada!', texto: 'Tu pago fue aprobado y tu reserva está confirmada. Puedes consultarla cuando quieras en «Mis reservas».', pildora: ['#dcfce7', '#15803d', 'Confirmada'] },
   cancelada: { icono: 'advertencia', color: '#dc2626', titulo: 'Reserva cancelada', texto: 'Esta reserva fue cancelada. Si tienes dudas, contacta al agente responsable del evento.', pildora: ['#fee2e2', '#991b1b', 'Cancelada'] },
 }
 
@@ -46,7 +46,6 @@ export const DetalleEventoView = {
         </div>
         <div class="portada-evento__info">
           <div class="portada-evento__etiquetas">
-            <span class="etiqueta-vidrio">${esc(evento.categoria)}</span>
             ${insigniaEvento(evento.estado, { borde: false, grande: true })}
           </div>
           <h1 class="portada-evento__titulo">${esc(evento.nombre)}</h1>
@@ -74,9 +73,8 @@ export const DetalleEventoView = {
             ${filaInfo('numeral', 'Código del evento', evento.codigo)}
             ${filaInfo('edificio', 'Lugar / Recinto', evento.recinto)}
             ${filaInfo('ubicacion', 'Ciudad', `${evento.ciudad}, ${evento.departamento}, ${evento.pais}`)}
-            ${filaInfo('calendario', 'Fecha', evento.fechaLarga)}
-            ${filaInfo('reloj', 'Hora de inicio', evento.horaInicio)}
-            ${filaInfo('reloj', 'Hora estimada de fin', evento.horaFin)}
+            ${filaInfo('calendario', 'Inicio', `${evento.fechaInicio} · ${evento.horaInicio}`)}
+            ${filaInfo('reloj', 'Fin estimado', `${evento.fechaFin} · ${evento.horaFin}`)}
             ${filaInfo('usuarios', 'Capacidad disponible', `${disponibles} de ${evento.capacidad} lugares disponibles`)}
             <div class="ocupacion${disponibles < 50 ? ' ocupacion--critica' : ''}">
               <div class="ocupacion__fila"><span>Ocupación actual</span><strong>${porcentaje}% vendido</strong></div>
@@ -257,6 +255,17 @@ export const DetalleEventoView = {
       </div>
       <div class="pago__acciones" style="padding-top:0">
         <button type="button" class="boton boton--primario boton--bloque boton--grande" data-accion="ver-reserva">Ver mi reserva</button>
+      </div>`
+  },
+
+  /** Ajustes finales: el evento no existe o fue eliminado (antes la página quedaba en blanco) */
+  noEncontrado(mensaje) {
+    document.getElementById('detalle-evento').innerHTML = `
+      <div class="vacio vacio--tarjeta" style="margin:32px">
+        <div class="vacio__icono">${icono('brujula', 18)}</div>
+        <p class="vacio__titulo">${esc(mensaje)}</p>
+        <p class="vacio__texto">Puede que el enlace esté mal escrito o que el organizador lo haya eliminado.</p>
+        <a href="/pages/cliente/explorar.html" class="boton boton--primario">Explorar eventos</a>
       </div>`
   },
 

@@ -44,7 +44,6 @@ const CAMPOS_AGENTE = [
   "empresa",
   "descripcionNegocio",
   "experiencia",
-  "comision",
 ];
 const valor = (id) => document.getElementById(id).value;
 
@@ -70,8 +69,7 @@ function validar(campo) {
       return Number.isInteger(Number(v)) && v >= 0 && v <= 60
         ? "valido"
         : "invalido";
-    case "comision":
-      return v >= 0 && v <= 100 ? "valido" : "invalido";
+
     default:
       return v.length > 1 ? "valido" : "";
   }
@@ -302,7 +300,7 @@ formulario.addEventListener("submit", async (e) => {
         descripcionNegocio: valor("descripcionNegocio"),
         id_plan: planSeleccionado,
         experiencia: Number(valor("experiencia")),
-        comision: Number(valor("comision")),
+
       });
       const plan = planes.find((p) => p.id_plan === planSeleccionado);
       mostrarToast("Cuenta de Agente creada correctamente.", {
