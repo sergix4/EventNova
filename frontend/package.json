@@ -1,0 +1,12 @@
+{
+  "name": "eventnova-frontend",
+  "version": "1.0.0",
+  "description": "EventNova - Interfaz web estática HTML5/CSS/JS",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "node -e \"const fs = require('fs'); fs.mkdirSync('vendor/chart.js', { recursive: true }); fs.copyFileSync('node_modules/chart.js/dist/chart.umd.js', 'vendor/chart.js/chart.umd.js');\""
+  },
+  "dependencies": {
+    "chart.js": "^4.5.1"
+  }
+}
