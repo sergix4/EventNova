@@ -18,7 +18,7 @@ const MAX_CAUSA = 300;
 
 // Enlace al detalle del evento de la reserva (página de la tarea 3.1)
 const urlEvento = (r) =>
-  `/pages/cliente/detalle-evento.html?id=${encodeURIComponent(r.id_evento)}`;
+  `detalle-evento.html?id=${encodeURIComponent(r.id_evento)}`;
 
 export const MisReservasView = {
   mostrarEstadisticas(reservas) {
@@ -86,7 +86,7 @@ export const MisReservasView = {
           <div class="vacio__icono vacio__icono--grande">${icono("ticket", 36)}</div>
           <p class="vacio__titulo vacio__titulo--grande">Todavía no tienes reservas</p>
           <p class="vacio__texto vacio__texto--estrecho">Explora los eventos disponibles y realiza tu primera reserva. ¡Es rápido y sencillo!</p>
-          <a href="/pages/cliente/explorar.html" class="boton boton--primario boton--grande">Explorar eventos ${icono("flechaDerecha", 14)}</a>
+          <a href="explorar.html" class="boton boton--primario boton--grande">Explorar eventos ${icono("flechaDerecha", 14)}</a>
         </div>`
       }</div>`;
       return;

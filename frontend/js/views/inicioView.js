@@ -35,7 +35,7 @@ export const InicioView = {
               <span class="precio__desde">Desde</span>
               <span class="precio__valor">${esc(e.precio)}</span>
             </div>
-            <a href="/pages/login.html" class="boton-ver" aria-label="Ver evento ${esc(e.nombre)}">Ver evento ${icono('flechaDerecha', 18)}</a>
+            <a href="pages/login.html" class="boton-ver" aria-label="Ver evento ${esc(e.nombre)}">Ver evento ${icono('flechaDerecha', 18)}</a>
           </div>
         </div>
       </article>`).join('')

@@ -84,7 +84,7 @@ function abrirPago() {
     }
     if (e.target.closest('[data-accion="ver-reserva"]')) {
       // Tarea 7: lleva a "Mis reservas" y abre el detalle de la reserva recién creada
-      window.location.href = `/pages/cliente/mis-reservas.html?reserva=${estado.reserva.id}`
+      window.location.href = `mis-reservas.html?reserva=${estado.reserva.id}`
     }
   })
 }

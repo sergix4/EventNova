@@ -13,7 +13,7 @@ import { icono } from "../../views/componentes/iconos.js";
 import { esc } from "../../utils/formato.js";
 
 const IR_A_MIS_EVENTOS = () => {
-  window.location.href = "/pages/agente/mis-eventos.html";
+  window.location.href = "mis-eventos.html";
 };
 
 // Aviso cuando el plan ya no tiene cupo
@@ -25,7 +25,7 @@ function avisoLimite({ plan, limite_eventos, estadisticas }) {
         <p class="vacio__titulo">Llegaste al límite de tu ${esc(plan)}</p>
         <p class="vacio__texto">Tienes ${estadisticas.eventos_activos} eventos activos y tu plan permite ${limite_eventos}.<br>
           Para registrar otro, espera a que finalice alguno, cancela uno o cambia a un plan superior.</p>
-        <a class="boton boton--primario" href="/pages/agente/perfil.html#planes-disponibles">Ver planes</a>
+        <a class="boton boton--primario" href="perfil.html#planes-disponibles">Ver planes</a>
       </div>
     </section>`;
 }

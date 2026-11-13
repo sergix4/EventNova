@@ -9,7 +9,7 @@ import { capitalizarMes } from "../utils/formato.js";
 
 // Imagen que se muestra cuando el evento no tiene imagen guardada
 // (archivo local: funciona aunque no haya internet)
-const IMAGEN_DEFECTO = "/img/evento-defecto.svg";
+const IMAGEN_DEFECTO = new URL("../../img/evento-defecto.svg", import.meta.url).href;
 
 // Estados del EVENTO en los que el cliente ya no puede cancelar su reserva
 const EVENTO_NO_CANCELABLE = ["En Vivo", "Finalizado"];

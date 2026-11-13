@@ -40,7 +40,7 @@ export const DetalleEventoView = {
     document.getElementById('detalle-evento').innerHTML = `
       <section class="portada-evento">
         <img src="${esc(evento.imagen)}" alt="${esc(evento.nombre)}">
-        <a href="/pages/cliente/explorar.html" class="portada-evento__volver">${icono('flechaIzquierda', 16)}Volver</a>
+        <a href="explorar.html" class="portada-evento__volver">${icono('flechaIzquierda', 16)}Volver</a>
         <div class="portada-evento__acciones">
           <button type="button" class="portada-evento__accion" data-accion="compartir" aria-label="Copiar enlace del evento" title="Copiar enlace">${icono('compartir', 16)}</button>
         </div>
@@ -173,7 +173,7 @@ export const DetalleEventoView = {
     // Si tiene varias reservas de este evento, se muestra el total y el enlace a todas
     const varias = numReservas > 1
       ? `<div class="estado-reserva__fila"><span>Total en este evento</span><strong>${totalEntradas} entradas · ${numReservas} reservas</strong></div>
-         <a href="/pages/cliente/mis-reservas.html" class="boton boton--contorno boton--bloque">Ver todas en Mis reservas</a>`
+         <a href="mis-reservas.html" class="boton boton--contorno boton--bloque">Ver todas en Mis reservas</a>`
       : ''
     return `
       <div class="pila-16">
@@ -266,7 +266,7 @@ export const DetalleEventoView = {
         <div class="vacio__icono">${icono('brujula', 18)}</div>
         <p class="vacio__titulo">${esc(mensaje)}</p>
         <p class="vacio__texto">Puede que el enlace esté mal escrito o que el organizador lo haya eliminado.</p>
-        <a href="/pages/cliente/explorar.html" class="boton boton--primario">Explorar eventos</a>
+        <a href="explorar.html" class="boton boton--primario">Explorar eventos</a>
       </div>`
   },
 

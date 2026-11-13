@@ -63,7 +63,7 @@ export function tarjetaEvento(e, { explorar = false } = {}) {
     : `${e.ciudad}, ${e.departamento}`;
   const tam = explorar ? 13 : 14;
   const boton = disponible
-    ? `<a href="/pages/cliente/detalle-evento.html?id=${encodeURIComponent(e.id)}" class="boton-detalles" aria-label="Ver detalles de ${esc(e.nombre)}">Ver detalles ${icono("flechaDerecha", explorar ? 14 : 15)}</a>`
+    ? `<a href="detalle-evento.html?id=${encodeURIComponent(e.id)}" class="boton-detalles" aria-label="Ver detalles de ${esc(e.nombre)}">Ver detalles ${icono("flechaDerecha", explorar ? 14 : 15)}</a>`
     : `<span class="boton-detalles boton-detalles--deshabilitado" aria-disabled="true">Ver detalles</span>`;
 
   return `

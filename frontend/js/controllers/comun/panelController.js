@@ -23,14 +23,17 @@ const BARRAS = {
 // Usuario con sesión (lo guarda iniciarPanel; la campana lo usa para su clave)
 let usuarioActual = null;
 
+const RUTA_INICIO = new URL("../../../index.html", import.meta.url).href;
+const RUTA_LOGIN = new URL("../../../pages/login.html", import.meta.url).href;
+
 const PAGINA_INICIO_POR_ROL = {
-  cliente: "/pages/cliente/inicio.html",
-  agente: "/pages/agente/mis-eventos.html",
-  administrador: "/pages/admin/dashboard.html",
+  cliente: new URL("../../../pages/cliente/inicio.html", import.meta.url).href,
+  agente: new URL("../../../pages/agente/mis-eventos.html", import.meta.url).href,
+  administrador: new URL("../../../pages/admin/dashboard.html", import.meta.url).href,
 };
 
 export function paginaInicioDe(rol) {
-  return PAGINA_INICIO_POR_ROL[rol] || "/";
+  return PAGINA_INICIO_POR_ROL[rol] || RUTA_INICIO;
 }
 
 /**
@@ -45,7 +48,7 @@ export async function iniciarPanel({ rol, activo, requiereSesion = true }) {
 
   if (requiereSesion && (!usuario || usuario.rol !== rol)) {
     // Sin sesión (o con otro rol): se manda al login
-    window.location.replace("/pages/login.html");
+    window.location.replace(RUTA_LOGIN);
     return new Promise(() => {}); // detiene la ejecución del controlador de la página
   }
 
@@ -78,7 +81,7 @@ export function conectarCerrarSesion() {
   document.addEventListener("click", async (e) => {
     if (!e.target.closest('[data-accion="cerrar-sesion"]')) return;
     await AuthModel.cerrarSesion();
-    window.location.href = "/";
+    window.location.href = RUTA_INICIO;
   });
 }
 

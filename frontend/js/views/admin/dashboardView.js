@@ -114,7 +114,7 @@ function tarjetaActividad(actividad) {
       }).join('')}
       </div>`}
       <div class="tarjeta__pie">
-        <a href="/pages/admin/reportes-generales.html" class="enlace-reporte">Ver reporte completo →</a>
+        <a href="reportes-generales.html" class="enlace-reporte">Ver reporte completo →</a>
       </div>
     </section>`
 }

@@ -6,14 +6,16 @@
 
 const API_URL = '/api'
 
+const LOGIN_URL = new URL('../../pages/login.html', import.meta.url).href
+
 // M2: si la sesión se vence o la cuenta es suspendida con la página abierta,
 // se manda al login (una sola vez, aunque fallen varias peticiones a la vez).
 let redirigiendo = false
 function irAlLogin(aviso) {
-  if (redirigiendo || window.location.pathname === '/pages/login.html') return
+  if (redirigiendo || window.location.pathname.endsWith('/pages/login.html')) return
   redirigiendo = true
   try { sessionStorage.setItem('eventnova-aviso', aviso) } catch {}
-  window.location.replace('/pages/login.html')
+  window.location.replace(LOGIN_URL)
 }
 
 /**

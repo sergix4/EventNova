@@ -6,7 +6,7 @@ import { peticion } from "./api.js";
 import { capitalizarMes } from "../utils/formato.js";
 
 // Imagen local para los eventos sin imagen (funciona aunque no haya internet)
-const IMAGEN_DEFECTO = "/img/evento-defecto.svg";
+const IMAGEN_DEFECTO = new URL("../../img/evento-defecto.svg", import.meta.url).href;
 
 // Equivalencia del estado del evento con el texto que muestra la página de inicio
 const ESTADO_EN_INICIO = {

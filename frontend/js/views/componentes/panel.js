@@ -12,25 +12,25 @@ const MENU_CLIENTE = [
     clave: "inicio",
     texto: "Inicio",
     icono: "casa",
-    url: "/pages/cliente/inicio.html",
+    url: "../../pages/cliente/inicio.html",
   },
   {
     clave: "explorar",
     texto: "Explorar eventos",
     icono: "brujula",
-    url: "/pages/cliente/explorar.html",
+    url: "../../pages/cliente/explorar.html",
   },
   {
     clave: "reservas",
     texto: "Mis reservas",
     icono: "portapapeles",
-    url: "/pages/cliente/mis-reservas.html",
+    url: "../../pages/cliente/mis-reservas.html",
   },
   {
     clave: "perfil",
     texto: "Mi perfil",
     icono: "usuario",
-    url: "/pages/cliente/perfil.html",
+    url: "../../pages/cliente/perfil.html",
   },
 ];
 
@@ -39,25 +39,25 @@ const MENU_AGENTE = [
     clave: "mis-eventos",
     texto: "Mis eventos",
     icono: "cuadricula",
-    url: "/pages/agente/mis-eventos.html",
+    url: "../../pages/agente/mis-eventos.html",
   },
   {
     clave: "registrar-evento",
     texto: "Registrar evento",
     icono: "calendarioMas",
-    url: "/pages/agente/registrar-evento.html",
+    url: "../../pages/agente/registrar-evento.html",
   },
   {
     clave: "reservas",
     texto: "Reservas",
     icono: "ticket",
-    url: "/pages/agente/reservas.html",
+    url: "../../pages/agente/reservas.html",
   },
   {
     clave: "perfil",
     texto: "Perfil",
     icono: "perfil",
-    url: "/pages/agente/perfil.html",
+    url: "../../pages/agente/perfil.html",
   },
 ];
 
@@ -66,49 +66,49 @@ const MENU_ADMIN = [
     clave: "dashboard",
     texto: "Dashboard",
     icono: "cuadricula",
-    url: "/pages/admin/dashboard.html",
+    url: "../../pages/admin/dashboard.html",
   },
   {
     clave: "reportes-generales",
     texto: "Reportes generales",
     icono: "reporte",
-    url: "/pages/admin/reportes-generales.html",
+    url: "../../pages/admin/reportes-generales.html",
   },
   {
     clave: "reportes-comerciales",
     texto: "Reportes comerciales",
     icono: "dolar",
-    url: "/pages/admin/reportes-comerciales.html",
+    url: "../../pages/admin/reportes-comerciales.html",
   },
   {
     clave: "cobertura",
     texto: "Cobertura y eventos",
     icono: "globo",
-    url: "/pages/admin/cobertura.html",
+    url: "../../pages/admin/cobertura.html",
   },
   {
     clave: "reservas-operacion",
     texto: "Reservas y operación",
     icono: "ticket",
-    url: "/pages/admin/operacion.html",
+    url: "../../pages/admin/operacion.html",
   },
   {
     clave: "usuarios",
     texto: "Usuarios",
     icono: "usuarios",
-    url: "/pages/admin/usuarios.html",
+    url: "../../pages/admin/usuarios.html",
   },
   {
     clave: "ubicacion",
     texto: "Ubicación geográfica",
     icono: "ubicacion",
-    url: "/pages/admin/ubicacion.html",
+    url: "../../pages/admin/ubicacion.html",
   },
   {
     clave: "perfil",
     texto: "Perfil",
     icono: "perfil",
-    url: "/pages/admin/perfil.html",
+    url: "../../pages/admin/perfil.html",
   },
 ];
 
@@ -128,7 +128,7 @@ function enlaces(menu, activo, conPunto) {
 
 function logo(clase = "", tamanoIcono = 20) {
   return `
-    <a href="/" class="logo ${clase}">
+    <a href="../../index.html" class="logo ${clase}">
       <span class="logo__icono">${icono("ticket", tamanoIcono)}</span>
       <span class="logo__texto">Event<span>Nova</span></span>
     </a>`;
@@ -212,7 +212,7 @@ export function panelNotificaciones(notificaciones, error = "") {
     cuerpo = `<div class="notificaciones__lista">${notificaciones
       .map(
         (n) => `
-      <a class="notificacion${n.leida ? " notificacion--leida" : ""}" href="/pages/cliente/mis-reservas.html?reserva=${encodeURIComponent(n.id_reserva)}">
+      <a class="notificacion${n.leida ? " notificacion--leida" : ""}" href="../../pages/cliente/mis-reservas.html?reserva=${encodeURIComponent(n.id_reserva)}">
         <span class="notificacion__emoji" aria-hidden="true">${n.emoji}</span>
         <div class="notificacion__cuerpo">
           <p class="notificacion__texto">${esc(n.texto)}</p>
@@ -229,5 +229,5 @@ export function panelNotificaciones(notificaciones, error = "") {
       ${hayNoLeidas ? '<button type="button" data-accion="marcar-leidas">Marcar todas como leídas</button>' : ""}
     </div>
     ${cuerpo}
-    <a class="notificaciones__pie" href="/pages/cliente/mis-reservas.html">Ver mis reservas</a>`;
+    <a class="notificaciones__pie" href="../../pages/cliente/mis-reservas.html">Ver mis reservas</a>`;
 }
