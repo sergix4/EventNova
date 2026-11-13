@@ -35,6 +35,25 @@ require("./config/db"); // fuerza a que db.js se ejecute y pruebe la conexión
 
 const app = express();
 app.disable("x-powered-by"); // Tarea 16: no anunciar en cada respuesta que el servidor usa Express
+app.set("trust proxy", 1); // necesario detrás del proxy HTTPS de Railway para cookies secure
+
+// CORS: aceptar cualquier origen con soporte de credenciales (cookies de sesión)
+app.use((req, res, next) => {
+  const origen = req.headers.origin;
+  if (origen) {
+    res.setHeader("Access-Control-Allow-Origin", origen);
+    res.setHeader("Vary", "Origin");
+  } else {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  }
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(204);
+  }
+  next();
+});
 
 // Auditoría final: cabeceras de seguridad básicas en todas las respuestas
 app.use((req, res, next) => {
@@ -59,7 +78,7 @@ app.use(
     rolling: true, // cada petición vuelve a contar las 2 horas
     cookie: {
       httpOnly: true, // el JavaScript de la página no puede leer la cookie
-      sameSite: "lax", // otra página web no puede usar la sesión del usuario
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // permite cookies cross-site en producción (HTTPS)
       secure: process.env.NODE_ENV === "production", // en producción, solo por HTTPS
       maxAge: DOS_HORAS, // la sesión vence tras 2 horas sin usar el sistema
     },
