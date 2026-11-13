@@ -25,7 +25,6 @@ if (SECRETO.length < 32 || SECRETO.startsWith("cambia_este_secreto")) {
   process.exit(1);
 }
 
-const path = require("path");
 const express = require("express");
 require("express-async-errors"); // Tarea 16: los errores de los controladores async llegan a manejarErrores
 const session = require("express-session");
@@ -45,7 +44,6 @@ app.use((req, res, next) => {
   next();
 });
 const PORT = process.env.PORT || 3000;
-const CARPETA_FRONTEND = path.join(__dirname, "..", "frontend");
 
 // ─── Middlewares ────────────────────────────────────────────────────────────
 app.use(express.urlencoded({ extended: true })); // leer datos de formularios
@@ -69,27 +67,15 @@ app.use(
 );
 
 // ─── API REST (Modelo + Controlador) ────────────────────────────────────────
+app.get("/", (req, res) => {
+  res.json({ message: "API de EventNova funcionando correctamente" });
+});
+
 app.use("/api", indexRoutes);
 
 // Si una ruta de la API no existe se responde en JSON
 app.use("/api", (req, res) => {
   res.status(404).json({ error: "Ruta de la API no encontrada" });
-});
-
-// ─── Archivos de terceros usados por la vista ───────────────────────────────
-// Chart.js (gráficas del panel de administrador) se instala con npm y se sirve
-// desde node_modules, así funciona sin internet.
-app.use(
-  "/vendor/chart.js",
-  express.static(path.join(__dirname, "node_modules", "chart.js", "dist")),
-);
-
-// ─── Interfaz (Vista): HTML5 + CSS + JavaScript ─────────────────────────────
-app.use(express.static(CARPETA_FRONTEND));
-
-// Página no encontrada
-app.use((req, res) => {
-  res.status(404).sendFile(path.join(CARPETA_FRONTEND, "404.html"));
 });
 
 // Tarea 16: errores no controlados. SIEMPRE al final (lleva 4 parámetros: err, req, res, next)
