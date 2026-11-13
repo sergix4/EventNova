@@ -3,6 +3,7 @@
 // las filas de PostgreSQL al formato que esperan las Vistas.
 
 import { peticion } from "./api.js";
+import { BASE_URL } from "./config.js";
 import { capitalizarMes } from "../utils/formato.js";
 
 // Imagen local para los eventos sin imagen (funciona aunque no haya internet)
@@ -77,7 +78,7 @@ function adaptarEventoBD(fila) {
     // la imagen se pide aparte. El detalle (GET /api/eventos/:id) sí la trae completa.
     imagen:
       fila.imagen_evento ||
-      (fila.tiene_imagen ? `/api/eventos/${fila.id_evento}/imagen` : IMAGEN_DEFECTO),
+      (fila.tiene_imagen ? `${BASE_URL}/api/eventos/${fila.id_evento}/imagen` : IMAGEN_DEFECTO),
     imagen_evento: fila.imagen_evento || "", // solo viene en el detalle (formulario de editar)
     id_ciudad: fila.id_ciudad,
     ciudad: fila.nombre_ciudad,

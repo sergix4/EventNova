@@ -5,6 +5,7 @@
 //   - "Reservas" del agente: listar y confirmar / cancelar (Tarea 8)
 
 import { peticion } from "./api.js";
+import { BASE_URL } from "./config.js";
 import { capitalizarMes } from "../utils/formato.js";
 
 // Imagen que se muestra cuando el evento no tiene imagen guardada
@@ -102,7 +103,7 @@ function adaptarReservaBD(fila) {
     eventoFinalizado: fila.estado_evento === "Finalizado",
     precioBase: Number(fila.precio_base) || 0,
     // Ajustes finales: la imagen ya no viene en el listado, se pide aparte
-    imagen: fila.tiene_imagen ? `/api/eventos/${fila.id_evento}/imagen` : IMAGEN_DEFECTO,
+    imagen: fila.tiene_imagen ? `${BASE_URL}/api/eventos/${fila.id_evento}/imagen` : IMAGEN_DEFECTO,
     // El cliente puede cancelar mientras la reserva no esté cancelada
     // y el evento todavía no haya empezado
     cancelable:

@@ -4,7 +4,9 @@
 // Como las páginas y la API salen del mismo servidor, basta con rutas
 // relativas que empiezan por /api.
 
-const API_URL = '/api'
+import { BASE_URL } from './config.js'
+
+const API_URL = `${BASE_URL}/api`
 
 const LOGIN_URL = new URL('../../pages/login.html', import.meta.url).href
 
@@ -26,7 +28,7 @@ export async function peticion(ruta, { metodo = 'GET', datos } = {}) {
   const opciones = {
     method: metodo,
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'same-origin', // envía la cookie de sesión
+    credentials: BASE_URL ? 'include' : 'same-origin', // envía la cookie de sesión
   }
   if (datos !== undefined) opciones.body = JSON.stringify(datos)
 
