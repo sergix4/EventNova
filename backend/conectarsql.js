@@ -12,7 +12,7 @@ const path = require('path');
 const pool = require('./config/db');
 
 // Se ejecutan en este orden
-const SCRIPTS = ['develop.sql', 'seed_planes.sql', 'seed_estados.sql'];
+const SCRIPTS = ['schema.sql', 'seeds.sql'];
 const FORZAR = process.argv.includes('--forzar');
 const DESTINO = pool.usaNeon ? 'Neon (base COMPARTIDA del equipo)' : 'PostgreSQL local';
 
