@@ -1,5 +1,5 @@
 
---Tablas independientes (catálogos)
+--Tablas independientes cataloos con opciones predeterminadas
 CREATE TABLE public."PAIS" (
     id_pais     SERIAL PRIMARY KEY,
     nombre_pais VARCHAR(100) NOT NULL
@@ -24,7 +24,6 @@ CREATE TABLE public."ESTADO_RESERVA" (
     CONSTRAINT ux_estado_reserva_nombre UNIQUE (nombre_estado)
 );
 
---Ubicación geográfica
 
 CREATE TABLE public."DEPARTAMENTO" (
     id_departamento     SERIAL PRIMARY KEY,
@@ -41,7 +40,7 @@ CREATE TABLE public."CIUDAD" (
 );
 
 
---Usuarios y roles
+-- usuarios
 
 CREATE TABLE public."USUARIO" (
     numero_id         VARCHAR(20) PRIMARY KEY,
@@ -93,7 +92,7 @@ CREATE TABLE public."CLIENTE" (
 );
 
 
--- 4. Eventos
+-- eventos
 
 CREATE TABLE public."EVENTO" (
     id_evento          SERIAL PRIMARY KEY,
@@ -177,7 +176,7 @@ CREATE TABLE public."CANCELACION_ENTRADAS" (
 CREATE INDEX ix_cancelacion_reserva ON public."CANCELACION_ENTRADAS" (id_reserva);
 
 
---Índices UNIQUE (sin distinguir mayúsculas)
+-- minuscula
 
 CREATE UNIQUE INDEX ux_pais_nombre
   ON public."PAIS" (LOWER(nombre_pais));
@@ -191,7 +190,7 @@ CREATE UNIQUE INDEX ux_ciudad_nombre_departamento
 CREATE UNIQUE INDEX ux_estado_nombre
   ON public."ESTADO" (nombre_estado);
 
--- Triggers de fecha de cancelación
+-- Triggers de fecha de cancelación, guarda el momento exacto en donde se canceló
 
 CREATE OR REPLACE FUNCTION public.fn_reserva_fecha_cancelacion()
 RETURNS TRIGGER AS $$
