@@ -360,9 +360,9 @@ async function buscarCiudades(client) {
   for (const [clave, [pais, depto, ciudad]] of Object.entries(CIUDADES)) {
     const { rows } = await client.query(
       `SELECT c.id_ciudad
-       FROM public."CIUDAD" c
-       JOIN public."DEPARTAMENTO" d ON d.id_departamento = c.id_departamento
-       JOIN public."PAIS" p         ON p.id_pais = d.id_pais
+       FROM public.ciudad c
+       JOIN public.departamento d ON d.id_departamento = c.id_departamento
+       JOIN public.pais p         ON p.id_pais = d.id_pais
        WHERE LOWER(p.nombre_pais) = LOWER($1)
          AND LOWER(d.nombre_departamento) = LOWER($2)
          AND LOWER(c.nombre_ciudad) = LOWER($3)
@@ -380,18 +380,18 @@ async function buscarCiudades(client) {
 // Crea USUARIO + TELEFONOS. Devuelve false si el usuario ya existía.
 async function crearUsuario(client, u, idCiudad, hash) {
   const existe = await client.query(
-    'SELECT 1 FROM public."USUARIO" WHERE correo = $1 OR numero_id = $2',
+    'SELECT 1 FROM public.usuario WHERE correo = $1 OR numero_id = $2',
     [u.correo, u.numero_id],
   );
   if (existe.rowCount > 0) return false;
 
   await client.query(
-    `INSERT INTO public."USUARIO" (numero_id, correo, nombre, contraseña, direccion, id_ciudad, fecha_registro)
+    `INSERT INTO public.usuario (numero_id, correo, nombre, contraseña, direccion, id_ciudad, fecha_registro)
      VALUES ($1, $2, $3, $4, $5, $6, $7)`,
     [u.numero_id, u.correo, u.nombre, hash, u.direccion || null, idCiudad, u.registro],
   );
   await client.query(
-    'INSERT INTO public."TELEFONOS" (numero_id, telefono) VALUES ($1, $2)',
+    'INSERT INTO public.telefonos (numero_id, telefono) VALUES ($1, $2)',
     [u.numero_id, u.telefono],
   );
   return true;
@@ -400,8 +400,8 @@ async function crearUsuario(client, u, idCiudad, hash) {
 async function crearAgente(client, a, idCiudad, hash) {
   if (!(await crearUsuario(client, a, idCiudad, hash))) return false;
   await client.query(
-    `INSERT INTO public."AGENTE" (numero_id, id_plan, nombre_empresa, descripcion_agente, comision, experiencia)
-     VALUES ($1, (SELECT id_plan FROM public."TIPO_PLAN" WHERE nombre_plan = $2), $3, $4, $5, $6)`,
+    `INSERT INTO public.agente (numero_id, id_plan, nombre_empresa, descripcion_agente, comision, experiencia)
+     VALUES ($1, (SELECT id_plan FROM public.tipo_plan WHERE nombre_plan = $2), $3, $4, $5, $6)`,
     [a.numero_id, a.plan, a.empresa, a.descripcion, a.comision, a.experiencia],
   );
   return true;
@@ -410,7 +410,7 @@ async function crearAgente(client, a, idCiudad, hash) {
 async function crearCliente(client, c, idCiudad, hash) {
   if (!(await crearUsuario(client, c, idCiudad, hash))) return false;
   await client.query(
-    `INSERT INTO public."CLIENTE" (numero_id, codigo_cliente, visualizar_publicidad)
+    `INSERT INTO public.cliente (numero_id, codigo_cliente, visualizar_publicidad)
      VALUES ($1, $2, TRUE)`,
     [c.numero_id, `CLI-${c.numero_id}`],  // mismo formato que el registro normal
   );
@@ -421,18 +421,18 @@ async function crearCliente(client, c, idCiudad, hash) {
 // Devuelve { id, nuevo }.
 async function crearEvento(client, ev, idCiudad, idAgente) {
   const existe = await client.query(
-    'SELECT id_evento FROM public."EVENTO" WHERE nombre_evento = $1 AND id_agente = $2',
+    'SELECT id_evento FROM public.evento WHERE nombre_evento = $1 AND id_agente = $2',
     [ev.nombre, idAgente],
   );
   if (existe.rowCount > 0) return { id: existe.rows[0].id_evento, nuevo: false };
 
   const { rows } = await client.query(
-    `INSERT INTO public."EVENTO"
+    `INSERT INTO public.evento
        (nombre_evento, descripcion_evento, teatro, direccion_evento, id_ciudad,
         fecha_inicio, fecha_fin, capacidad, precio_base, id_estado,
         causa_cancelacion, fecha_cancelacion, id_agente, fecha_registro)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,
-             (SELECT id_estado FROM public."ESTADO" WHERE nombre_estado = $10),
+             (SELECT id_estado FROM public.estado WHERE nombre_estado = $10),
              $11, $12, $13,
              -- fecha_registro se guarda en la zona de la BD (UTC en Neon), igual que NOW()
              ($14::timestamp AT TIME ZONE 'America/Bogota'))
@@ -449,7 +449,7 @@ async function crearEvento(client, ev, idCiudad, idAgente) {
 async function crearReserva(client, ev, idEvento, [claveCliente, entradas, estado, fecha, causa, fechaCancel]) {
   const idCliente = CLIENTES[claveCliente].numero_id;
   const existe = await client.query(
-    'SELECT 1 FROM public."RESERVA" WHERE id_cliente = $1 AND id_evento = $2',
+    'SELECT 1 FROM public.reserva WHERE id_cliente = $1 AND id_evento = $2',
     [idCliente, idEvento],
   );
   if (existe.rowCount > 0) return false;
@@ -464,12 +464,12 @@ async function crearReserva(client, ev, idEvento, [claveCliente, entradas, estad
   const canceladaPor = estado !== 'Cancelada' ? null : ev.estado === 'Cancelado' ? 'Agente' : 'Cliente';
 
   await client.query(
-    `INSERT INTO public."RESERVA"
+    `INSERT INTO public.reserva
        (fecha_hora_reserva, numero_entradas, valor_total, id_estado_reserva,
         causa_cancelacion, fecha_cancelacion, id_cliente, id_evento, cancelada_por)
      VALUES ($1, $2::int,
-             $2::int * (SELECT precio_base FROM public."EVENTO" WHERE id_evento = $7),
-             (SELECT id_estado_reserva FROM public."ESTADO_RESERVA" WHERE nombre_estado = $3),
+             $2::int * (SELECT precio_base FROM public.evento WHERE id_evento = $7),
+             (SELECT id_estado_reserva FROM public.estado_reserva WHERE nombre_estado = $3),
              $4, $5, $6, $7, $8)`,
     [fecha, entradas, estado, causa || null, fechaCancel || null, idCliente, idEvento, canceladaPor],
   );
@@ -484,9 +484,9 @@ async function cargarDemo(client) {
 
   // Requisitos: planes y estados (db:init) y ciudades (db:ubicaciones)
   const base = await client.query(`
-    SELECT (SELECT COUNT(*) FROM public."TIPO_PLAN")::int      AS planes,
-           (SELECT COUNT(*) FROM public."ESTADO")::int         AS estados,
-           (SELECT COUNT(*) FROM public."ESTADO_RESERVA")::int AS estados_reserva`);
+    SELECT (SELECT COUNT(*) FROM public.tipo_plan)::int      AS planes,
+           (SELECT COUNT(*) FROM public.estado)::int         AS estados,
+           (SELECT COUNT(*) FROM public.estado_reserva)::int AS estados_reserva`);
   const { planes, estados, estados_reserva } = base.rows[0];
   if (planes < 3 || estados < 5 || estados_reserva < 3) {
     throw new Error('Faltan los planes o los estados. Ejecuta primero: npm run db:init');
@@ -535,20 +535,20 @@ async function cargarDemo(client) {
 //    RESERVA -> EVENTO -> TELEFONOS / CLIENTE / AGENTE -> USUARIO
 // ════════════════════════════════════════════════════════════════════════════
 // Usuarios demo = los que tienen correo @demo.eventnova.com
-const USUARIOS_DEMO = `SELECT numero_id FROM public."USUARIO" WHERE LOWER(correo) LIKE '%' || $1`;
-const EVENTOS_DEMO  = `SELECT id_evento FROM public."EVENTO" WHERE id_agente IN (${USUARIOS_DEMO})`;
+const USUARIOS_DEMO = `SELECT numero_id FROM public.usuario WHERE LOWER(correo) LIKE '%' || $1`;
+const EVENTOS_DEMO  = `SELECT id_evento FROM public.evento WHERE id_agente IN (${USUARIOS_DEMO})`;
 
 async function borrarDemo(client) {
   // 1. Contar antes, para mostrar qué se va a borrar
   const { rows } = await client.query(
     `SELECT
-       (SELECT COUNT(*) FROM public."CLIENTE" WHERE numero_id IN (${USUARIOS_DEMO}))::int AS clientes,
-       (SELECT COUNT(*) FROM public."AGENTE"  WHERE numero_id IN (${USUARIOS_DEMO}))::int AS agentes,
-       (SELECT COUNT(*) FROM public."EVENTO"  WHERE id_evento IN (${EVENTOS_DEMO}))::int  AS eventos,
-       (SELECT COUNT(*) FROM public."RESERVA"
+       (SELECT COUNT(*) FROM public.cliente WHERE numero_id IN (${USUARIOS_DEMO}))::int AS clientes,
+       (SELECT COUNT(*) FROM public.agente  WHERE numero_id IN (${USUARIOS_DEMO}))::int AS agentes,
+       (SELECT COUNT(*) FROM public.evento  WHERE id_evento IN (${EVENTOS_DEMO}))::int  AS eventos,
+       (SELECT COUNT(*) FROM public.reserva
          WHERE id_cliente IN (${USUARIOS_DEMO}) OR id_evento IN (${EVENTOS_DEMO}))::int AS reservas,
        -- reservas de clientes que NO son demo hechas sobre eventos demo
-       (SELECT COUNT(*) FROM public."RESERVA"
+       (SELECT COUNT(*) FROM public.reserva
          WHERE id_evento IN (${EVENTOS_DEMO}) AND id_cliente NOT IN (${USUARIOS_DEMO}))::int AS reservas_ajenas`,
     [DOMINIO_DEMO],
   );
@@ -561,16 +561,16 @@ async function borrarDemo(client) {
   // 2. Borrar todo en una transacción
   await client.query('BEGIN');
   await client.query(
-    `DELETE FROM public."RESERVA"
+    `DELETE FROM public.reserva
      WHERE id_cliente IN (${USUARIOS_DEMO}) OR id_evento IN (${EVENTOS_DEMO})`,
     [DOMINIO_DEMO],
   );
-  await client.query(`DELETE FROM public."EVENTO"    WHERE id_agente IN (${USUARIOS_DEMO})`, [DOMINIO_DEMO]);
-  await client.query(`DELETE FROM public."TELEFONOS" WHERE numero_id IN (${USUARIOS_DEMO})`, [DOMINIO_DEMO]);
-  await client.query(`DELETE FROM public."CLIENTE"   WHERE numero_id IN (${USUARIOS_DEMO})`, [DOMINIO_DEMO]);
-  await client.query(`DELETE FROM public."AGENTE"    WHERE numero_id IN (${USUARIOS_DEMO})`, [DOMINIO_DEMO]);
+  await client.query(`DELETE FROM public.evento    WHERE id_agente IN (${USUARIOS_DEMO})`, [DOMINIO_DEMO]);
+  await client.query(`DELETE FROM public.telefonos WHERE numero_id IN (${USUARIOS_DEMO})`, [DOMINIO_DEMO]);
+  await client.query(`DELETE FROM public.cliente   WHERE numero_id IN (${USUARIOS_DEMO})`, [DOMINIO_DEMO]);
+  await client.query(`DELETE FROM public.agente    WHERE numero_id IN (${USUARIOS_DEMO})`, [DOMINIO_DEMO]);
   const usuarios = await client.query(
-    `DELETE FROM public."USUARIO" WHERE LOWER(correo) LIKE '%' || $1`,
+    `DELETE FROM public.usuario WHERE LOWER(correo) LIKE '%' || $1`,
     [DOMINIO_DEMO],
   );
   await client.query('COMMIT');

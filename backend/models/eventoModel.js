@@ -21,17 +21,17 @@ const SELECT_BASE = `
          e.id_agente, u.nombre AS nombre_agente, a.nombre_empresa,
          -- Entradas ya reservadas (sin contar las reservas canceladas)
          COALESCE((SELECT SUM(r.numero_entradas)
-                   FROM public."RESERVA" r
-                   JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+                   FROM public.RESERVA r
+                   JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
                    WHERE r.id_evento = e.id_evento
                      AND er.nombre_estado <> 'Cancelada'), 0)::int AS reservas
-  FROM public."EVENTO" e
-  JOIN public."CIUDAD" c        ON c.id_ciudad = e.id_ciudad
-  JOIN public."DEPARTAMENTO" d  ON d.id_departamento = c.id_departamento
-  JOIN public."PAIS" p          ON p.id_pais = d.id_pais
-  JOIN public."ESTADO" es       ON es.id_estado = e.id_estado
-  JOIN public."AGENTE" a        ON a.numero_id = e.id_agente
-  JOIN public."USUARIO" u       ON u.numero_id = a.numero_id`;
+  FROM public.EVENTO e
+  JOIN public.CIUDAD c        ON c.id_ciudad = e.id_ciudad
+  JOIN public.DEPARTAMENTO d  ON d.id_departamento = c.id_departamento
+  JOIN public.PAIS p          ON p.id_pais = d.id_pais
+  JOIN public.ESTADO es       ON es.id_estado = e.id_estado
+  JOIN public.AGENTE a        ON a.numero_id = e.id_agente
+  JOIN public.USUARIO u       ON u.numero_id = a.numero_id`;
 
 const EventoModel = {
   // Lista de eventos. Filtros opcionales: { id_estado, id_ciudad, id_agente }
@@ -112,12 +112,12 @@ const EventoModel = {
       `SELECT DISTINCT c.id_ciudad, c.nombre_ciudad,
               d.id_departamento, d.nombre_departamento,
               p.id_pais, p.nombre_pais
-       FROM public."EVENTO" e
-       JOIN public."ESTADO" es       ON es.id_estado = e.id_estado
-       JOIN public."CIUDAD" c        ON c.id_ciudad = e.id_ciudad
-       JOIN public."DEPARTAMENTO" d  ON d.id_departamento = c.id_departamento
-       JOIN public."PAIS" p          ON p.id_pais = d.id_pais
-       JOIN public."USUARIO" u       ON u.numero_id = e.id_agente
+       FROM public.EVENTO e
+       JOIN public.ESTADO es       ON es.id_estado = e.id_estado
+       JOIN public.CIUDAD c        ON c.id_ciudad = e.id_ciudad
+       JOIN public.DEPARTAMENTO d  ON d.id_departamento = c.id_departamento
+       JOIN public.PAIS p          ON p.id_pais = d.id_pais
+       JOIN public.USUARIO u       ON u.numero_id = e.id_agente
        WHERE es.nombre_estado NOT IN ('Finalizado', 'Cancelado')
          AND u.activo
        ORDER BY p.nombre_pais, d.nombre_departamento, c.nombre_ciudad`,
@@ -130,7 +130,7 @@ const EventoModel = {
     const result = await pool.query(
       `SELECT b.*, ev.imagen_evento
        FROM (${SELECT_BASE} WHERE e.id_evento = $1) b
-       JOIN public."EVENTO" ev ON ev.id_evento = b.id_evento`,
+       JOIN public.EVENTO ev ON ev.id_evento = b.id_evento`,
       [id],
     );
     return result.rows[0];
@@ -139,7 +139,7 @@ const EventoModel = {
   // Solo la imagen del evento (data URL "data:image/png;base64,...") o null
   async getImagen(id) {
     const result = await pool.query(
-      'SELECT imagen_evento FROM public."EVENTO" WHERE id_evento = $1',
+      'SELECT imagen_evento FROM public.EVENTO WHERE id_evento = $1',
       [id],
     );
     return result.rows[0]?.imagen_evento || null;
@@ -149,7 +149,7 @@ const EventoModel = {
   // Los 5 estados posibles (para llenar selects y filtros)
   async getEstados() {
     const result = await pool.query(
-      'SELECT id_estado, nombre_estado FROM public."ESTADO" ORDER BY id_estado ASC',
+      'SELECT id_estado, nombre_estado FROM public.estado ORDER BY id_estado ASC',
     );
     return result.rows;
   },
@@ -158,8 +158,8 @@ const EventoModel = {
   async getAgentes() {
     const result = await pool.query(
       `SELECT a.numero_id AS id_agente, u.nombre AS nombre_agente, a.nombre_empresa
-       FROM public."AGENTE" a
-       JOIN public."USUARIO" u ON u.numero_id = a.numero_id
+       FROM public.AGENTE a
+       JOIN public.USUARIO u ON u.numero_id = a.numero_id
        WHERE u.activo -- los agentes suspendidos no aparecen para asignarles eventos
        ORDER BY u.nombre ASC`,
     );
@@ -171,12 +171,12 @@ const EventoModel = {
   // Crea el evento. Siempre nace en estado "Programado".
   async create(datos, id_agente) {
     const result = await pool.query(
-      `INSERT INTO public."EVENTO"
+      `INSERT INTO public.EVENTO
          (nombre_evento, descripcion_evento, teatro, direccion_evento, id_ciudad,
           fecha_inicio, fecha_fin, capacidad, precio_base, observaciones,
           imagen_evento, id_agente, id_estado)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12,
-         (SELECT id_estado FROM public."ESTADO" WHERE nombre_estado = 'Programado'))
+         (SELECT id_estado FROM public.ESTADO WHERE nombre_estado = 'Programado'))
        RETURNING id_evento`,
       [
         datos.nombre_evento,
@@ -199,7 +199,7 @@ const EventoModel = {
   // Modifica los datos del evento (el estado se cambia con cambiarEstado)
   async update(id, datos) {
     const result = await pool.query(
-      `UPDATE public."EVENTO"
+      `UPDATE public.EVENTO
        SET nombre_evento = $1, descripcion_evento = $2, teatro = $3,
            direccion_evento = $4, id_ciudad = $5, fecha_inicio = $6,
            fecha_fin = $7, capacidad = $8, precio_base = $9,
@@ -228,7 +228,7 @@ const EventoModel = {
   // Cambia el estado (Programado -> En Boletería -> En Vivo -> Finalizado / Cancelado)
   async cambiarEstado(id, id_estado, causa_cancelacion = null) {
     const result = await pool.query(
-      `UPDATE public."EVENTO" SET id_estado = $1, causa_cancelacion = $2
+      `UPDATE public.EVENTO SET id_estado = $1, causa_cancelacion = $2
        WHERE id_evento = $3 RETURNING id_evento`,
       [id_estado, causa_cancelacion, id],
     );
@@ -247,7 +247,7 @@ const EventoModel = {
       await client.query("BEGIN");
 
       const evento = await client.query(
-        `UPDATE public."EVENTO" SET id_estado = $1, causa_cancelacion = $2
+        `UPDATE public.EVENTO SET id_estado = $1, causa_cancelacion = $2
          WHERE id_evento = $3 RETURNING id_evento`,
         [id_estado, causa_cancelacion, id],
       );
@@ -257,12 +257,12 @@ const EventoModel = {
       }
 
       const reservas = await client.query(
-        `UPDATE public."RESERVA" r
-         SET id_estado_reserva = (SELECT id_estado_reserva FROM public."ESTADO_RESERVA"
+        `UPDATE public.RESERVA r
+         SET id_estado_reserva = (SELECT id_estado_reserva FROM public.ESTADO_RESERVA
                                   WHERE nombre_estado = 'Cancelada'),
              causa_cancelacion = 'Evento cancelado por el organizador: ' || $1::text,
              cancelada_por = $3::varchar
-         FROM public."ESTADO_RESERVA" er
+         FROM public.ESTADO_RESERVA er
          WHERE er.id_estado_reserva = r.id_estado_reserva
            AND er.nombre_estado <> 'Cancelada'
            AND r.id_evento = $2`,
@@ -288,29 +288,29 @@ const EventoModel = {
   // Los eventos "Cancelado" nunca se tocan.
   async actualizarEstadosAutomaticos() {
     await pool.query(`
-      UPDATE public."EVENTO" e
+      UPDATE public.EVENTO e
       SET id_estado = destino.id_estado
-      FROM public."ESTADO" destino, public."ESTADO" actual
+      FROM public.ESTADO destino, public.estado actual
       WHERE destino.nombre_estado = 'Finalizado'
         AND actual.id_estado = e.id_estado
         AND actual.nombre_estado IN ('Programado', 'En Boletería', 'En Vivo')
         AND e.fecha_fin <= (NOW() AT TIME ZONE 'America/Bogota');
 
-      UPDATE public."EVENTO" e
+      UPDATE public.EVENTO e
       SET id_estado = destino.id_estado
-      FROM public."ESTADO" destino, public."ESTADO" actual
+      FROM public.ESTADO destino, public.ESTADO actual
       WHERE destino.nombre_estado = 'En Vivo'
         AND actual.id_estado = e.id_estado
         AND actual.nombre_estado IN ('Programado', 'En Boletería')
         AND e.fecha_inicio <= (NOW() AT TIME ZONE 'America/Bogota')
         AND e.fecha_fin > (NOW() AT TIME ZONE 'America/Bogota');
 
-      UPDATE public."RESERVA" r
+      UPDATE public.RESERVA r
       SET id_estado_reserva = cancelada.id_estado_reserva,
           causa_cancelacion = 'El agente no confirmó la reserva antes de que terminara el evento.',
           cancelada_por = 'Sistema'
-      FROM public."ESTADO_RESERVA" cancelada, public."ESTADO_RESERVA" actual,
-           public."EVENTO" e, public."ESTADO" es
+      FROM public.ESTADO_RESERVA cancelada, public.ESTADO_RESERVA actual,
+           public.evento e, public.estado es
       WHERE cancelada.nombre_estado = 'Cancelada'
         AND actual.id_estado_reserva = r.id_estado_reserva
         AND actual.nombre_estado = 'Reservada'
@@ -323,7 +323,7 @@ const EventoModel = {
   // ¿El evento tiene reservas? (no se debe eliminar si las tiene)
   async tieneReservas(id) {
     const result = await pool.query(
-      'SELECT 1 FROM public."RESERVA" WHERE id_evento = $1 LIMIT 1',
+      'SELECT 1 FROM public.RESERVA WHERE id_evento = $1 LIMIT 1',
       [id],
     );
     return result.rowCount > 0;
@@ -331,7 +331,7 @@ const EventoModel = {
 
   async remove(id) {
     const result = await pool.query(
-      'DELETE FROM public."EVENTO" WHERE id_evento = $1',
+      'DELETE FROM public.EVENTO WHERE id_evento = $1',
       [id],
     );
     return result.rowCount > 0;

@@ -19,7 +19,7 @@ const DESTINO = pool.usaNeon ? 'Neon (base COMPARTIDA del equipo)' : 'PostgreSQL
 (async () => {
   try {
     // ── Candado ────────────────────────────────────────────────────────────
-    const { rows } = await pool.query(`SELECT to_regclass('public."PAIS"') AS tabla`);
+    const { rows } = await pool.query(`SELECT to_regclass('public.pais') AS tabla`);
     const yaTieneTablas = rows[0].tabla !== null;
 
     if (yaTieneTablas && !FORZAR) {

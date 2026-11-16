@@ -14,7 +14,7 @@ const password = process.env.ADMIN_PASSWORD || 'Admin12345';
   const client = await pool.connect();
   try {
     const existe = await client.query(
-      'SELECT 1 FROM public."USUARIO" WHERE correo = $1 OR numero_id = $2',
+      'SELECT 1 FROM public.usuario WHERE correo = $1 OR numero_id = $2',
       [correo, numero_id]
     );
     if (existe.rowCount > 0) {
@@ -25,12 +25,12 @@ const password = process.env.ADMIN_PASSWORD || 'Admin12345';
     const hash = await bcrypt.hash(password, 10);
     await client.query('BEGIN');
     await client.query(
-      `INSERT INTO public."USUARIO" (numero_id, correo, nombre, contraseña, direccion)
+      `INSERT INTO public.usuario (numero_id, correo, nombre, contraseña, direccion)
        VALUES ($1, $2, $3, $4, $5)`,
       [numero_id, correo, 'Administrador EventNova', hash, 'Oficina principal']
     );
     await client.query(
-      `INSERT INTO public."ADMINISTRADOR" (numero_id, codigo_admin)
+      `INSERT INTO public.administrador (numero_id, codigo_admin)
        VALUES ($1, $2)`,
       [numero_id, `ADM-${numero_id}`]
     );

@@ -18,12 +18,12 @@ const SELECT_BASE = `
          ee.nombre_estado AS estado_evento, e.id_agente,
          c.nombre_ciudad,
          r.id_cliente, u.nombre AS nombre_cliente, u.correo AS correo_cliente
-  FROM public."RESERVA" r
-  JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
-  JOIN public."EVENTO" e          ON e.id_evento = r.id_evento
-  JOIN public."ESTADO" ee         ON ee.id_estado = e.id_estado
-  JOIN public."CIUDAD" c          ON c.id_ciudad = e.id_ciudad
-  JOIN public."USUARIO" u         ON u.numero_id = r.id_cliente`;
+  FROM public.reserva r
+  JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
+  JOIN public.evento e          ON e.id_evento = r.id_evento
+  JOIN public.estado ee         ON ee.id_estado = e.id_estado
+  JOIN public.ciudad c          ON c.id_ciudad = e.id_ciudad
+  JOIN public.usuario u         ON u.numero_id = r.id_cliente`;
 
 // Único estado del evento en el que SÍ se pueden reservar entradas
 const ESTADO_RESERVABLE = "En Boletería";
@@ -44,9 +44,9 @@ async function bloquearEvento(client, id_evento) {
     `SELECT e.id_evento, e.capacidad, e.precio_base, es.nombre_estado,
             (e.fecha_inicio <= (NOW() AT TIME ZONE 'America/Bogota')) AS ya_empezo,
             u.activo AS agente_activo
-     FROM public."EVENTO" e
-     JOIN public."ESTADO" es ON es.id_estado = e.id_estado
-     JOIN public."USUARIO" u ON u.numero_id = e.id_agente
+     FROM public.evento e
+     JOIN public.estado es ON es.id_estado = e.id_estado
+     JOIN public.usuario u ON u.numero_id = e.id_agente
      WHERE e.id_evento = $1
      FOR UPDATE OF e`,
     [id_evento],
@@ -59,8 +59,8 @@ async function bloquearEvento(client, id_evento) {
 async function entradasOcupadas(client, id_evento, excluirReserva = null) {
   const result = await client.query(
     `SELECT COALESCE(SUM(r.numero_entradas), 0)::int AS ocupadas
-     FROM public."RESERVA" r
-     JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+     FROM public.reserva r
+     JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
      WHERE r.id_evento = $1
        AND er.nombre_estado <> 'Cancelada'
        AND ($2::int IS NULL OR r.id_reserva <> $2::int)`,
@@ -166,7 +166,7 @@ const ReservaModel = {
   // Los 3 estados posibles (para llenar selects y filtros)
   async getEstados() {
     const result = await pool.query(
-      'SELECT id_estado_reserva, nombre_estado FROM public."ESTADO_RESERVA" ORDER BY id_estado_reserva ASC',
+      'SELECT id_estado_reserva, nombre_estado FROM public.estado_reserva ORDER BY id_estado_reserva ASC',
     );
     return result.rows;
   },
@@ -192,8 +192,8 @@ const ReservaModel = {
       // ¿Cuántas entradas tiene YA el cliente en este evento?
       const previas = await client.query(
         `SELECT COALESCE(SUM(r.numero_entradas), 0)::int AS ya_tiene
-         FROM public."RESERVA" r
-         JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+         FROM public.reserva r
+         JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
          WHERE r.id_cliente = $1 AND r.id_evento = $2
            AND er.nombre_estado <> 'Cancelada'`,
         [id_cliente, datos.id_evento],
@@ -207,14 +207,14 @@ const ReservaModel = {
       }
 
       const result = await client.query(
-        `INSERT INTO public."RESERVA"
+        `INSERT INTO public.reserva
            (numero_entradas, valor_total, observaciones,
             id_estado_reserva, id_cliente, id_evento)
          SELECT $1::int, $1::int * e.precio_base, $2,
-                (SELECT id_estado_reserva FROM public."ESTADO_RESERVA"
+                (SELECT id_estado_reserva FROM public.estado_reserva
                  WHERE nombre_estado = 'Confirmada'),
                 $3, e.id_evento
-         FROM public."EVENTO" e
+         FROM public.evento e
          WHERE e.id_evento = $4
          RETURNING id_reserva`,
         [
@@ -243,7 +243,7 @@ const ReservaModel = {
   // M4: solo cambia las observaciones (reservas Confirmadas)
   async updateObservaciones(id, observaciones) {
     await pool.query(
-      'UPDATE public."RESERVA" SET observaciones = $1 WHERE id_reserva = $2',
+      'UPDATE public.reserva SET observaciones = $1 WHERE id_reserva = $2',
       [observaciones, id],
     );
     return this.getById(id);
@@ -255,7 +255,7 @@ const ReservaModel = {
       await client.query("BEGIN");
 
       const actual = await client.query(
-        'SELECT id_evento FROM public."RESERVA" WHERE id_reserva = $1',
+        'SELECT id_evento FROM public.reserva WHERE id_reserva = $1',
         [id],
       );
       if (actual.rowCount === 0) {
@@ -266,11 +266,11 @@ const ReservaModel = {
       await validarCupos(client, id_evento, datos.numero_entradas, id);
 
       await client.query(
-        `UPDATE public."RESERVA" r
+        `UPDATE public.reserva r
          SET numero_entradas = $1::int,
              valor_total = $1::int * e.precio_base,
              observaciones = $2
-         FROM public."EVENTO" e
+         FROM public.evento e
          WHERE e.id_evento = r.id_evento AND r.id_reserva = $3`,
         [datos.numero_entradas, datos.observaciones || null, id],
       );
@@ -295,13 +295,13 @@ const ReservaModel = {
     cancelada_por = null,
   ) {
     const result = await pool.query(
-      `UPDATE public."RESERVA" r
+      `UPDATE public.reserva r
        SET id_estado_reserva = er.id_estado_reserva,
            causa_cancelacion = CASE WHEN er.nombre_estado = 'Cancelada'
                                     THEN $2 ELSE NULL END,
            cancelada_por     = CASE WHEN er.nombre_estado = 'Cancelada'
                                     THEN $4::varchar ELSE NULL END
-       FROM public."ESTADO_RESERVA" er
+       FROM public.estado_reserva er
        WHERE er.id_estado_reserva = $1 AND r.id_reserva = $3
        RETURNING r.id_reserva`,
       [id_estado_reserva, causa_cancelacion, id, cancelada_por],
@@ -318,12 +318,12 @@ const ReservaModel = {
     const result = await pool.query(
       `WITH actual AS (
          SELECT r.id_reserva, r.numero_entradas, e.precio_base
-         FROM public."RESERVA" r
-         JOIN public."EVENTO" e ON e.id_evento = r.id_evento
+         FROM public.reserva r
+         JOIN public.evento e ON e.id_evento = r.id_evento
          WHERE r.id_reserva = $3 AND r.numero_entradas > $1::int
          FOR UPDATE OF r
        ), cambio AS (
-         UPDATE public."RESERVA" r
+         UPDATE public.reserva r
          SET numero_entradas = a.numero_entradas - $1::int,
              valor_total = (a.numero_entradas - $1::int) * a.precio_base,
              observaciones = concat_ws(E'\n', r.observaciones, $2::text)
@@ -331,7 +331,7 @@ const ReservaModel = {
          WHERE r.id_reserva = a.id_reserva
          RETURNING r.id_reserva
        )
-       INSERT INTO public."CANCELACION_ENTRADAS"
+       INSERT INTO public.cancelacion_entradas
          (id_reserva, entradas_canceladas, entradas_antes, valor_cancelado, causa, cancelada_por)
        SELECT a.id_reserva, $1::int, a.numero_entradas, $1::int * a.precio_base, $4::text, $5::varchar
        FROM actual a
@@ -348,9 +348,9 @@ const ReservaModel = {
     const result = await pool.query(
       `SELECT e.capacidad - COALESCE(SUM(r.numero_entradas)
                 FILTER (WHERE er.nombre_estado <> 'Cancelada'), 0)::int AS disponibles
-       FROM public."EVENTO" e
-       LEFT JOIN public."RESERVA" r         ON r.id_evento = e.id_evento
-       LEFT JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+       FROM public.evento e
+       LEFT JOIN public.reserva r         ON r.id_evento = e.id_evento
+       LEFT JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
        WHERE e.id_evento = $1
        GROUP BY e.id_evento, e.capacidad`,
       [id_evento],
@@ -360,7 +360,7 @@ const ReservaModel = {
 
   async remove(id) {
     const result = await pool.query(
-      'DELETE FROM public."RESERVA" WHERE id_reserva = $1',
+      'DELETE FROM public.reserva WHERE id_reserva = $1',
       [id],
     );
     return result.rowCount > 0;

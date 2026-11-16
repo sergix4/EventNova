@@ -16,7 +16,7 @@ const PlanModel = {
   async listar() {
     const result = await pool.query(
       `SELECT id_plan, nombre_plan, descripcion_plan, precio_plan, limite_evento
-       FROM public."TIPO_PLAN" ORDER BY precio_plan ASC`,
+       FROM public.tipo_plan ORDER BY precio_plan ASC`,
     );
     return result.rows;
   },
@@ -25,7 +25,7 @@ const PlanModel = {
   async findByNombre(nombre_plan) {
     const result = await pool.query(
       `SELECT id_plan, nombre_plan, precio_plan, limite_evento
-       FROM public."TIPO_PLAN" WHERE nombre_plan = $1`,
+       FROM public.tipo_plan WHERE nombre_plan = $1`,
       [nombre_plan],
     );
     return result.rows[0] || null;
@@ -35,7 +35,7 @@ const PlanModel = {
   async getById(id_plan) {
     const result = await pool.query(
       `SELECT id_plan, nombre_plan, precio_plan, limite_evento
-       FROM public."TIPO_PLAN" WHERE id_plan = $1`,
+       FROM public.tipo_plan WHERE id_plan = $1`,
       [id_plan],
     );
     return result.rows[0] || null;
@@ -48,13 +48,13 @@ const PlanModel = {
     const result = await pool.query(
       `SELECT tp.id_plan, tp.nombre_plan, tp.limite_evento,
               (SELECT COUNT(*)::int
-               FROM public."EVENTO" e
-               JOIN public."ESTADO" es ON es.id_estado = e.id_estado
+               FROM public.evento e
+               JOIN public.estado es ON es.id_estado = e.id_estado
                WHERE e.id_agente = ag.numero_id
                  AND es.nombre_estado = ANY($2)) AS eventos_activos
-       FROM public."AGENTE" ag
-       JOIN public."TIPO_PLAN" tp ON tp.id_plan = ag.id_plan
-       JOIN public."USUARIO" u    ON u.numero_id = ag.numero_id
+       FROM public.agente ag
+       JOIN public.tipo_plan tp ON tp.id_plan = ag.id_plan
+       JOIN public.usuario u    ON u.numero_id = ag.numero_id
        WHERE ag.numero_id = $1 AND u.activo`,
       [numero_id, ESTADOS_ACTIVOS],
     );

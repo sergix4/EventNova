@@ -20,7 +20,7 @@ const SELECT_PERSONA = `
          TO_CHAR(u.fecha_suspension, 'YYYY-MM-DD HH24:MI') AS fecha_suspension,
          u.id_ciudad, c.nombre_ciudad, d.id_departamento, d.nombre_departamento,
          p.id_pais, p.nombre_pais,
-         ARRAY(SELECT t.telefono FROM public."TELEFONOS" t
+         ARRAY(SELECT t.telefono FROM public.telefonos t
                WHERE t.numero_id = u.numero_id ORDER BY t.telefono) AS telefonos,
          CASE WHEN cl.numero_id IS NOT NULL THEN 'cliente'
               WHEN ag.numero_id IS NOT NULL THEN 'agente'
@@ -30,16 +30,16 @@ const SELECT_PERSONA = `
          ag.nombre_empresa, ag.descripcion_agente, ag.comision, ag.experiencia,
          ag.id_plan, tp.nombre_plan, tp.limite_evento,
          ad.codigo_admin, ad.salario, ad.horario,
-         (SELECT COUNT(*)::int FROM public."RESERVA" r WHERE r.id_cliente = u.numero_id) AS total_reservas,
-         (SELECT COUNT(*)::int FROM public."EVENTO"  e WHERE e.id_agente  = u.numero_id) AS total_eventos
-  FROM public."USUARIO" u
-  LEFT JOIN public."CIUDAD" c         ON c.id_ciudad = u.id_ciudad
-  LEFT JOIN public."DEPARTAMENTO" d   ON d.id_departamento = c.id_departamento
-  LEFT JOIN public."PAIS" p           ON p.id_pais = d.id_pais
-  LEFT JOIN public."CLIENTE" cl       ON cl.numero_id = u.numero_id
-  LEFT JOIN public."AGENTE" ag        ON ag.numero_id = u.numero_id
-  LEFT JOIN public."TIPO_PLAN" tp     ON tp.id_plan = ag.id_plan
-  LEFT JOIN public."ADMINISTRADOR" ad ON ad.numero_id = u.numero_id
+         (SELECT COUNT(*)::int FROM public.reserva r WHERE r.id_cliente = u.numero_id) AS total_reservas,
+         (SELECT COUNT(*)::int FROM public.evento  e WHERE e.id_agente  = u.numero_id) AS total_eventos
+  FROM public.usuario u
+  LEFT JOIN public.ciudad c         ON c.id_ciudad = u.id_ciudad
+  LEFT JOIN public.departamento d   ON d.id_departamento = c.id_departamento
+  LEFT JOIN public.pais p           ON p.id_pais = d.id_pais
+  LEFT JOIN public.cliente cl       ON cl.numero_id = u.numero_id
+  LEFT JOIN public.agente ag        ON ag.numero_id = u.numero_id
+  LEFT JOIN public.tipo_plan tp     ON tp.id_plan = ag.id_plan
+  LEFT JOIN public.administrador ad ON ad.numero_id = u.numero_id
 `;
 
 // Condición SQL de cada rol. Se usa un objeto (y no el texto que manda el
@@ -144,7 +144,7 @@ const PersonaModel = {
   // ¿Otro usuario ya usa ese correo? (el correo debe seguir siendo único)
   async existeCorreo(correo, excluirNumeroId) {
     const result = await pool.query(
-      `SELECT 1 FROM public."USUARIO" WHERE LOWER(correo) = LOWER($1) AND numero_id <> $2 LIMIT 1`,
+      `SELECT 1 FROM public.usuario WHERE LOWER(correo) = LOWER($1) AND numero_id <> $2 LIMIT 1`,
       [correo, excluirNumeroId],
     );
     return result.rowCount > 0;
@@ -153,7 +153,7 @@ const PersonaModel = {
   // ¿Ya existe un usuario con ese correo O con esa identificación? (para registrar)
   async existeCorreoOIdentificacion(correo, numero_id) {
     const result = await pool.query(
-      `SELECT 1 FROM public."USUARIO" WHERE LOWER(correo) = LOWER($1) OR numero_id = $2 LIMIT 1`,
+      `SELECT 1 FROM public.usuario WHERE LOWER(correo) = LOWER($1) OR numero_id = $2 LIMIT 1`,
       [correo, numero_id],
     );
     return result.rowCount > 0;
@@ -171,7 +171,7 @@ const PersonaModel = {
 
       // 1. La persona
       await client.query(
-        `INSERT INTO public."USUARIO"
+        `INSERT INTO public.usuario
            (numero_id, correo, nombre, contraseña, direccion, fecha_nacimiento, id_ciudad)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [
@@ -188,7 +188,7 @@ const PersonaModel = {
       // 2. Sus teléfonos (de 1 a 3)
       for (const telefono of datos.telefonos) {
         await client.query(
-          `INSERT INTO public."TELEFONOS" (numero_id, telefono) VALUES ($1, $2)`,
+          `INSERT INTO public.telefonos (numero_id, telefono) VALUES ($1, $2)`,
           [datos.numero_id, telefono],
         );
       }
@@ -196,19 +196,19 @@ const PersonaModel = {
       // 3. Los datos propios del rol
       if (rol === "cliente") {
         await client.query(
-          `INSERT INTO public."CLIENTE" (numero_id, codigo_cliente, puntos, visualizar_publicidad)
+          `INSERT INTO public.cliente (numero_id, codigo_cliente, puntos, visualizar_publicidad)
            VALUES ($1, $2, $3, $4)`,
           [datos.numero_id, `CLI-${datos.numero_id}`, datos.puntos, datos.visualizar_publicidad],
         );
       } else if (rol === "agente") {
         await client.query(
-          `INSERT INTO public."AGENTE" (numero_id, id_plan, nombre_empresa, descripcion_agente, comision, experiencia)
+          `INSERT INTO public.agente (numero_id, id_plan, nombre_empresa, descripcion_agente, comision, experiencia)
            VALUES ($1, $2, $3, $4, $5, $6)`,
           [datos.numero_id, datos.id_plan, datos.nombre_empresa, datos.descripcion_agente, datos.comision, datos.experiencia],
         );
       } else {
         await client.query(
-          `INSERT INTO public."ADMINISTRADOR" (numero_id, codigo_admin, salario, horario)
+          `INSERT INTO public.administrador (numero_id, codigo_admin, salario, horario)
            VALUES ($1, $2, $3, $4)`,
           [datos.numero_id, `ADM-${datos.numero_id}`, datos.salario, datos.horario],
         );
@@ -227,8 +227,8 @@ const PersonaModel = {
   // ¿Esa identificación sigue siendo de un administrador ACTIVO? (lo usa adminVigente)
   async esAdministrador(numero_id) {
     const result = await pool.query(
-      `SELECT 1 FROM public."ADMINISTRADOR" ad
-       JOIN public."USUARIO" u ON u.numero_id = ad.numero_id
+      `SELECT 1 FROM public.administrador ad
+       JOIN public.usuario u ON u.numero_id = ad.numero_id
        WHERE ad.numero_id = $1 AND u.activo`,
       [numero_id],
     );
@@ -238,11 +238,11 @@ const PersonaModel = {
   // ¿La persona sigue existiendo con ese rol y ACTIVA? (lo usa authMiddleware para
   // que la sesión de un usuario suspendido por el administrador deje de servir)
   async tieneRol(numero_id, rol) {
-    const tabla = { cliente: "CLIENTE", agente: "AGENTE", administrador: "ADMINISTRADOR" }[rol];
+    const tabla = { cliente: "cliente", agente: "agente", administrador: "administrador" }[rol];
     if (!tabla) return false;
     const result = await pool.query(
-      `SELECT 1 FROM public."${tabla}" t
-       JOIN public."USUARIO" u ON u.numero_id = t.numero_id
+      `SELECT 1 FROM public.${tabla} t
+       JOIN public.usuario u ON u.numero_id = t.numero_id
        WHERE t.numero_id = $1 AND u.activo`,
       [numero_id],
     );
@@ -253,8 +253,8 @@ const PersonaModel = {
   async contarAdministradores() {
     const result = await pool.query(
       `SELECT COUNT(*)::int AS total
-       FROM public."ADMINISTRADOR" ad
-       JOIN public."USUARIO" u ON u.numero_id = ad.numero_id
+       FROM public.administrador ad
+       JOIN public.usuario u ON u.numero_id = ad.numero_id
        WHERE u.activo`,
     );
     return result.rows[0].total;
@@ -270,7 +270,7 @@ const PersonaModel = {
 
       // 1. Datos de la persona (el numero_id NO se cambia: es la llave primaria)
       await client.query(
-        `UPDATE public."USUARIO"
+        `UPDATE public.usuario
          SET nombre = $1, correo = $2, direccion = $3, fecha_nacimiento = $4, id_ciudad = $5
          WHERE numero_id = $6`,
         [
@@ -285,12 +285,12 @@ const PersonaModel = {
 
       // 2. Teléfonos: se borran los anteriores y se guardan los nuevos
       await client.query(
-        `DELETE FROM public."TELEFONOS" WHERE numero_id = $1`,
+        `DELETE FROM public.telefonos WHERE numero_id = $1`,
         [numero_id],
       );
       for (const telefono of datos.telefonos) {
         await client.query(
-          `INSERT INTO public."TELEFONOS" (numero_id, telefono) VALUES ($1, $2)`,
+          `INSERT INTO public.telefonos (numero_id, telefono) VALUES ($1, $2)`,
           [numero_id, telefono],
         );
       }
@@ -298,12 +298,12 @@ const PersonaModel = {
       // 3. Campos propios del rol
       if (rol === "cliente") {
         await client.query(
-          `UPDATE public."CLIENTE" SET puntos = $1, visualizar_publicidad = $2 WHERE numero_id = $3`,
+          `UPDATE public.cliente SET puntos = $1, visualizar_publicidad = $2 WHERE numero_id = $3`,
           [datos.puntos, datos.visualizar_publicidad, numero_id],
         );
       } else if (rol === "agente") {
         await client.query(
-          `UPDATE public."AGENTE"
+          `UPDATE public.agente
            SET nombre_empresa = $1, descripcion_agente = $2, comision = $3, experiencia = $4, id_plan = $5
            WHERE numero_id = $6`,
           [
@@ -317,7 +317,7 @@ const PersonaModel = {
         );
       } else if (rol === "administrador") {
         await client.query(
-          `UPDATE public."ADMINISTRADOR" SET salario = $1, horario = $2 WHERE numero_id = $3`,
+          `UPDATE public.administrador SET salario = $1, horario = $2 WHERE numero_id = $3`,
           [datos.salario, datos.horario, numero_id],
         );
       }
@@ -338,7 +338,7 @@ const PersonaModel = {
   // Sus reservas, eventos y demás datos NO se tocan.
   async cambiarActivo(numero_id, activo, motivo = null) {
     await pool.query(
-      `UPDATE public."USUARIO"
+      `UPDATE public.usuario
        SET activo = $1,
            fecha_suspension  = CASE WHEN $1 THEN NULL ELSE (NOW() AT TIME ZONE 'America/Bogota') END,
            motivo_suspension = CASE WHEN $1 THEN NULL ELSE $2::varchar END
@@ -352,7 +352,7 @@ const PersonaModel = {
   // Hash de la contraseña (solo se usa para compararlo con bcrypt, nunca sale de aquí)
   async obtenerHashContrasena(numero_id) {
     const result = await pool.query(
-      `SELECT contraseña FROM public."USUARIO" WHERE numero_id = $1`,
+      `SELECT contraseña FROM public.usuario WHERE numero_id = $1`,
       [numero_id],
     );
     return result.rows[0]?.contraseña || null;
@@ -361,7 +361,7 @@ const PersonaModel = {
   // Guarda la contraseña nueva (ya viene encriptada desde el controlador)
   async actualizarContrasena(numero_id, contrasenaHash) {
     await pool.query(
-      `UPDATE public."USUARIO" SET contraseña = $1 WHERE numero_id = $2`,
+      `UPDATE public.usuario SET contraseña = $1 WHERE numero_id = $2`,
       [contrasenaHash, numero_id],
     );
   },
@@ -374,10 +374,10 @@ const PersonaModel = {
                 WHERE es.nombre_estado IN ('Programado', 'En Boletería', 'En Vivo'))::int AS eventos_activos,
               COUNT(r.id_reserva) FILTER (WHERE er.nombre_estado <> 'Cancelada')::int AS reservas_recibidas,
               COALESCE(SUM(r.numero_entradas) FILTER (WHERE er.nombre_estado <> 'Cancelada'), 0)::int AS entradas_vendidas
-       FROM public."EVENTO" e
-       JOIN public."ESTADO" es               ON es.id_estado = e.id_estado
-       LEFT JOIN public."RESERVA" r          ON r.id_evento = e.id_evento
-       LEFT JOIN public."ESTADO_RESERVA" er  ON er.id_estado_reserva = r.id_estado_reserva
+       FROM public.evento e
+       JOIN public.estado es               ON es.id_estado = e.id_estado
+       LEFT JOIN public.reserva r          ON r.id_evento = e.id_evento
+       LEFT JOIN public.estado_reserva er  ON er.id_estado_reserva = r.id_estado_reserva
        WHERE e.id_agente = $1`,
       [numero_id],
     );

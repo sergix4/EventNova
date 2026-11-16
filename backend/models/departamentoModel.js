@@ -6,8 +6,8 @@ const pool = require('../config/db');
 // Consulta base: trae el departamento junto con el nombre de su país
 const SELECT_BASE = `
   SELECT d.id_departamento, d.id_pais, d.nombre_departamento, p.nombre_pais
-  FROM public."DEPARTAMENTO" d
-  JOIN public."PAIS" p ON p.id_pais = d.id_pais`;
+  FROM public.DEPARTAMENTO d
+  JOIN public.pais p ON p.id_pais = d.id_pais`;
 
 const DepartamentoModel = {
   async getAll() {
@@ -34,8 +34,8 @@ const DepartamentoModel = {
   // ¿Ya existe ese nombre dentro del MISMO país? (excludeId se usa al editar)
   async existsByNombre(nombre, idPais, excludeId = null) {
     const query = excludeId
-      ? 'SELECT 1 FROM public."DEPARTAMENTO" WHERE LOWER(nombre_departamento) = LOWER($1) AND id_pais = $2 AND id_departamento <> $3'
-      : 'SELECT 1 FROM public."DEPARTAMENTO" WHERE LOWER(nombre_departamento) = LOWER($1) AND id_pais = $2';
+      ? 'SELECT 1 FROM public.DEPARTAMENTO WHERE LOWER(nombre_departamento) = LOWER($1) AND id_pais = $2 AND id_departamento <> $3'
+      : 'SELECT 1 FROM public.DEPARTAMENTO WHERE LOWER(nombre_departamento) = LOWER($1) AND id_pais = $2';
     const params = excludeId ? [nombre, idPais, excludeId] : [nombre, idPais];
     const result = await pool.query(query, params);
     return result.rowCount > 0;
@@ -43,7 +43,7 @@ const DepartamentoModel = {
 
   async create(nombre_departamento, id_pais) {
     const result = await pool.query(
-      'INSERT INTO public."DEPARTAMENTO" (nombre_departamento, id_pais) VALUES ($1, $2) RETURNING id_departamento',
+      'INSERT INTO public.departamento (nombre_departamento, id_pais) VALUES ($1, $2) RETURNING id_departamento',
       [nombre_departamento, id_pais]
     );
     return this.getById(result.rows[0].id_departamento);
@@ -51,7 +51,7 @@ const DepartamentoModel = {
 
   async update(id, nombre_departamento, id_pais) {
     const result = await pool.query(
-      'UPDATE public."DEPARTAMENTO" SET nombre_departamento = $1, id_pais = $2 WHERE id_departamento = $3 RETURNING id_departamento',
+      'UPDATE public.departamento SET nombre_departamento = $1, id_pais = $2 WHERE id_departamento = $3 RETURNING id_departamento',
       [nombre_departamento, id_pais, id]
     );
     if (result.rowCount === 0) return undefined;
@@ -60,7 +60,7 @@ const DepartamentoModel = {
 
   async remove(id) {
     const result = await pool.query(
-      'DELETE FROM public."DEPARTAMENTO" WHERE id_departamento = $1',
+      'DELETE FROM public.departamento WHERE id_departamento = $1',
       [id]
     );
     return result.rowCount > 0;

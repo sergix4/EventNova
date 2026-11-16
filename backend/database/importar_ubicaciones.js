@@ -53,7 +53,7 @@ const TAMANO_LOTE = 10000; // ciudades por consulta (para no mandar 148.000 de u
 
     // ── 2. Países ────────────────────────────────────────────────────────────
     const r1 = await client.query(
-      `INSERT INTO public."PAIS" (nombre_pais)
+      `INSERT INTO public.pais (nombre_pais)
        SELECT nombre FROM unnest($1::text[]) AS v(nombre)
        ON CONFLICT DO NOTHING`,
       [paises.map(nombrePais)]
@@ -62,10 +62,10 @@ const TAMANO_LOTE = 10000; // ciudades por consulta (para no mandar 148.000 de u
 
     // ── 3. Departamentos (se unen con su país por nombre) ───────────────────
     const r2 = await client.query(
-      `INSERT INTO public."DEPARTAMENTO" (id_pais, nombre_departamento)
+      `INSERT INTO public.departamento (id_pais, nombre_departamento)
        SELECT p.id_pais, v.depto
        FROM unnest($1::text[], $2::text[]) AS v(pais, depto)
-       JOIN public."PAIS" p ON LOWER(p.nombre_pais) = LOWER(v.pais)
+       JOIN public.pais p ON LOWER(p.nombre_pais) = LOWER(v.pais)
        ON CONFLICT DO NOTHING`,
       [deptosUtiles.map(d => nombrePorCodigo.get(d.countryCode)), deptosUtiles.map(d => d.name)]
     );
@@ -76,11 +76,11 @@ const TAMANO_LOTE = 10000; // ciudades por consulta (para no mandar 148.000 de u
     for (let i = 0; i < ciudades.length; i += TAMANO_LOTE) {
       const lote = ciudades.slice(i, i + TAMANO_LOTE);
       const r3 = await client.query(
-        `INSERT INTO public."CIUDAD" (id_departamento, nombre_ciudad)
+        `INSERT INTO public.ciudad (id_departamento, nombre_ciudad)
          SELECT d.id_departamento, v.ciudad
          FROM unnest($1::text[], $2::text[], $3::text[]) AS v(pais, depto, ciudad)
-         JOIN public."PAIS" p ON LOWER(p.nombre_pais) = LOWER(v.pais)
-         JOIN public."DEPARTAMENTO" d ON d.id_pais = p.id_pais
+         JOIN public.pais p ON LOWER(p.nombre_pais) = LOWER(v.pais)
+         JOIN public.departamento d ON d.id_pais = p.id_pais
                                      AND LOWER(d.nombre_departamento) = LOWER(v.depto)
          ON CONFLICT DO NOTHING`,
         [

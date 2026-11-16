@@ -10,18 +10,18 @@ const pool = require('../config/db');
 // Inserta el USUARIO y su(s) teléfono(s). Se llama dentro de una transacción ya abierta.
 async function insertarUsuarioBase(client, { numero_id, correo, nombre, contraseñaHash, direccion, id_ciudad, telefono, telefono2 }) {
   await client.query(
-    `INSERT INTO public."USUARIO" (numero_id, correo, nombre, contraseña, direccion, id_ciudad)
+    `INSERT INTO public.usuario (numero_id, correo, nombre, contraseña, direccion, id_ciudad)
      VALUES ($1, $2, $3, $4, $5, $6)`,
     [numero_id, correo, nombre, contraseñaHash, direccion || null, id_ciudad]
   );
   await client.query(
-    `INSERT INTO public."TELEFONOS" (numero_id, telefono) VALUES ($1, $2)`,
+    `INSERT INTO public.telefonos (numero_id, telefono) VALUES ($1, $2)`,
     [numero_id, telefono]
   );
   // Teléfono alternativo (opcional): una persona puede tener varios teléfonos
   if (telefono2) {
     await client.query(
-      `INSERT INTO public."TELEFONOS" (numero_id, telefono) VALUES ($1, $2)`,
+      `INSERT INTO public.telefonos (numero_id, telefono) VALUES ($1, $2)`,
       [numero_id, telefono2]
     );
   }
@@ -31,15 +31,15 @@ async function insertarUsuarioBase(client, { numero_id, correo, nombre, contrase
 // 'db' puede ser el pool o un client de una transacción abierta.
 async function obtenerContacto(db, numero_id) {
   const result = await db.query(
-    `SELECT (SELECT MIN(t.telefono) FROM public."TELEFONOS" t WHERE t.numero_id = u.numero_id) AS telefono,
+    `SELECT (SELECT MIN(t.telefono) FROM public.telefonos t WHERE t.numero_id = u.numero_id) AS telefono,
             u.id_ciudad,
             c.nombre_ciudad,
             d.nombre_departamento,
             p.nombre_pais
-     FROM public."USUARIO" u
-     LEFT JOIN public."CIUDAD" c       ON c.id_ciudad = u.id_ciudad
-     LEFT JOIN public."DEPARTAMENTO" d ON d.id_departamento = c.id_departamento
-     LEFT JOIN public."PAIS" p         ON p.id_pais = d.id_pais
+     FROM public.usuario u
+     LEFT JOIN public.ciudad c       ON c.id_ciudad = u.id_ciudad
+     LEFT JOIN public.departamento d ON d.id_departamento = c.id_departamento
+     LEFT JOIN public.pais p         ON p.id_pais = d.id_pais
      WHERE u.numero_id = $1`,
     [numero_id]
   );
@@ -64,11 +64,11 @@ const UsuarioModel = {
               ad.numero_id AS es_administrador,
               a.nombre_empresa, a.descripcion_agente,
               p.nombre_plan
-       FROM public."USUARIO" u
-       LEFT JOIN public."CLIENTE" c        ON c.numero_id = u.numero_id
-       LEFT JOIN public."AGENTE" a         ON a.numero_id = u.numero_id
-       LEFT JOIN public."ADMINISTRADOR" ad ON ad.numero_id = u.numero_id
-       LEFT JOIN public."TIPO_PLAN" p      ON p.id_plan = a.id_plan
+       FROM public.usuario u
+       LEFT JOIN public.cliente c        ON c.numero_id = u.numero_id
+       LEFT JOIN public.agente a         ON a.numero_id = u.numero_id
+       LEFT JOIN public.administrador ad ON ad.numero_id = u.numero_id
+       LEFT JOIN public.tipo_plan p      ON p.id_plan = a.id_plan
        WHERE u.correo = $1`,
       [correo]
     );
@@ -105,7 +105,7 @@ const UsuarioModel = {
   // Verifica si ya existe un usuario con ese correo o ese número de identificación
   async existsByEmailOrId(correo, numero_id) {
     const result = await pool.query(
-      `SELECT 1 FROM public."USUARIO" WHERE correo = $1 OR numero_id = $2 LIMIT 1`,
+      `SELECT 1 FROM public.usuario WHERE correo = $1 OR numero_id = $2 LIMIT 1`,
       [correo, numero_id]
     );
     return result.rowCount > 0;
@@ -121,7 +121,7 @@ const UsuarioModel = {
       await insertarUsuarioBase(client, { numero_id, correo, nombre, contraseñaHash, direccion, id_ciudad, telefono, telefono2 });
 
       await client.query(
-        `INSERT INTO public."CLIENTE" (numero_id, codigo_cliente, visualizar_publicidad)
+        `INSERT INTO public.cliente (numero_id, codigo_cliente, visualizar_publicidad)
          VALUES ($1, $2, $3)`,
         [numero_id, `CLI-${numero_id}`, visualizar_publicidad]
       );
@@ -147,7 +147,7 @@ const UsuarioModel = {
       await insertarUsuarioBase(client, { numero_id, correo, nombre, contraseñaHash, direccion, id_ciudad, telefono, telefono2 });
 
       await client.query(
-        `INSERT INTO public."AGENTE" (numero_id, id_plan, nombre_empresa, descripcion_agente, comision, experiencia)
+        `INSERT INTO public.agente (numero_id, id_plan, nombre_empresa, descripcion_agente, comision, experiencia)
          VALUES ($1, $2, $3, $4, $5, $6)`,
         [numero_id, id_plan, nombre_empresa, descripcion_agente || null, comision, experiencia]
       );

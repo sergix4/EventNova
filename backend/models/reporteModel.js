@@ -20,9 +20,9 @@ const REGISTRO_EVENTO = `((e.fecha_registro AT TIME ZONE current_setting('TimeZo
 // Se usa como CTE ("WITH ventas AS (...)") en los reportes comerciales.
 const VENTAS_DEL_ANIO = `
   SELECT r.id_reserva, r.id_cliente, r.numero_entradas, r.valor_total, e.id_agente
-  FROM public."RESERVA" r
-  JOIN public."EVENTO" e          ON e.id_evento = r.id_evento
-  JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+  FROM public.reserva r
+  JOIN public.evento e          ON e.id_evento = r.id_evento
+  JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
   WHERE er.nombre_estado <> 'Cancelada'
     AND EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1`;
 
@@ -41,24 +41,24 @@ const ReporteModel = {
   async totales() {
     const result = await pool.query(`
       SELECT
-        (SELECT COUNT(*) FROM public."CLIENTE")::int        AS clientes,
-        (SELECT COUNT(*) FROM public."AGENTE")::int         AS agentes,
-        (SELECT COUNT(*) FROM public."ADMINISTRADOR")::int  AS administradores,
-        (SELECT COUNT(*) FROM public."RESERVA")::int        AS reservas,
-        (SELECT COUNT(*) FROM public."EVENTO")::int         AS eventos,
+        (SELECT COUNT(*) FROM public.cliente)::int        AS clientes,
+        (SELECT COUNT(*) FROM public.agente)::int         AS agentes,
+        (SELECT COUNT(*) FROM public.administrador)::int  AS administradores,
+        (SELECT COUNT(*) FROM public.reserva)::int        AS reservas,
+        (SELECT COUNT(*) FROM public.evento)::int         AS eventos,
 
-        (SELECT COUNT(*) FROM public."CLIENTE" c
-           JOIN public."USUARIO" u ON u.numero_id = c.numero_id
+        (SELECT COUNT(*) FROM public.cliente c
+           JOIN public.usuario u ON u.numero_id = c.numero_id
           WHERE date_trunc('month', u.fecha_registro) = date_trunc('month', ${AHORA}))::int AS clientes_mes,
-        (SELECT COUNT(*) FROM public."AGENTE" a
-           JOIN public."USUARIO" u ON u.numero_id = a.numero_id
+        (SELECT COUNT(*) FROM public.agente a
+           JOIN public.usuario u ON u.numero_id = a.numero_id
           WHERE date_trunc('month', u.fecha_registro) = date_trunc('month', ${AHORA}))::int AS agentes_mes,
-        (SELECT COUNT(*) FROM public."ADMINISTRADOR" ad
-           JOIN public."USUARIO" u ON u.numero_id = ad.numero_id
+        (SELECT COUNT(*) FROM public.administrador ad
+           JOIN public.usuario u ON u.numero_id = ad.numero_id
           WHERE date_trunc('month', u.fecha_registro) = date_trunc('month', ${AHORA}))::int AS administradores_mes,
-        (SELECT COUNT(*) FROM public."RESERVA" r
+        (SELECT COUNT(*) FROM public.reserva r
           WHERE date_trunc('month', r.fecha_hora_reserva) = date_trunc('month', ${AHORA}))::int AS reservas_mes,
-        (SELECT COUNT(*) FROM public."EVENTO" e
+        (SELECT COUNT(*) FROM public.evento e
           WHERE date_trunc('month', ${REGISTRO_EVENTO}) = date_trunc('month', ${AHORA}))::int AS eventos_mes
     `);
     return result.rows[0];
@@ -69,8 +69,8 @@ const ReporteModel = {
     const result = await pool.query(
       `SELECT EXTRACT(MONTH FROM r.fecha_hora_reserva)::int AS mes,
               SUM(r.valor_total) AS valor
-       FROM public."RESERVA" r
-       JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+       FROM public.reserva r
+       JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
        WHERE er.nombre_estado <> 'Cancelada'
          AND EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1
        GROUP BY mes`,
@@ -84,8 +84,8 @@ const ReporteModel = {
     const result = await pool.query(
       `SELECT EXTRACT(MONTH FROM r.fecha_hora_reserva)::int AS mes,
               SUM(r.valor_total) AS valor
-       FROM public."RESERVA" r
-       JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+       FROM public.reserva r
+       JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
        WHERE er.nombre_estado = 'Confirmada'
          AND EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1
        GROUP BY mes`,
@@ -101,8 +101,8 @@ const ReporteModel = {
               COUNT(*) FILTER (WHERE er.nombre_estado = 'Confirmada')::int AS confirmadas,
               COUNT(*) FILTER (WHERE er.nombre_estado = 'Reservada')::int  AS pendientes,
               COUNT(*) FILTER (WHERE er.nombre_estado = 'Cancelada')::int  AS canceladas
-       FROM public."RESERVA" r
-       JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+       FROM public.reserva r
+       JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
        WHERE EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1
        GROUP BY mes`,
       [anio],
@@ -119,7 +119,7 @@ const ReporteModel = {
     const result = await pool.query(
       `SELECT EXTRACT(MONTH FROM ${REGISTRO_EVENTO})::int AS mes,
               COUNT(*)::int AS valor
-       FROM public."EVENTO" e
+       FROM public.evento e
        WHERE EXTRACT(YEAR FROM ${REGISTRO_EVENTO}) = $1
        GROUP BY mes`,
       [anio],
@@ -137,8 +137,8 @@ const ReporteModel = {
          COUNT(*) FILTER (WHERE er.nombre_estado = 'Reservada')::int  AS pendientes,
          COUNT(*) FILTER (WHERE er.nombre_estado = 'Cancelada')::int  AS canceladas,
          COALESCE(SUM(r.numero_entradas) FILTER (WHERE er.nombre_estado <> 'Cancelada'), 0)::int AS entradas
-       FROM public."RESERVA" r
-       JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+       FROM public.reserva r
+       JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
        WHERE EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1`,
       [anio],
     );
@@ -155,10 +155,10 @@ const ReporteModel = {
     const result = await pool.query(`
       SELECT p.nombre_pais AS pais, d.nombre_departamento AS departamento,
              c.nombre_ciudad AS ciudad, COUNT(e.id_evento)::int AS eventos
-      FROM public."EVENTO" e
-      JOIN public."CIUDAD" c       ON c.id_ciudad = e.id_ciudad
-      JOIN public."DEPARTAMENTO" d ON d.id_departamento = c.id_departamento
-      JOIN public."PAIS" p         ON p.id_pais = d.id_pais
+      FROM public.evento e
+      JOIN public.ciudad c       ON c.id_ciudad = e.id_ciudad
+      JOIN public.departamento d ON d.id_departamento = c.id_departamento
+      JOIN public.pais p         ON p.id_pais = d.id_pais
       GROUP BY p.nombre_pais, d.nombre_departamento, c.nombre_ciudad
       ORDER BY eventos DESC, ciudad ASC
     `);
@@ -173,25 +173,25 @@ const ReporteModel = {
       `SELECT * FROM (
          SELECT 'cliente' AS tipo, 'Nuevo cliente registrado' AS titulo,
                 u.nombre AS detalle, u.fecha_registro AS fecha
-         FROM public."CLIENTE" c JOIN public."USUARIO" u ON u.numero_id = c.numero_id
+         FROM public.cliente c JOIN public.usuario u ON u.numero_id = c.numero_id
          WHERE u.fecha_registro IS NOT NULL
 
          UNION ALL
          SELECT 'agente', 'Nuevo agente registrado',
                 COALESCE(a.nombre_empresa, u.nombre), u.fecha_registro
-         FROM public."AGENTE" a JOIN public."USUARIO" u ON u.numero_id = a.numero_id
+         FROM public.agente a JOIN public.usuario u ON u.numero_id = a.numero_id
          WHERE u.fecha_registro IS NOT NULL
 
          UNION ALL
          SELECT 'evento', 'Nuevo evento creado',
                 e.nombre_evento, ${REGISTRO_EVENTO}
-         FROM public."EVENTO" e
+         FROM public.evento e
 
          UNION ALL
          SELECT 'cancelada', 'Evento cancelado',
                 e.nombre_evento || COALESCE(' · Causa: ' || e.causa_cancelacion, ''),
                 e.fecha_cancelacion
-         FROM public."EVENTO" e
+         FROM public.evento e
          WHERE e.fecha_cancelacion IS NOT NULL
 
          UNION ALL
@@ -199,13 +199,13 @@ const ReporteModel = {
                 e.nombre_evento || ' · ' || r.numero_entradas ||
                   CASE WHEN r.numero_entradas = 1 THEN ' entrada' ELSE ' entradas' END,
                 r.fecha_hora_reserva
-         FROM public."RESERVA" r JOIN public."EVENTO" e ON e.id_evento = r.id_evento
+         FROM public.reserva r JOIN public.evento e ON e.id_evento = r.id_evento
 
          UNION ALL
          SELECT 'cancelada', 'Reserva cancelada',
                 e.nombre_evento || COALESCE(' · Causa: ' || r.causa_cancelacion, ''),
                 r.fecha_cancelacion
-         FROM public."RESERVA" r JOIN public."EVENTO" e ON e.id_evento = r.id_evento
+         FROM public.reserva r JOIN public.evento e ON e.id_evento = r.id_evento
          WHERE r.fecha_cancelacion IS NOT NULL
        ) AS actividad
        ORDER BY fecha DESC
@@ -219,8 +219,8 @@ const ReporteModel = {
   async eventosPorEstado() {
     const result = await pool.query(`
       SELECT es.nombre_estado AS estado, COUNT(e.id_evento)::int AS cantidad
-      FROM public."ESTADO" es
-      LEFT JOIN public."EVENTO" e ON e.id_estado = es.id_estado
+      FROM public.estado es
+      LEFT JOIN public.evento e ON e.id_estado = es.id_estado
       GROUP BY es.id_estado, es.nombre_estado
       ORDER BY es.id_estado
     `);
@@ -235,8 +235,8 @@ const ReporteModel = {
              COUNT(r.id_reserva)::int                    AS cantidad,
              COALESCE(SUM(r.numero_entradas), 0)::int    AS entradas,
              COALESCE(SUM(r.valor_total), 0)             AS valor
-      FROM public."ESTADO_RESERVA" er
-      LEFT JOIN public."RESERVA" r ON r.id_estado_reserva = er.id_estado_reserva
+      FROM public.estado_reserva er
+      LEFT JOIN public.reserva r ON r.id_estado_reserva = er.id_estado_reserva
       GROUP BY er.id_estado_reserva, er.nombre_estado
       ORDER BY er.id_estado_reserva
     `);
@@ -252,37 +252,37 @@ const ReporteModel = {
          SELECT 'cliente' AS tipo,
                 u.nombre || ' · ' || u.correo AS descripcion,
                 u.fecha_registro AS fecha, 'Registrado' AS estado
-         FROM public."CLIENTE" c JOIN public."USUARIO" u ON u.numero_id = c.numero_id
+         FROM public.cliente c JOIN public.usuario u ON u.numero_id = c.numero_id
  
          UNION ALL
          SELECT 'agente',
                 COALESCE(a.nombre_empresa, u.nombre) || ' · ' || u.correo,
                 u.fecha_registro, 'Registrado'
-         FROM public."AGENTE" a JOIN public."USUARIO" u ON u.numero_id = a.numero_id
+         FROM public.agente a JOIN public.usuario u ON u.numero_id = a.numero_id
  
          UNION ALL
          SELECT 'admin',
                 u.nombre || ' · ' || u.correo,
                 u.fecha_registro, 'Registrado'
-         FROM public."ADMINISTRADOR" ad JOIN public."USUARIO" u ON u.numero_id = ad.numero_id
+         FROM public.administrador ad JOIN public.usuario u ON u.numero_id = ad.numero_id
  
          UNION ALL
          SELECT 'evento',
                 e.codigo_evento || ' · ' || e.nombre_evento || ' (' || c.nombre_ciudad || ')',
                 ${REGISTRO_EVENTO}, es.nombre_estado
-         FROM public."EVENTO" e
-         JOIN public."ESTADO" es ON es.id_estado = e.id_estado
-         JOIN public."CIUDAD" c  ON c.id_ciudad = e.id_ciudad
+         FROM public.evento e
+         JOIN public.estado es ON es.id_estado = e.id_estado
+         JOIN public.ciudad c  ON c.id_ciudad = e.id_ciudad
  
          UNION ALL
          SELECT 'reserva',
                 r.codigo_reserva || ' · ' || u.nombre || ' → ' || e.nombre_evento || ' (' ||
                   r.numero_entradas || CASE WHEN r.numero_entradas = 1 THEN ' entrada)' ELSE ' entradas)' END,
                 r.fecha_hora_reserva, er.nombre_estado
-         FROM public."RESERVA" r
-         JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
-         JOIN public."EVENTO" e  ON e.id_evento = r.id_evento
-         JOIN public."USUARIO" u ON u.numero_id = r.id_cliente
+         FROM public.reserva r
+         JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
+         JOIN public.evento e  ON e.id_evento = r.id_evento
+         JOIN public.usuario u ON u.numero_id = r.id_cliente
        ) AS registros
        ORDER BY fecha DESC NULLS LAST
        LIMIT $1`,
@@ -310,19 +310,19 @@ const ReporteModel = {
               u.nombre                   AS responsable,
               COALESCE(
                 (SELECT c.nombre_ciudad
-                   FROM public."EVENTO" e
-                   JOIN public."CIUDAD" c ON c.id_ciudad = e.id_ciudad
+                   FROM public.evento e
+                   JOIN public.ciudad c ON c.id_ciudad = e.id_ciudad
                   WHERE e.id_agente = a.numero_id
                   GROUP BY c.nombre_ciudad
                   ORDER BY COUNT(*) DESC, c.nombre_ciudad
                   LIMIT 1),
                 cu.nombre_ciudad, 'Sin ciudad')                                       AS ciudad,
-              (SELECT COUNT(*) FROM public."EVENTO" e WHERE e.id_agente = a.numero_id)::int AS eventos,
+              (SELECT COUNT(*) FROM public.evento e WHERE e.id_agente = a.numero_id)::int AS eventos,
               (SELECT COUNT(*) FROM ventas v WHERE v.id_agente = a.numero_id)::int          AS reservas,
               (SELECT COALESCE(SUM(v.valor_total), 0) FROM ventas v WHERE v.id_agente = a.numero_id) AS ingresos
-       FROM public."AGENTE" a
-       JOIN public."USUARIO" u     ON u.numero_id = a.numero_id
-       LEFT JOIN public."CIUDAD" cu ON cu.id_ciudad = u.id_ciudad
+       FROM public.agente a
+       JOIN public.usuario u     ON u.numero_id = a.numero_id
+       LEFT JOIN public.ciudad cu ON cu.id_ciudad = u.id_ciudad
        ORDER BY ingresos DESC, agente ASC`,
       [anio],
     );
@@ -341,8 +341,8 @@ const ReporteModel = {
               (SELECT COUNT(*) FROM ventas v WHERE v.id_cliente = c.numero_id)::int                         AS reservas,
               (SELECT COALESCE(SUM(v.numero_entradas), 0) FROM ventas v WHERE v.id_cliente = c.numero_id)::int AS entradas,
               (SELECT COALESCE(SUM(v.valor_total), 0) FROM ventas v WHERE v.id_cliente = c.numero_id)         AS ingresos
-       FROM public."CLIENTE" c
-       JOIN public."USUARIO" u ON u.numero_id = c.numero_id
+       FROM public.cliente c
+       JOIN public.usuario u ON u.numero_id = c.numero_id
        ORDER BY ingresos DESC, cliente ASC`,
       [anio],
     );
@@ -358,8 +358,8 @@ const ReporteModel = {
               e.nombre_evento AS evento,
               EXTRACT(MONTH FROM r.fecha_hora_reserva)::int AS mes,
               COUNT(*)::int AS reservas
-       FROM public."RESERVA" r
-       JOIN public."EVENTO" e ON e.id_evento = r.id_evento
+       FROM public.reserva r
+       JOIN public.evento e ON e.id_evento = r.id_evento
        WHERE EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1
        GROUP BY e.codigo_evento, e.nombre_evento, mes`,
       [anio],
@@ -393,12 +393,12 @@ const ReporteModel = {
              COUNT(*) FILTER (WHERE es.nombre_estado IN ('Programado', 'En Boletería', 'En Vivo'))::int AS activos,
              COUNT(*) FILTER (WHERE es.nombre_estado = 'Finalizado')::int AS finalizados,
              COUNT(*) FILTER (WHERE es.nombre_estado = 'Cancelado')::int  AS cancelados
-      FROM public."EVENTO" e
-      JOIN public."AGENTE" a       ON a.numero_id = e.id_agente
-      JOIN public."ESTADO" es      ON es.id_estado = e.id_estado
-      JOIN public."CIUDAD" c       ON c.id_ciudad = e.id_ciudad
-      JOIN public."DEPARTAMENTO" d ON d.id_departamento = c.id_departamento
-      JOIN public."PAIS" p         ON p.id_pais = d.id_pais
+      FROM public.evento e
+      JOIN public.agente a       ON a.numero_id = e.id_agente
+      JOIN public.estado es      ON es.id_estado = e.id_estado
+      JOIN public.ciudad c       ON c.id_ciudad = e.id_ciudad
+      JOIN public.departamento d ON d.id_departamento = c.id_departamento
+      JOIN public.pais p         ON p.id_pais = d.id_pais
       GROUP BY a.numero_id, a.nombre_empresa, c.id_ciudad, c.nombre_ciudad,
                d.nombre_departamento, p.nombre_pais
       ORDER BY agente ASC, creados DESC, ciudad ASC
@@ -433,20 +433,20 @@ const ReporteModel = {
               COALESCE(a.nombre_empresa, u.nombre)     AS agente,
               COALESCE(v.reservas, 0)::int             AS reservas,
               COALESCE(v.entradas, 0)::int             AS entradas
-       FROM public."EVENTO" e
-       JOIN public."ESTADO" es      ON es.id_estado = e.id_estado
-       JOIN public."CIUDAD" c       ON c.id_ciudad = e.id_ciudad
-       JOIN public."DEPARTAMENTO" d ON d.id_departamento = c.id_departamento
-       JOIN public."PAIS" p         ON p.id_pais = d.id_pais
-       JOIN public."AGENTE" a       ON a.numero_id = e.id_agente
-       JOIN public."USUARIO" u      ON u.numero_id = a.numero_id
+       FROM public.evento e
+       JOIN public.estado es      ON es.id_estado = e.id_estado
+       JOIN public.ciudad c       ON c.id_ciudad = e.id_ciudad
+       JOIN public.departamento d ON d.id_departamento = c.id_departamento
+       JOIN public.pais p         ON p.id_pais = d.id_pais
+       JOIN public.agente a       ON a.numero_id = e.id_agente
+       JOIN public.usuario u      ON u.numero_id = a.numero_id
        -- Reservas NO canceladas de cada evento (ya sumadas)
        LEFT JOIN (
          SELECT r.id_evento,
                 COUNT(*)               AS reservas,
                 SUM(r.numero_entradas) AS entradas
-         FROM public."RESERVA" r
-         JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
+         FROM public.reserva r
+         JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
          WHERE er.nombre_estado <> 'Cancelada'
          GROUP BY r.id_evento
        ) v ON v.id_evento = e.id_evento
@@ -461,7 +461,7 @@ const ReporteModel = {
   async aniosEventos() {
     const result = await pool.query(`
       SELECT DISTINCT anio FROM (
-        SELECT EXTRACT(YEAR FROM fecha_inicio)::int AS anio FROM public."EVENTO"
+        SELECT EXTRACT(YEAR FROM fecha_inicio)::int AS anio FROM public.evento
         UNION
         SELECT EXTRACT(YEAR FROM ${AHORA})::int
       ) AS anios
@@ -505,22 +505,22 @@ const ReporteModel = {
               COALESCE(a.nombre_empresa, ua.nombre)              AS agente,
               COALESCE(pc.entradas, 0)::int                      AS entradas_canceladas,
               COALESCE(pc.valor, 0)                              AS valor_parcial
-       FROM public."RESERVA" r
-       JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
-       JOIN public."USUARIO" uc        ON uc.numero_id = r.id_cliente
-       JOIN public."EVENTO" e          ON e.id_evento = r.id_evento
-       JOIN public."ESTADO" es         ON es.id_estado = e.id_estado
-       JOIN public."CIUDAD" c          ON c.id_ciudad = e.id_ciudad
-       JOIN public."DEPARTAMENTO" d    ON d.id_departamento = c.id_departamento
-       JOIN public."PAIS" p            ON p.id_pais = d.id_pais
-       JOIN public."AGENTE" a          ON a.numero_id = e.id_agente
-       JOIN public."USUARIO" ua        ON ua.numero_id = a.numero_id
+       FROM public.reserva r
+       JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
+       JOIN public.usuario uc        ON uc.numero_id = r.id_cliente
+       JOIN public.evento e          ON e.id_evento = r.id_evento
+       JOIN public.estado es         ON es.id_estado = e.id_estado
+       JOIN public.ciudad c          ON c.id_ciudad = e.id_ciudad
+       JOIN public.departamento d    ON d.id_departamento = c.id_departamento
+       JOIN public.pais p            ON p.id_pais = d.id_pais
+       JOIN public.agente a          ON a.numero_id = e.id_agente
+       JOIN public.usuario ua        ON ua.numero_id = a.numero_id
        -- Cancelaciones parciales de cada reserva (ya sumadas)
        LEFT JOIN (
          SELECT id_reserva,
                 SUM(entradas_canceladas) AS entradas,
                 SUM(valor_cancelado)     AS valor
-         FROM public."CANCELACION_ENTRADAS"
+         FROM public.cancelacion_entradas
          GROUP BY id_reserva
        ) pc ON pc.id_reserva = r.id_reserva
        WHERE ($1::int IS NULL OR EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1)
@@ -549,13 +549,13 @@ const ReporteModel = {
               TO_CHAR(ce.fecha_cancelacion, 'YYYY-MM-DD HH24:MI') AS fecha_cancelacion,
               er.nombre_estado                                    AS estado_reserva,
               r.numero_entradas                                   AS entradas_actuales
-       FROM public."CANCELACION_ENTRADAS" ce
-       JOIN public."RESERVA" r         ON r.id_reserva = ce.id_reserva
-       JOIN public."ESTADO_RESERVA" er ON er.id_estado_reserva = r.id_estado_reserva
-       JOIN public."USUARIO" uc        ON uc.numero_id = r.id_cliente
-       JOIN public."EVENTO" e          ON e.id_evento = r.id_evento
-       JOIN public."AGENTE" a          ON a.numero_id = e.id_agente
-       JOIN public."USUARIO" ua        ON ua.numero_id = a.numero_id
+       FROM public.cancelacion_entradas ce
+       JOIN public.reserva r         ON r.id_reserva = ce.id_reserva
+       JOIN public.estado_reserva er ON er.id_estado_reserva = r.id_estado_reserva
+       JOIN public.usuario uc        ON uc.numero_id = r.id_cliente
+       JOIN public.evento e          ON e.id_evento = r.id_evento
+       JOIN public.agente a          ON a.numero_id = e.id_agente
+       JOIN public.usuario ua        ON ua.numero_id = a.numero_id
        WHERE ($1::int IS NULL OR EXTRACT(YEAR FROM r.fecha_hora_reserva) = $1)
        ORDER BY ce.fecha_cancelacion DESC, ce.id_cancelacion DESC`,
       [anio],
@@ -583,19 +583,19 @@ const ReporteModel = {
               COALESCE(ra.reservas, 0)::int                       AS reservas_afectadas,
               COALESCE(ra.entradas, 0)::int                       AS entradas_afectadas,
               COALESCE(ra.valor, 0)                               AS valor_afectado
-       FROM public."EVENTO" e
-       JOIN public."ESTADO" es      ON es.id_estado = e.id_estado
-       JOIN public."CIUDAD" c       ON c.id_ciudad = e.id_ciudad
-       JOIN public."DEPARTAMENTO" d ON d.id_departamento = c.id_departamento
-       JOIN public."PAIS" p         ON p.id_pais = d.id_pais
-       JOIN public."AGENTE" a       ON a.numero_id = e.id_agente
-       JOIN public."USUARIO" ua     ON ua.numero_id = a.numero_id
+       FROM public.evento e
+       JOIN public.estado es      ON es.id_estado = e.id_estado
+       JOIN public.ciudad c       ON c.id_ciudad = e.id_ciudad
+       JOIN public.departamento d ON d.id_departamento = c.id_departamento
+       JOIN public.pais p         ON p.id_pais = d.id_pais
+       JOIN public.agente a       ON a.numero_id = e.id_agente
+       JOIN public.usuario ua     ON ua.numero_id = a.numero_id
        LEFT JOIN (
          SELECT id_evento,
                 COUNT(*)             AS reservas,
                 SUM(numero_entradas) AS entradas,
                 SUM(valor_total)     AS valor
-         FROM public."RESERVA"
+         FROM public.reserva
          WHERE causa_cancelacion LIKE 'Evento cancelado por el organizador:%'
          GROUP BY id_evento
        ) ra ON ra.id_evento = e.id_evento
@@ -614,8 +614,8 @@ const ReporteModel = {
               COUNT(*) FILTER (WHERE es.nombre_estado IN ('Programado', 'En Boletería', 'En Vivo'))::int AS activos,
               COUNT(*) FILTER (WHERE es.nombre_estado = 'Finalizado')::int AS finalizados,
               COUNT(*) FILTER (WHERE es.nombre_estado = 'Cancelado')::int  AS cancelados
-       FROM public."EVENTO" e
-       JOIN public."ESTADO" es ON es.id_estado = e.id_estado
+       FROM public.evento e
+       JOIN public.estado es ON es.id_estado = e.id_estado
        WHERE ($1::int IS NULL OR EXTRACT(YEAR FROM e.fecha_inicio) = $1)`,
       [anio],
     );
@@ -626,9 +626,9 @@ const ReporteModel = {
   async aniosDisponibles() {
     const result = await pool.query(`
       SELECT DISTINCT anio FROM (
-        SELECT EXTRACT(YEAR FROM fecha_hora_reserva)::int AS anio FROM public."RESERVA"
+        SELECT EXTRACT(YEAR FROM fecha_hora_reserva)::int AS anio FROM public.reserva
         UNION
-        SELECT EXTRACT(YEAR FROM ${REGISTRO_EVENTO})::int FROM public."EVENTO" e
+        SELECT EXTRACT(YEAR FROM ${REGISTRO_EVENTO})::int FROM public.evento e
         UNION
         SELECT EXTRACT(YEAR FROM ${AHORA})::int
       ) AS anios
