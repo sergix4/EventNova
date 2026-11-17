@@ -24,7 +24,7 @@ const DESTINO = pool.usaNeon ? 'Neon (base COMPARTIDA del equipo)' : 'PostgreSQL
 
     if (yaTieneTablas && !FORZAR) {
       console.error(`\n⛔ La base de datos ${DESTINO} YA tiene tablas.`);
-      console.error('   develop.sql las BORRARÍA junto con todos sus datos, así que no se hizo nada.');
+      console.error('   schema.sql las BORRARÍA junto con todos sus datos, así que no se hizo nada.');
       console.error('   Si de verdad quieres recrearla desde cero: npm run db:init -- --forzar\n');
       process.exitCode = 1;
       return;

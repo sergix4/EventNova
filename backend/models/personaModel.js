@@ -129,7 +129,9 @@ const PersonaModel = {
       `${SELECT_PERSONA} ${where} ORDER BY u.nombre ASC`,
       valores,
     );
-    return result.rows.map(formatear);
+    // Si se pidió un rol, cada persona se muestra con ESE rol (y sus datos de
+    // ese rol), aunque por error también estuviera registrada con otro.
+    return result.rows.map((fila) => formatear(rol ? { ...fila, rol } : fila));
   },
 
   // Una sola persona por su número de identificación (o null si no existe)

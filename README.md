@@ -12,14 +12,14 @@ Sistema web de gestión y reserva de eventos y espectáculos — Proyecto Integr
 
 ```
 EventNova/
-├── backend/                  # Servidor Express (API REST + archivos estáticos)
-│   ├── app.js                # Punto de entrada: /api + sirve la carpeta frontend/
+├── backend/                  # Servidor Express: solo API REST (se despliega en Railway con Docker)
+│   ├── app.js                # Punto de entrada: /api (con CORS para el frontend publicado)
 │   ├── config/db.js          # Conexión a PostgreSQL (pg)
 │   ├── models/               # MODELO: consultas SQL (usuario, persona, plan, país, departamento, ciudad, evento, reserva, reporte)
 │   ├── controllers/          # CONTROLADOR: reciben la petición y responden JSON
 │   ├── routes/               # Rutas /api/auth, /api/paises, /api/departamentos, /api/ciudades, /api/eventos, /api/reservas, /api/usuarios, /api/planes, /api/reportes, /api/status
 │   ├── middlewares/          # authMiddleware (sesión, rol y cuenta activa), limiteLogin, validarId, sincronizarEstados, manejarErrores
-│   ├── database/             # develop.sql, migraciones, seed_planes.sql, seed_estados.sql, seed_admin.js, seed_demo.js
+│   ├── database/             # schema.sql (tablas), seeds.sql (datos iniciales), seed_demo.js, importar_ubicaciones.js
 │   └── .env.example          # Plantilla de variables de entorno
 │
 ├── docs/                     # Manual de usuario, diagramas UML, E-R y modelo relacional (PDF)
@@ -67,49 +67,53 @@ ubicacion.html ──► ubicacionController.js ──► PaisModel (js/models/p
 
 ### 1. Base de datos
 
-El equipo usa una base compartida en **Neon Postgres** (nube).
+La base de datos se crea con **dos archivos** de `backend/database/`:
 
-**Si ya existe la base en Neon (caso normal):**
+| Archivo | Qué hace |
+| ------- | -------- |
+| `schema.sql` | Crea las 14 tablas, índices, restricciones y triggers. Se ejecuta sobre una base vacía.|
+| `seeds.sql` | Inserta los datos iniciales: 5 estados de evento, 3 estados de reserva, 3 planes, 4 administradores, 20 clientes, 20 agentes y 20 o más filas en las demás tablas. Cada persona tiene **un solo rol**. |
 
-1. Pedir la `DATABASE_URL` por privado y pegarla en `backend/.env`.
-2. `npm run dev`. **No** ejecutar `npm run db:init`.
+**Opción A · pgAdmin (así lo revisa la docente):**
 
-**Para crear una base nueva desde cero (Neon o PostgreSQL local):**
+1. Crear una base de datos vacía (por ejemplo `eventnova_db`).
+2. Clic derecho sobre la base → **Query Tool** → abrir `schema.sql` → **Ejecutar (F5)**.
+3. En el mismo Query Tool abrir `seeds.sql` → **Ejecutar (F5)**.
 
-1. Neon: crear el proyecto y pegar la `DATABASE_URL` en `.env`.
-   Local: crear `eventnova_db` y llenar `DB_HOST`, `DB_PORT`, etc. (sin `DATABASE_URL`).
-2. `npm run db:init` → tablas (`develop.sql`) + planes + estados.
+**Opción B · desde el proyecto (Neon o PostgreSQL local):**
+
+1. Neon: pegar la `DATABASE_URL` en `backend/.env`.
+   Local: llenar `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` y `DB_PASSWORD` (sin `DATABASE_URL`).
+2. `npm run db:init` → ejecuta `schema.sql` + `seeds.sql`.
    Tiene un candado: si la base ya tiene tablas no hace nada
-   (para recrearla a propósito: `npm run db:init -- --forzar`, **borra todo**).
-3. `npm run db:ubicaciones` → países, departamentos y ciudades del mundo  
+3. `npm run db:ubicaciones` → (opcional) agrega los países, departamentos y ciudades del mundo
    (datos de [countries-states-cities-database](https://github.com/dr5hn/countries-states-cities-database),
    licencia ODbL, mediante el paquete npm [`country-state-city`](https://github.com/harpreetkhalsagtbit/country-state-city)).
-4. `npm run db:admin` → administrador inicial.
-5. `npm run db:demo` → **datos de demostración** (opcional): 5 agentes, 12 clientes,
-   22 eventos en 15 ciudades de 5 países (en todos los estados) y 82 reservas
-   repartidas en los meses de 2026. No borra nada y no duplica si se ejecuta dos veces.
-   Contraseña de todos los usuarios demo: `Demo12345` (por ejemplo
-   `laura.gomez@demo.eventnova.com` como cliente y
-   `valle.producciones@demo.eventnova.com` como agente).
-   Para **quitar** la demo después: `npm run db:demo -- --borrar` (borra solo los
-   usuarios `@demo.eventnova.com`, sus eventos y sus reservas; lo demás no se toca).
+4. `npm run db:demo` → (opcional, necesita el paso 3) **datos de demostración**: 5 agentes, 12 clientes,
+   22 eventos en todos los estados y 82 reservas con fechas calculadas desde el día en que se ejecuta.
+   Contraseña de los usuarios demo: `Demo12345` (por ejemplo `laura.gomez@demo.eventnova.com`).
+   Para quitarla: `npm run db:demo -- --borrar`.
 
-> `develop.sql` es el script **consolidado**: ya trae todos los cambios de las
-migraciones 01 a 11, así que una base nueva queda igual a la de Neon **sin**
-> ejecutar ninguna migración.
+> No hace falta `npm run db:admin`: `seeds.sql` ya trae los 4 administradores.
 
-**Para aplicar una migración nueva a una base que ya existe** (no borra datos):
-`npm run db:migrar -- migracion_11.sql` (cambiar por el nombre de la migración).
-Los archivos `migracion_XX.sql` son el historial de cambios que se aplicó a Neon;
-solo sirven para bases creadas antes de esa migración.
+**Usuarios de `seeds.sql`** (contraseña de todos: `12345`):
 
-### 2. Servidor
+| Rol | Correos |
+| --- | ------- |
+| Administrador | `sergio@eventnova.com`, `daniel@eventnova.com`, `isabella@eventnova.com`, `paola@eventnova.com` |
+| Cliente | `carlos.perez@correo.com`, `maria.gomez@correo.com` … (20 en total) |
+| Agente | `eventos.nova@eventos.com`, `live.stage@eventos.com` … (20 en total) |
+
+**Para aplicar un cambio nuevo a una base que ya existe** (no borra datos):
+crear un `.sql` en `backend/database/` y ejecutar `npm run db:migrar -- nombre_del_archivo.sql`.
+
+### 2. Servidor (API)
 
 ```bash
 cd backend
 npm install
 cp .env.example .env      # en Windows: copy .env.example .env
-# editar .env con tus credenciales de PostgreSQL
+# editar .env con las credenciales de la base de datos
 npm run dev
 ```
 
@@ -120,23 +124,23 @@ Conexion a PostgreSQL establecida correctamente.
 EventNova corriendo en http://localhost:3000
 ```
 
-Para crear el usuario administrador inicial (una sola vez):
-
-```bash
-npm run db:admin
-```
-
-Por defecto queda `admin@eventnova.com` / `Admin12345`. Se puede cambiar con
-`ADMIN_CORREO`, `ADMIN_PASSWORD` y `ADMIN_ID` en el `.env`.
+El backend **solo** responde la API (en `http://localhost:3000` se ve un mensaje JSON).
+En internet corre en **Railway** (`backend/Dockerfile`).
 
 ### 3. Abrir la aplicación
 
-Abrir **http://localhost:3000** en el navegador. Un solo comando levanta todo:
-el mismo servidor entrega las páginas HTML y responde la API.
+- **En internet:** https://sergix4.github.io/EventNova/ (GitHub Pages, workflow
+  `.github/workflows/static.yml`), conectada al backend de Railway.
+- **En local**, contra tu backend local:
+  1. En `frontend/js/models/config.js` cambiar temporalmente la URL:
+     `export const BASE_URL = "http://127.0.0.1:3000";`
+  2. Abrir `frontend/index.html` con la extensión **Live Server** de VS Code
+     (abre `http://127.0.0.1:5500`).
+  3. **No subir ese cambio**: antes de hacer commit, restaurarlo con
+     `git restore frontend/js/models/config.js`.
 
-> ⚠️ No abrir los `.html` con doble clic ni con _Live Server_: las páginas usan
-> módulos de JavaScript y la sesión del servidor, así que deben abrirse desde
-> `http://localhost:3000`.
+> ⚠️ Usar `127.0.0.1` en los dos lados (o `localhost` en los dos): si se mezclan,
+> el navegador no envía la cookie de sesión y el inicio de sesión no se mantiene.
 
 ## API disponible
 
@@ -194,7 +198,7 @@ el mismo servidor entrega las páginas HTML y responde la API.
 - ✅ Administrar reservas (perfil agente): listado real de las reservas de sus eventos con filtros (texto, evento, estado, fecha), indicador de entradas vendidas, detalle y cancelación (total o parcial) con causa obligatoria.
 - ✅ Reglas de eventos: duración mínima de 1 hora, registro con 24 h de anticipación y sin fechas pasadas; solo se reserva En Boletería; En Vivo y Finalizado cambian solos según la hora; cancelar un evento cancela todas sus reservas.
 - ✅ Dashboard del administrador con estadísticas reales (`/api/reportes/dashboard`, solo administrador): totales de usuarios, reservas y eventos; ingresos, reservas y eventos por mes del año elegido; cobertura por país/departamento/ciudad; actividad reciente y resumen de pagos de reservas (`migracion_06.sql`).
-- ✅ Script de base de datos consolidado: `develop.sql` crea las 14 tablas finales con sus triggers; se quitaron las tablas que no pide el enunciado (CATEGORIA, AGRUPA, RESEÑA, METODO_PAGO y TIPO) con `migracion_07.sql`.
+- ✅ Script de base de datos consolidado: `develop.sql` (hoy `schema.sql` + `seeds.sql`) crea las 14 tablas finales con sus triggers; se quitaron las tablas que no pide el enunciado (CATEGORIA, AGRUPA, RESEÑA, METODO_PAGO y TIPO) con `migracion_07.sql`.
 - ✅ Datos de demostración (`npm run db:demo`, `backend/database/seed_demo.js`): clientes, agentes, eventos y reservas en todos los estados (con causas de cancelación) para probar los reportes y la sustentación.
 - ✅ API de usuarios (`/api/usuarios`, solo administrador): listado por rol con búsqueda, consulta, edición en transacción (persona, teléfonos y datos de cliente/agente/administrador) y suspensión / reactivación protegida (no se suspende a un cliente con reservas, a un agente con eventos, ni el admin a sí mismo).
 - ✅ Gestión de clientes y agentes (`pages/admin/usuarios.html`, solo administrador): pestañas con buscador, paginación, Ver, Editar (persona, teléfonos, país → departamento → ciudad y datos del rol) y Suspender / Reactivar con motivo; el botón Suspender se deshabilita si el cliente tiene reservas o el agente tiene eventos.
@@ -219,7 +223,7 @@ En la carpeta [`docs/`](docs/) (actualizados el 12 de noviembre de 2026):
 | [Manual de usuario](docs/Manual_Usuario_EventNova.pdf) | Uso del sistema por rol (cliente, agente y administrador), flujo de una reserva, preguntas frecuentes |
 | [Diagramas UML](docs/Diagramas_UML_EventNova.pdf) | Diagrama de clases (pág. 1) y diagrama de paquetes MVC (pág. 2) |
 | [Diagrama E-R](docs/Diagrama_ER_EventNova.pdf) | Entidad-relación en notación Chen (13 entidades + teléfono multivaluado) |
-| [Modelo relacional](docs/Modelo_Relacional_EventNova.pdf) | Las 14 tablas de `develop.sql` con columnas, tipos y llaves |
+| [Modelo relacional](docs/Modelo_Relacional_EventNova.pdf) | Las 14 tablas de `schema.sql` con columnas, tipos y llaves |
 
 ## Convenciones
 
