@@ -1,4 +1,4 @@
-﻿-- ════════════════════════════════════════════════════════════════════════════
+-- ════════════════════════════════════════════════════════════════════════════
 -- EventNova · seeds.sql
 -- Datos iniciales de TODAS las tablas. Ejecutar DESPUÉS de schema.sql, sobre la
 -- base recién creada (en pgAdmin: Query Tool → abrir este archivo → Ejecutar F5).
